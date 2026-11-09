@@ -1,3 +1,10 @@
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  resolveRoute,
+  routeURL,
+  masterPaths,
+  companyFromSearch,
+} from "../application/routes";
 import { useState, useEffect, type FormEvent } from "react";
 import {
   LayoutDashboard,
@@ -51,12 +58,15 @@ const labels: Record<string, string> = {
   productAllergens: "Alérgenos de productos",
 };
 export function App() {
+  const location = useLocation(),
+    routerNavigate = useNavigate();
+  const route = resolveRoute(location.pathname),
+    page = route.page;
   const [user, setUser] = useState<Session | null>(null),
     [setup, setSetup] = useState(false),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [companyId, setCompany] = useState(""),
-    [page, setPage] = useState("dashboard"),
     [contract, setContract] = useState<Contract | null>(null),
     [refresh, setRefresh] = useState(0);
   const company = user?.companies.find((c) => c.id === companyId);
@@ -71,7 +81,9 @@ export function App() {
             const { user } = await request<{ user: Session }>("/session");
             if (live) {
               setUser(user);
-              setCompany(user.companies[0]?.id ?? "");
+              setCompany(
+                companyFromSearch(window.location.search, user.companies),
+              );
             }
           } catch (e) {
             if ((e as { status?: number }).status !== 401) throw e;
@@ -104,15 +116,24 @@ export function App() {
   }, [user, companyId]);
   function signedIn(u: Session) {
     setUser(u);
-    setCompany(u.companies[0]?.id ?? "");
+    setCompany(companyFromSearch(location.search, u.companies));
     setSetup(false);
     setError("");
-    setPage("dashboard");
   }
-  function navigate(next: string) {
-    setPage(next);
+  function urlFor(next: string, id?: string) {
+    return routeURL(
+      next,
+      id,
+      companyId && companyId !== user?.companies[0]?.id ? companyId : undefined,
+    );
+  }
+  function navigate(next: string, id?: string) {
+    routerNavigate(urlFor(next, id));
     setError("");
   }
+  useEffect(() => {
+    if (user) setCompany(companyFromSearch(location.search, user.companies));
+  }, [location.search, user]);
   if (loading) return <div className="loading">Conectando con Nexora…</div>;
   if (!user)
     return (
@@ -126,27 +147,27 @@ export function App() {
   return (
     <div className="shell">
       <aside className="sidebar">
-        <a className="brand" href="#" onClick={() => navigate("dashboard")}>
+        <Link className="brand" to={urlFor("dashboard")}>
           nexora<span>✳</span>
-        </a>
+        </Link>
         <nav>
-          <button
+          <Link
             className={page === "dashboard" ? "active" : ""}
-            onClick={() => navigate("dashboard")}
+            to={urlFor("dashboard")}
             title="Resumen"
           >
             <LayoutDashboard size={19} />
             Resumen
-          </button>
+          </Link>
           <span className="sidebar-label">MAESTROS</span>
           {Object.keys(contract?.resources ?? {})
             .filter((r) => contract?.permissions[r]?.read)
             .map((r) => (
-              <button
+              <Link
                 key={r}
                 title={labels[r]}
                 className={page === r ? "active" : ""}
-                onClick={() => navigate(r)}
+                to={urlFor(r)}
               >
                 {r === "products" ? (
                   <Package size={18} />
@@ -156,50 +177,50 @@ export function App() {
                   <Database size={18} />
                 )}
                 <span>{labels[r]}</span>
-              </button>
+              </Link>
             ))}
           <span className="sidebar-label">OPERACIONES</span>
           {operations.map((m, i) => {
             const Icon = icons[i];
             return (
-              <button
+              <Link
                 title={m.name}
                 key={m.id}
                 className={page === m.id ? "active" : ""}
-                onClick={() => navigate(m.id)}
+                to={urlFor(m.id)}
               >
                 <Icon size={18} />
                 <span>{m.name}</span>
-              </button>
+              </Link>
             );
           })}
           {company?.role === "admin" && (
             <>
               <span className="sidebar-label">SISTEMA</span>
-              <button
+              <Link
                 title="Usuarios y roles"
                 className={page === "users" ? "active" : ""}
-                onClick={() => navigate("users")}
+                to={urlFor("users")}
               >
                 <Users size={18} />
                 <span>Usuarios y roles</span>
-              </button>
-              <button
+              </Link>
+              <Link
                 title="Historial de cambios"
                 className={page === "audit" ? "active" : ""}
-                onClick={() => navigate("audit")}
+                to={urlFor("audit")}
               >
                 <History size={18} />
                 <span>Historial de cambios</span>
-              </button>
-              <button
+              </Link>
+              <Link
                 title="Configuración"
                 className={page === "settings" ? "active" : ""}
-                onClick={() => navigate("settings")}
+                to={urlFor("settings")}
               >
                 <Settings size={18} />
                 <span>Configuración</span>
-              </button>
+              </Link>
             </>
           )}
         </nav>
@@ -239,7 +260,15 @@ export function App() {
               value={companyId}
               onChange={(e) => {
                 setCompany(e.target.value);
-                navigate("dashboard");
+                routerNavigate(
+                  routeURL(
+                    "dashboard",
+                    undefined,
+                    e.target.value === user.companies[0]?.id
+                      ? undefined
+                      : e.target.value,
+                  ),
+                );
               }}
             >
               {user.companies.map((c) => (
@@ -264,7 +293,21 @@ export function App() {
             <p>Cargando espacio de trabajo…</p>
           ) : (
             <div key={companyId + ":" + page}>
-              {page === "dashboard" ? (
+              {page === "notFound" ? (
+                <RouteNotice
+                  title="Página no encontrada"
+                  message="La dirección no corresponde a ninguna página del backoffice."
+                  onBack={() => navigate("dashboard")}
+                />
+              ) : (masterPaths[page] && !contract.resources[page]) ||
+                (["audit", "users", "settings"].includes(page) &&
+                  company?.role !== "admin") ? (
+                <RouteNotice
+                  title="Acceso restringido"
+                  message="No tienes permisos para acceder a esta sección."
+                  onBack={() => navigate("dashboard")}
+                />
+              ) : page === "dashboard" ? (
                 <Overview
                   company={company?.name ?? ""}
                   companyId={companyId}
@@ -275,6 +318,9 @@ export function App() {
               ) : contract.resources[page] ? (
                 <Master
                   resource={page}
+                  recordId={route.recordId}
+                  createNew={route.isNew}
+                  onNavigate={(id) => navigate(page, id)}
                   def={contract.resources[page]}
                   contract={contract}
                   companyId={companyId}
@@ -613,6 +659,9 @@ function Overview({
   );
 }
 function Master({
+  recordId,
+  createNew,
+  onNavigate,
   resource,
   def,
   contract,
@@ -620,6 +669,9 @@ function Master({
   writable,
   onChanged,
 }: {
+  recordId?: string;
+  createNew: boolean;
+  onNavigate: (id?: string) => void;
   resource: string;
   def: Resource;
   contract: Contract;
@@ -639,7 +691,42 @@ function Master({
     [loading, setLoading] = useState(true),
     [confirmDelete, setConfirmDelete] = useState<RecordRow | null>(null),
     [showImport, setShowImport] = useState(false),
-    [version, setVersion] = useState(0);
+    [version, setVersion] = useState(0),
+    [detailLoading, setDetailLoading] = useState(!!recordId),
+    [detailError, setDetailError] = useState("");
+  useEffect(() => {
+    let live = true;
+    setDetailError("");
+    setError("");
+    if (createNew) {
+      setDetailLoading(false);
+      openForm(null);
+      return;
+    }
+    if (!recordId) {
+      setDetailLoading(false);
+      setEditing(undefined);
+      return;
+    }
+    setDetailLoading(true);
+    setEditing(undefined);
+    request<{ record: RecordRow }>(
+      `/masters/${resource}/${encodeURIComponent(recordId)}`,
+      companyId,
+    )
+      .then((d) => {
+        if (live) openForm(d.record);
+      })
+      .catch((e) => {
+        if (live) setDetailError(e.message);
+      })
+      .finally(() => {
+        if (live) setDetailLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [recordId, createNew, resource, companyId, def]);
   useEffect(() => {
     let live = true;
     setLoading(true);
@@ -702,6 +789,9 @@ function Master({
     };
   }, [companyId, def, contract, version]);
   function edit(row: RecordRow | null) {
+    onNavigate(row?.id ?? "new");
+  }
+  function openForm(row: RecordRow | null) {
     setEditing(row);
     setForm(
       row
@@ -737,8 +827,8 @@ function Master({
           ...(editing ? { version: editing.version } : {}),
         },
       );
-      setEditing(undefined);
       changed();
+      onNavigate();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -766,6 +856,23 @@ function Master({
           ? enumEs(String(value))
           : String(value);
   }
+  if (detailLoading) return <p role="status">Cargando registro…</p>;
+  if (detailError)
+    return (
+      <RouteNotice
+        title="No se puede abrir el registro"
+        message={detailError}
+        onBack={() => onNavigate()}
+      />
+    );
+  if (createNew && !writable)
+    return (
+      <RouteNotice
+        title="Acceso restringido"
+        message="No tienes permisos para crear registros."
+        onBack={() => onNavigate()}
+      />
+    );
   if (editing !== undefined)
     return (
       <>
@@ -784,7 +891,7 @@ function Master({
                 : "Los cambios se validarán y guardarán en la empresa activa."
           }
         >
-          <button className="secondary" onClick={() => setEditing(undefined)}>
+          <button className="secondary" onClick={() => onNavigate()}>
             <ArrowLeft size={16} />
             Volver al listado
           </button>
@@ -911,7 +1018,7 @@ function Master({
             <button
               type="button"
               className="secondary"
-              onClick={() => setEditing(undefined)}
+              onClick={() => onNavigate()}
             >
               Cancelar
             </button>
@@ -1649,6 +1756,26 @@ function Mfa() {
         </>
       )}
       {message && <p role="status">{message}</p>}
+    </section>
+  );
+}
+
+function RouteNotice({
+  title,
+  message,
+  onBack,
+}: {
+  title: string;
+  message: string;
+  onBack: () => void;
+}) {
+  return (
+    <section className="panel empty">
+      <h1>{title}</h1>
+      <p>{message}</p>
+      <button className="primary" onClick={onBack}>
+        Volver al listado o resumen
+      </button>
     </section>
   );
 }

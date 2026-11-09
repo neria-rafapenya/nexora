@@ -199,7 +199,7 @@ p {
 .sidebar > .sidebar-label {
   margin-top: 4px;
 }
-.sidebar nav > button {
+.sidebar nav > :is(button, a) {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -213,7 +213,7 @@ p {
   border-radius: 7px;
   margin: 3px 0;
 }
-.sidebar nav > button.active {
+.sidebar nav > :is(button, a).active {
   background: #eaf1e9;
   color: #315d40;
   font-weight: 600;
@@ -675,7 +675,7 @@ footer {
   .sidebar-label {
     display: none !important;
   }
-  .sidebar nav > button {
+  .sidebar nav > :is(button, a) {
     font-size: 0;
     padding: 15px;
     gap: 0;
@@ -757,7 +757,7 @@ footer {
   min-height: 0;
   margin-bottom: 15px;
 }
-.sidebar nav > button {
+.sidebar nav > :is(button, a) {
   padding: 9px 12px;
   font-size: 11px;
   gap: 10px;
@@ -1070,11 +1070,11 @@ h1 {
   }
 }
 @media (max-width: 600px) {
-  .sidebar nav > button {
+  .sidebar nav > :is(button, a) {
     font-size: 0;
     padding: 14px 12px;
   }
-  .sidebar nav > button > span {
+  .sidebar nav > :is(button, a) > span {
     display: none;
   }
   .sidebar .brand {
@@ -1131,4 +1131,8 @@ h1 {
   .actions {
     gap: 7px;
   }
+}
+
+.sidebar nav > a {
+  text-decoration: none;
 }

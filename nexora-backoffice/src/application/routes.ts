@@ -1,0 +1,65 @@
+import { matchRoutes } from "react-router-dom";
+export const masterPaths: Record<string, string> = {
+  mainCategories: "/categories",
+  families: "/families",
+  products: "/products",
+  allergens: "/allergens",
+  suppliers: "/suppliers",
+  clients: "/clients",
+  centers: "/centers",
+  diets: "/diets",
+  centerDiners: "/center-diners",
+  productAllergens: "/product-allergens",
+};
+export const pagePaths: Record<string, string> = {
+  dashboard: "/",
+  ...masterPaths,
+  orders: "/orders",
+  menus: "/menus",
+  documents: "/supplier-documents",
+  waste: "/food-waste",
+  audit: "/audit",
+  users: "/users",
+  settings: "/settings",
+};
+export interface AppRoute {
+  page: string;
+  recordId?: string;
+  isNew: boolean;
+}
+const routes = Object.entries(pagePaths).flatMap(([page, path]) => [
+  { path, handle: { page, isNew: false } },
+  ...(masterPaths[page]
+    ? [
+        { path: path + "/new", handle: { page, isNew: true } },
+        { path: path + "/:id", handle: { page, isNew: false } },
+      ]
+    : []),
+]);
+export function resolveRoute(pathname: string): AppRoute {
+  const result = matchRoutes(routes, pathname)?.at(-1);
+  if (!result) return { page: "notFound", isNew: false };
+  return { ...result.route.handle, recordId: result.params.id };
+}
+export function routeURL(
+  page: string,
+  recordId?: string,
+  companyId?: string,
+): string {
+  const path = pagePaths[page] ?? "/";
+  const record = recordId ? "/" + encodeURIComponent(recordId) : "";
+  return (
+    path +
+    record +
+    (companyId ? "?" + new URLSearchParams({ company: companyId }) : "")
+  );
+}
+export function companyFromSearch(
+  search: string,
+  companies: Array<{ id: string }>,
+): string {
+  const requested = new URLSearchParams(search).get("company");
+  return (
+    companies.find((c) => c.id === requested)?.id ?? companies[0]?.id ?? ""
+  );
+}
