@@ -30,19 +30,24 @@ import {
   type Resource,
   type RecordRow,
 } from "../domain/core";
+import { localizeContract, enumEs } from "../application/locale";
 import { request } from "../infrastructure/api";
 import { emptyForm, payload } from "../application/forms";
 const icons = [ShoppingBasket, Utensils, Building2, Sprout];
 const labels: Record<string, string> = {
-  families: "Families",
-  products: "Products",
-  allergens: "Allergens",
-  suppliers: "Suppliers",
-  clients: "Clients",
-  centers: "Centers",
-  diets: "Diets",
-  centerDiners: "Center diners",
-  productAllergens: "Product allergens",
+  dashboard: "Resumen",
+  audit: "Historial de cambios",
+  users: "Usuarios y roles",
+  settings: "Configuración",
+  families: "Familias",
+  products: "Productos",
+  allergens: "Alérgenos",
+  suppliers: "Proveedores",
+  clients: "Clientes",
+  centers: "Centros",
+  diets: "Dietas",
+  centerDiners: "Comensales por centro",
+  productAllergens: "Alérgenos de productos",
 };
 export function App() {
   const [user, setUser] = useState<Session | null>(null),
@@ -87,7 +92,7 @@ export function App() {
     setContract(null);
     request<Contract>("/schema", companyId)
       .then((c) => {
-        if (live) setContract(c);
+        if (live) setContract(localizeContract(c));
       })
       .catch((e) => {
         if (live) setError(e.message);
@@ -107,7 +112,7 @@ export function App() {
     setPage(next);
     setError("");
   }
-  if (loading) return <div className="loading">Connecting to Nexora…</div>;
+  if (loading) return <div className="loading">Conectando con Nexora…</div>;
   if (!user)
     return (
       <Access
@@ -127,13 +132,13 @@ export function App() {
           <button
             className={page === "dashboard" ? "active" : ""}
             onClick={() => navigate("dashboard")}
-            title="Overview"
+            title="Resumen"
           >
             <LayoutDashboard size={19} />
-            Overview
+            Resumen
           </button>
-          <span className="sidebar-label">MASTER DATA</span>
-          {Object.keys(labels)
+          <span className="sidebar-label">MAESTROS</span>
+          {Object.keys(contract?.resources ?? {})
             .filter((r) => contract?.permissions[r]?.read)
             .map((r) => (
               <button
@@ -152,7 +157,7 @@ export function App() {
                 <span>{labels[r]}</span>
               </button>
             ))}
-          <span className="sidebar-label">OPERATIONS</span>
+          <span className="sidebar-label">OPERACIONES</span>
           {operations.map((m, i) => {
             const Icon = icons[i];
             return (
@@ -169,30 +174,30 @@ export function App() {
           })}
           {company?.role === "admin" && (
             <>
-              <span className="sidebar-label">SYSTEM</span>
+              <span className="sidebar-label">SISTEMA</span>
               <button
-                title="Users and roles"
+                title="Usuarios y roles"
                 className={page === "users" ? "active" : ""}
                 onClick={() => navigate("users")}
               >
                 <Users size={18} />
-                <span>Users and roles</span>
+                <span>Usuarios y roles</span>
               </button>
               <button
-                title="Audit history"
+                title="Historial de cambios"
                 className={page === "audit" ? "active" : ""}
                 onClick={() => navigate("audit")}
               >
                 <History size={18} />
-                <span>Audit history</span>
+                <span>Historial de cambios</span>
               </button>
               <button
-                title="Settings"
+                title="Configuración"
                 className={page === "settings" ? "active" : ""}
                 onClick={() => navigate("settings")}
               >
                 <Settings size={18} />
-                <span>Settings</span>
+                <span>Configuración</span>
               </button>
             </>
           )}
@@ -206,7 +211,7 @@ export function App() {
             </small>
           </div>
           <button
-            aria-label="Sign out"
+            aria-label="Cerrar sesión"
             onClick={async () => {
               try {
                 await request("/logout", "", "POST");
@@ -224,11 +229,11 @@ export function App() {
       <div className="main">
         <header>
           <div className="breadcrumb">
-            Workspace <span>/</span> {labels[page] ?? page}
+            Espacio de trabajo <span>/</span> {labels[page] ?? page}
           </div>
           <label className="company">
             <Building2 size={17} />
-            <span className="sr-only">Active company</span>
+            <span className="sr-only">Empresa activa</span>
             <select
               value={companyId}
               onChange={(e) => {
@@ -245,7 +250,7 @@ export function App() {
           </label>
           <span className="local-badge">
             <i />
-            Local API · Supabase
+            Entorno local · Supabase
           </span>
         </header>
         <main>
@@ -255,7 +260,7 @@ export function App() {
             </div>
           )}
           {!contract ? (
-            <p>Loading workspace…</p>
+            <p>Cargando espacio de trabajo…</p>
           ) : (
             <div key={companyId + ":" + page}>
               {page === "dashboard" ? (
@@ -289,7 +294,7 @@ export function App() {
               ) : (
                 <div>
                   <Heading
-                    eyebrow="OPERATIONS"
+                    eyebrow="OPERACIONES"
                     title={operations.find((x) => x.id === page)?.name ?? page}
                     description={
                       operations.find((x) => x.id === page)?.description ?? ""
@@ -298,18 +303,19 @@ export function App() {
                   <section className="empty panel">
                     <ShieldCheck size={38} />
                     <span className="pill">
-                      {operations.find((x) => x.id === page)?.phase} · PLANNED
+                      {operations.find((x) => x.id === page)?.phase} · PREVISTO
                     </span>
-                    <h2>Ready for the next phase.</h2>
+                    <h2>Preparado para la siguiente fase.</h2>
                     <p>
-                      Operational workflows and AI proposals are not available
-                      yet. Build your master data first.
+                      Los flujos operativos y las propuestas de IA estarán
+                      disponibles en las próximas fases. Empieza por los
+                      maestros.
                     </p>
                     <button
                       className="primary"
                       onClick={() => navigate("products")}
                     >
-                      Open products <ArrowRight size={17} />
+                      Ver productos <ArrowRight size={17} />
                     </button>
                   </section>
                 </div>
@@ -319,7 +325,7 @@ export function App() {
           <footer>
             Nexora Backoffice{" "}
             <span>
-              Private workspace · PostgreSQL on Supabase · AI workflows pending
+              Espacio privado · PostgreSQL en Supabase · Flujos de IA pendientes
             </span>
           </footer>
         </main>
@@ -387,31 +393,33 @@ function Access({
           nexora<span>✳</span>
         </a>
         <div>
-          <span className="eyebrow">YOUR OPERATIONS, CONNECTED</span>
+          <span className="eyebrow">TUS OPERACIONES, CONECTADAS</span>
           <h1>
-            More clarity.
+            Más claridad.
             <br />
-            Better decisions.
+            Mejores decisiones.
           </h1>
           <p>
-            Your team, your data and your operations.
+            Tu equipo, tus datos y tus operaciones.
             <br />
-            One private workspace to work better.
+            Un espacio privado para trabajar mejor.
           </p>
           <div className="story-line">
-            <ShieldCheck size={20} /> AI proposes. Your team decides.
+            <ShieldCheck size={20} /> La IA propone. Tu equipo decide.
           </div>
         </div>
-        <small>PRIVATE BACKOFFICE · HORECA & COLLECTIVE CATERING</small>
+        <small>BACKOFFICE PRIVADO · HORECA Y COLECTIVIDADES</small>
       </section>
       <section className="login-form">
         <div>
-          <span className="pill">LOCAL WORKSPACE · SUPABASE</span>
-          <h2>{setup ? "Set up your workspace" : "Welcome to Nexora"}</h2>
+          <span className="pill">ENTORNO LOCAL · SUPABASE</span>
+          <h2>
+            {setup ? "Configura tu espacio de trabajo" : "Bienvenido a Nexora"}
+          </h2>
           <p>
             {setup
-              ? "Create the first administrator. No demo accounts are created."
-              : "Sign in with your workspace account."}
+              ? "Crea la primera cuenta de administración. No hay usuarios de ejemplo."
+              : "Accede con tu cuenta de trabajo."}
           </p>
           {error && (
             <div className="alert" role="alert">
@@ -421,14 +429,14 @@ function Access({
                 className="secondary"
                 onClick={() => window.location.reload()}
               >
-                Retry connection
+                Reintentar conexión
               </button>
             </div>
           )}
           <form onSubmit={submit}>
             {setup && (
               <>
-                <label htmlFor="name">Full name</label>
+                <label htmlFor="name">Nombre completo</label>
                 <input
                   id="name"
                   name="name"
@@ -436,7 +444,7 @@ function Access({
                   maxLength={120}
                   autoComplete="name"
                 />
-                <label htmlFor="companyName">Company name</label>
+                <label htmlFor="companyName">Nombre de la empresa</label>
                 <input
                   id="companyName"
                   name="companyName"
@@ -445,7 +453,7 @@ function Access({
                 />
               </>
             )}
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Correo electrónico</label>
             <input
               id="email"
               name="email"
@@ -453,7 +461,7 @@ function Access({
               autoComplete="username"
               required
             />
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Contraseña</label>
             <input
               id="password"
               name="password"
@@ -465,14 +473,14 @@ function Access({
             />
             {setup && (
               <p className="fine">
-                Use at least 12 characters. This account controls the private
-                workspace.
+                Usa al menos 12 caracteres. Esta cuenta administrará el espacio
+                privado.
               </p>
             )}
             {!setup && (
               <>
                 <label htmlFor="login-code">
-                  Authenticator code (if enabled)
+                  Código de autenticación (si está activado)
                 </label>
                 <input
                   id="login-code"
@@ -485,14 +493,18 @@ function Access({
               </>
             )}
             <button className="primary" disabled={busy}>
-              {busy ? "Please wait…" : setup ? "Create workspace" : "Sign in"}
+              {busy
+                ? "Un momento…"
+                : setup
+                  ? "Crear espacio de trabajo"
+                  : "Entrar"}
               <ArrowRight size={18} />
             </button>
           </form>
           <p className="fine">
             {setup
-              ? "The catalog contains 10 fictional families and 200 fictional products. All other business masters start empty."
-              : "Authenticated sessions are managed by the local API."}
+              ? "El catálogo contiene 10 familias y 200 productos ficticios. El resto de maestros empieza vacío."
+              : "El acceso se gestiona mediante el servicio local."}
           </p>
         </div>
       </section>
@@ -522,9 +534,9 @@ function Overview({
   return (
     <>
       <Heading
-        eyebrow="YOUR OPERATIONS, IN PERSPECTIVE"
-        title="Everything starts here."
-        description={`Welcome to ${company}.`}
+        eyebrow="TU OPERATIVA, EN PERSPECTIVA"
+        title="Todo empieza aquí."
+        description={`Bienvenido al espacio de ${company}.`}
       />
       {error && (
         <div role="alert" className="alert">
@@ -533,19 +545,20 @@ function Overview({
       )}
       <section className="welcome">
         <div>
-          <span className="pill">FOUNDATIONS & MASTER DATA</span>
+          <span className="pill">CIMIENTOS Y MAESTROS</span>
           <h2>
-            A solid foundation.
+            Una base sólida.
             <br />
-            Real data, connected.
+            Tus datos, conectados.
           </h2>
           <p>
-            Manage your catalog and business records in one private space.
+            Gestiona tu catálogo y tus datos de negocio en un espacio privado.
             <br />
-            Changes are saved in PostgreSQL and recorded in audit history.
+            Los cambios se guardan en la base de datos y quedan registrados en
+            el historial.
           </p>
           <button onClick={() => navigate("products")}>
-            Explore the catalog <ArrowRight size={18} />
+            Explorar catálogo <ArrowRight size={18} />
           </button>
         </div>
         <div className="abstract" aria-hidden="true">
@@ -555,8 +568,8 @@ function Overview({
         </div>
       </section>
       <div className="section-heading">
-        <h2>Master data</h2>
-        <span>Your active company</span>
+        <h2>Maestros</h2>
+        <span>Tu empresa activa</span>
       </div>
       <div className="row g-3">
         {Object.keys(contract.resources).map((r) => (
@@ -565,15 +578,15 @@ function Overview({
               <span>{labels[r]}</span>
               <strong>{counts[r] ?? "—"}</strong>
               <span className="card-link">
-                Manage records <ArrowRight size={16} />
+                Gestionar registros <ArrowRight size={16} />
               </span>
             </button>
           </div>
         ))}
       </div>
       <div className="section-heading mt">
-        <h2>Upcoming operations</h2>
-        <span>Human approval at every critical step</span>
+        <h2>Próximas operaciones</h2>
+        <span>Aprobación humana en cada paso crítico</span>
       </div>
       <div className="row g-3">
         {operations.map((m, i) => {
@@ -584,11 +597,11 @@ function Overview({
                 <span className={"module-icon tone-" + i}>
                   <Icon size={23} />
                 </span>
-                <span className="module-phase">{m.phase} · Planned</span>
+                <span className="module-phase">{m.phase} · Previsto</span>
                 <h3>{m.name}</h3>
                 <p>{m.description}</p>
                 <span className="card-link">
-                  View module <ArrowRight size={16} />
+                  Ver módulo <ArrowRight size={16} />
                 </span>
               </button>
             </div>
@@ -736,11 +749,11 @@ function Master({
     if (f.type === "relation")
       return String(
         lookups[f.resource!]?.find((x) => x.id === value)?.data.name ??
-          (value ? "Linked record" : "—"),
+          (value ? "Registro relacionado" : "—"),
       );
-    if (typeof value === "boolean") return value ? "Yes" : "No";
+    if (typeof value === "boolean") return value ? "Sí" : "No";
     if (key === "price" && typeof value === "number")
-      return new Intl.NumberFormat("en-IE", {
+      return new Intl.NumberFormat("es-ES", {
         style: "currency",
         currency: "EUR",
       }).format(value);
@@ -748,19 +761,25 @@ function Master({
       ? "—"
       : Array.isArray(value)
         ? value.join(", ")
-        : String(value);
+        : f.options
+          ? enumEs(String(value))
+          : String(value);
   }
   if (editing !== undefined)
     return (
       <>
         <Heading
-          eyebrow="MASTER DATA"
-          title={editing ? `Edit ${def.singular}` : `New ${def.singular}`}
-          description="Changes are validated and saved to the active company."
+          eyebrow="MAESTROS"
+          title={
+            editing
+              ? `Editar registro de ${def.singular}`
+              : `Nuevo registro de ${def.singular}`
+          }
+          description="Los cambios se validarán y guardarán en la empresa activa."
         >
           <button className="secondary" onClick={() => setEditing(undefined)}>
             <ArrowLeft size={16} />
-            Back to list
+            Volver al listado
           </button>
         </Heading>
         {error && (
@@ -820,7 +839,7 @@ function Master({
                       value=""
                       disabled={["multi", "relations"].includes(f.type)}
                     >
-                      Select…
+                      Seleccionar…
                     </option>
                     {f.resource
                       ? (lookups[f.resource] ?? []).map((row) => (
@@ -828,7 +847,11 @@ function Master({
                             {String(row.data.name ?? row.data.code ?? row.id)}
                           </option>
                         ))
-                      : f.options?.map((v) => <option key={v}>{v}</option>)}
+                      : f.options?.map((v) => (
+                          <option key={v} value={v}>
+                            {enumEs(v)}
+                          </option>
+                        ))}
                   </select>
                 ) : f.type === "json" ? (
                   <textarea
@@ -873,8 +896,8 @@ function Master({
           </div>
           {resource === "products" && (
             <p className="fine">
-              Sample ingredients and allergen information are unverified.
-              Validation is managed separately by the Quality role.
+              Los ingredientes y los alérgenos de los productos de ejemplo no
+              están validados. Su validación corresponde al rol de Calidad.
             </p>
           )}
           <div className="form-actions">
@@ -883,11 +906,11 @@ function Master({
               className="secondary"
               onClick={() => setEditing(undefined)}
             >
-              Cancel
+              Cancelar
             </button>
             {writable && (
               <button className="primary" disabled={busy}>
-                {busy ? "Saving…" : "Save record"}
+                {busy ? "Guardando…" : "Guardar registro"}
               </button>
             )}
           </div>
@@ -897,9 +920,9 @@ function Master({
   return (
     <>
       <Heading
-        eyebrow="MASTER DATA"
+        eyebrow="MAESTROS"
         title={def.label}
-        description={`${rows.length} ${loading ? "loading…" : "records"} · ${writable ? "Manage your company records." : "Read-only access."}`}
+        description={`${rows.length} ${loading ? "cargando…" : "registros"} · ${writable ? "Gestiona los registros de tu empresa." : "Acceso de solo lectura."}`}
       >
         <div className="actions">
           {writable && (
@@ -909,11 +932,11 @@ function Master({
                 onClick={() => setShowImport((x) => !x)}
               >
                 <Upload size={15} />
-                Import
+                Importar
               </button>
               <button className="primary" onClick={() => edit(null)}>
                 <Plus size={17} />
-                Add {def.singular}
+                Añadir registro de {def.singular}
               </button>
             </>
           )}
@@ -939,21 +962,21 @@ function Master({
         <div className="list-toolbar">
           <label className="search">
             <Search size={17} />
-            <span className="sr-only">Search {def.label}</span>
+            <span className="sr-only">Buscar {def.label}</span>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder={`Search ${def.label.toLowerCase()}…`}
+              placeholder={`Buscar ${def.label.toLowerCase()}…`}
             />
           </label>
           {resource === "products" && (
             <>
               <select
-                aria-label="Filter by family"
+                aria-label="Filtrar por familia"
                 value={family}
                 onChange={(e) => setFamily(e.target.value)}
               >
-                <option value="">All families</option>
+                <option value="">Todas las familias</option>
                 {(lookups.families ?? []).map((f) => (
                   <option key={f.id} value={f.id}>
                     {String(f.data.name)}
@@ -961,27 +984,29 @@ function Master({
                 ))}
               </select>
               <select
-                aria-label="Filter by temperature"
+                aria-label="Filtrar por temperatura"
                 value={temperature}
                 onChange={(e) => setTemperature(e.target.value)}
               >
-                <option value="">All temperatures</option>
+                <option value="">Todas las temperaturas</option>
                 {["AMBIENT", "CHILLED", "FROZEN"].map((t) => (
-                  <option key={t}>{t}</option>
+                  <option key={t} value={t}>
+                    {enumEs(t)}
+                  </option>
                 ))}
               </select>
             </>
           )}
           <button
             className="icon-button"
-            aria-label="Refresh records"
+            aria-label="Actualizar registros"
             onClick={() => setVersion((x) => x + 1)}
           >
             <RefreshCw size={17} />
           </button>
         </div>
         {loading ? (
-          <p className="empty-copy">Loading records…</p>
+          <p className="empty-copy">Cargando registros…</p>
         ) : rows.length ? (
           <div className="table-responsive">
             <table>
@@ -990,7 +1015,7 @@ function Master({
                   {def.columns.map((k) => (
                     <th key={k}>{def.fields[k].label}</th>
                   ))}
-                  <th>Actions</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -1011,7 +1036,7 @@ function Master({
                       <div className="actions">
                         <button
                           className="icon-button"
-                          aria-label={`${writable ? "Edit" : "View"} ${String(row.data.name ?? row.data.code ?? row.id)}`}
+                          aria-label={`${writable ? "Editar" : "Ver"} ${String(row.data.name ?? row.data.code ?? row.id)}`}
                           onClick={() => edit(row)}
                         >
                           <Pencil size={15} />
@@ -1019,7 +1044,7 @@ function Master({
                         {writable && (
                           <button
                             className="icon-button danger"
-                            aria-label={`Delete ${String(row.data.name ?? row.data.code ?? row.id)}`}
+                            aria-label={`Eliminar ${String(row.data.name ?? row.data.code ?? row.id)}`}
                             onClick={() => setConfirmDelete(row)}
                           >
                             <Trash2 size={15} />
@@ -1037,13 +1062,13 @@ function Master({
             <Database size={30} />
             <h3>
               {q || family || temperature
-                ? "No matching records"
-                : "No records yet"}
+                ? "No hay coincidencias"
+                : "Todavía no hay registros"}
             </h3>
             <p>
               {q || family || temperature
-                ? "Try a different search or filter."
-                : "This master is intentionally empty. Add your own records when ready."}
+                ? "Prueba con otra búsqueda o filtro."
+                : "Este maestro está vacío. Añade tus propios registros cuando lo necesites."}
             </p>
           </div>
         )}
@@ -1056,16 +1081,19 @@ function Master({
             aria-labelledby="delete-title"
             className="panel dialog"
           >
-            <h2 id="delete-title">Delete this {def.singular}?</h2>
+            <h2 id="delete-title">
+              ¿Eliminar este registro de {def.singular}?
+            </h2>
             <p>
-              This removes the record. Records used elsewhere cannot be deleted.
+              Se eliminará el registro. Los registros utilizados por otros datos
+              no se pueden eliminar.
             </p>
             <div className="actions">
               <button
                 className="secondary"
                 onClick={() => setConfirmDelete(null)}
               >
-                Cancel
+                Cancelar
               </button>
               <button
                 disabled={busy}
@@ -1089,7 +1117,7 @@ function Master({
                   }
                 }}
               >
-                Delete record
+                Eliminar registro
               </button>
             </div>
           </section>
@@ -1125,15 +1153,15 @@ function ImportPanel({
     [busy, setBusy] = useState(false);
   return (
     <section className="panel import-panel">
-      <h2>Import {def.label.toLowerCase()}</h2>
+      <h2>Importar {def.label.toLowerCase()}</h2>
       <p>
-        CSV or XLSX · up to 1,000 rows · validate before saving. Use field keys
-        as column headers. Relationships use record IDs.
+        CSV o XLSX · hasta 1.000 filas · valida antes de guardar. Usa las claves
+        de los campos como cabeceras y los identificadores para las relaciones.
       </p>
-      <p className="fine">Fields: {Object.keys(def.fields).join(", ")}</p>
+      <p className="fine">Campos: {Object.keys(def.fields).join(", ")}</p>
       <div className="actions">
         <input
-          aria-label="Import file"
+          aria-label="Archivo de importación"
           type="file"
           accept=".csv,.xlsx"
           onChange={async (e) => {
@@ -1142,7 +1170,7 @@ function ImportPanel({
             const f = e.target.files?.[0];
             if (!f) return;
             if (f.size > 2_000_000) {
-              setMessage("Maximum file size is 2 MB");
+              setMessage("El archivo no puede superar los 2 MB");
               return;
             }
             if (f.name.endsWith(".xlsx")) {
@@ -1168,7 +1196,7 @@ function ImportPanel({
           }}
         >
           <Download size={15} />
-          CSV headers
+          Cabeceras CSV
         </button>
         <button
           className="secondary"
@@ -1183,7 +1211,9 @@ function ImportPanel({
                 { ...file, commit: false },
               );
               setValid(true);
-              setMessage(`${d.count} rows passed validation. Ready to import.`);
+              setMessage(
+                `${d.count} filas han superado la validación. Puedes confirmar la importación.`,
+              );
             } catch (e) {
               setValid(false);
               setMessage((e as Error).message);
@@ -1192,7 +1222,7 @@ function ImportPanel({
             }
           }}
         >
-          Validate file
+          Validar archivo
         </button>
         <button
           className="primary"
@@ -1213,7 +1243,7 @@ function ImportPanel({
             }
           }}
         >
-          Confirm import
+          Confirmar importación
         </button>
       </div>
       {message && (
@@ -1245,32 +1275,32 @@ function Audit({ companyId }: { companyId: string }) {
   return (
     <>
       <Heading
-        eyebrow="SYSTEM"
-        title="Audit history"
-        description="Latest 200 events for the active company. Changes are recorded by the API."
+        eyebrow="SISTEMA"
+        title="Historial de cambios"
+        description="Últimos 200 eventos de la empresa activa. Los cambios quedan registrados por el servicio."
       />
       {error && <p role="alert">{error}</p>}
       <section className="panel table-responsive">
         <table>
           <thead>
             <tr>
-              <th>Action</th>
-              <th>Resource</th>
-              <th>Actor</th>
-              <th>Time</th>
-              <th>Changes</th>
+              <th>Acción</th>
+              <th>Recurso</th>
+              <th>Usuario</th>
+              <th>Fecha</th>
+              <th>Cambios</th>
             </tr>
           </thead>
           <tbody>
             {data.map((e) => (
               <tr key={e.id}>
-                <td>{e.action}</td>
-                <td>{e.resource ?? "—"}</td>
-                <td>{e.actor ?? "Catalog initialization"}</td>
-                <td>{new Date(e.at).toLocaleString("en-GB")}</td>
+                <td>{enumEs(e.action)}</td>
+                <td>{labels[e.resource] ?? e.resource ?? "—"}</td>
+                <td>{e.actor ?? "Carga inicial del catálogo"}</td>
+                <td>{new Date(e.at).toLocaleString("es-ES")}</td>
                 <td>
                   <details>
-                    <summary>Details</summary>
+                    <summary>Detalles</summary>
                     <pre>
                       {JSON.stringify(
                         { before: e.before_data, after: e.after_data },
@@ -1309,9 +1339,9 @@ function UserManagement({
   return (
     <>
       <Heading
-        eyebrow="SYSTEM"
-        title="Users and roles"
-        description="Create real accounts with access to this company."
+        eyebrow="SISTEMA"
+        title="Usuarios y roles"
+        description="Crea cuentas con acceso a esta empresa."
       />
       {error && (
         <p role="alert" className="alert">
@@ -1322,9 +1352,9 @@ function UserManagement({
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
+              <th>Nombre</th>
+              <th>Correo electrónico</th>
+              <th>Rol</th>
             </tr>
           </thead>
           <tbody>
@@ -1334,7 +1364,7 @@ function UserManagement({
                 <td>{u.email}</td>
                 <td>
                   <select
-                    aria-label={"Role for " + u.name}
+                    aria-label={"Rol de " + u.name}
                     value={u.role}
                     onChange={async (e) => {
                       try {
@@ -1359,7 +1389,7 @@ function UserManagement({
             ))}
           </tbody>
         </table>
-        <h2 className="mt">Add user</h2>
+        <h2 className="mt">Añadir usuario</h2>
         <form
           className="master-form"
           onSubmit={async (e) => {
@@ -1383,11 +1413,11 @@ function UserManagement({
             }
           }}
         >
-          <label htmlFor="user-name">Name</label>
+          <label htmlFor="user-name">Nombre</label>
           <input id="user-name" name="name" required />
-          <label htmlFor="user-email">Email</label>
+          <label htmlFor="user-email">Correo electrónico</label>
           <input id="user-email" name="email" type="email" required />
-          <label htmlFor="user-password">Initial password</label>
+          <label htmlFor="user-password">Contraseña inicial</label>
           <input
             id="user-password"
             name="password"
@@ -1397,7 +1427,7 @@ function UserManagement({
             autoComplete="new-password"
             required
           />
-          <label htmlFor="user-role">Role</label>
+          <label htmlFor="user-role">Rol</label>
           <select id="user-role" name="role">
             {Object.entries(roles).map(([key, label]) => (
               <option key={key} value={key}>
@@ -1407,7 +1437,7 @@ function UserManagement({
           </select>
           <div className="form-actions">
             <button className="primary" disabled={busy}>
-              Create user
+              Crear usuario
             </button>
           </div>
         </form>
@@ -1435,9 +1465,9 @@ function WorkspaceSettings({
   return (
     <>
       <Heading
-        eyebrow="SYSTEM"
-        title="Workspace settings"
-        description="Company configuration and future AI limits."
+        eyebrow="SISTEMA"
+        title="Configuración del espacio"
+        description="Configuración de la empresa y límites para los futuros servicios de IA."
       />
       {message && (
         <div role="status" className="alert">
@@ -1445,20 +1475,23 @@ function WorkspaceSettings({
         </div>
       )}
       <section className="panel master-form">
-        <h2>AI parameters</h2>
-        <p>Stored for future workflows. No AI service is connected yet.</p>
+        <h2>Parámetros de IA</h2>
+        <p>
+          Se guardarán para los próximos flujos. Todavía no hay servicios de IA
+          conectados.
+        </p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
             try {
               await request("/settings", companyId, "PUT", settings);
-              setMessage("Settings saved.");
+              setMessage("Configuración guardada.");
             } catch (e) {
               setMessage((e as Error).message);
             }
           }}
         >
-          <label htmlFor="confidence">Review confidence threshold</label>
+          <label htmlFor="confidence">Umbral de confianza para revisión</label>
           <input
             id="confidence"
             type="number"
@@ -1473,7 +1506,7 @@ function WorkspaceSettings({
               })
             }
           />
-          <label htmlFor="budget">Daily AI budget (€)</label>
+          <label htmlFor="budget">Presupuesto diario de IA (€)</label>
           <input
             id="budget"
             type="number"
@@ -1488,14 +1521,14 @@ function WorkspaceSettings({
             }
           />
           <div className="form-actions">
-            <button className="primary">Save settings</button>
+            <button className="primary">Guardar configuración</button>
           </div>
         </form>
       </section>
       <Mfa />
       <section className="panel master-form mt">
-        <h2>Add company</h2>
-        <p>New companies start with empty master data.</p>
+        <h2>Añadir empresa</h2>
+        <p>Las nuevas empresas empiezan con los maestros vacíos.</p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -1509,16 +1542,18 @@ function WorkspaceSettings({
               );
               onUser(d.user);
               f.reset();
-              setMessage("Company created. Select it in the workspace menu.");
+              setMessage(
+                "Empresa creada. Selecciónala en el menú de empresas.",
+              );
             } catch (e) {
               setMessage((e as Error).message);
             }
           }}
         >
-          <label htmlFor="company-name">Company name</label>
+          <label htmlFor="company-name">Nombre de la empresa</label>
           <input id="company-name" name="name" maxLength={120} required />
           <div className="form-actions">
-            <button className="primary">Create company</button>
+            <button className="primary">Crear empresa</button>
           </div>
         </form>
       </section>
@@ -1537,11 +1572,11 @@ function Mfa() {
   }, []);
   return (
     <section className="panel master-form mt">
-      <h2>Two-factor authentication</h2>
+      <h2>Autenticación de dos factores</h2>
       <p>
         {enabled
-          ? "Enabled for your account. A current authenticator code is required at sign-in."
-          : "Protect your account with a time-based authenticator code."}
+          ? "Activada para tu cuenta. Necesitarás un código de tu aplicación de autenticación para entrar."
+          : "Protege tu cuenta con códigos de una aplicación de autenticación."}
       </p>
       {!enabled && !secret && (
         <button
@@ -1559,17 +1594,19 @@ function Mfa() {
             }
           }}
         >
-          Set up authenticator
+          Configurar autenticador
         </button>
       )}
       {!enabled && secret && (
         <>
           <p>
-            Add a time-based account in your authenticator using this secret:
+            Añade una cuenta basada en tiempo en tu aplicación de autenticación
+            con esta clave:
           </p>
           <code className="mfa-secret">{secret}</code>
           <p className="fine">
-            SHA-1 · 6 digits · 30-second interval. Keep this secret private.
+            SHA-1 · 6 dígitos · intervalo de 30 segundos. Mantén esta clave en
+            privado.
           </p>
           <form
             onSubmit={async (e) => {
@@ -1583,13 +1620,13 @@ function Mfa() {
                 );
                 setEnabled(true);
                 setSecret("");
-                setMessage("Two-factor authentication enabled.");
+                setMessage("Autenticación de dos factores activada.");
               } catch (e) {
                 setMessage((e as Error).message);
               }
             }}
           >
-            <label htmlFor="mfa-code">Current authenticator code</label>
+            <label htmlFor="mfa-code">Código actual del autenticador</label>
             <input
               id="mfa-code"
               name="code"
@@ -1599,7 +1636,7 @@ function Mfa() {
               maxLength={6}
             />
             <div className="form-actions">
-              <button className="primary">Verify and enable</button>
+              <button className="primary">Verificar y activar</button>
             </div>
           </form>
         </>

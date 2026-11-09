@@ -1,3 +1,4 @@
+import { errorEs } from "../application/locale";
 export async function request<T>(
   path: string,
   companyId = "",
@@ -17,7 +18,7 @@ export async function request<T>(
     });
   } catch {
     throw new Error(
-      "The API is unavailable. Check that the local server is running.",
+      "No se puede conectar con el servicio. Comprueba que el servidor local está iniciado.",
     );
   }
   let data;
@@ -25,19 +26,20 @@ export async function request<T>(
     data = await response.json();
   } catch {
     throw new Error(
-      "The API is unavailable. Start the API server and try again.",
+      "No se puede conectar con el servicio. Inicia el servidor local y vuelve a intentarlo.",
     );
   }
   if (!response.ok)
     throw Object.assign(
       new Error(
-        data.error ??
+        (data.error ? errorEs(data.error) : undefined) ??
           data.errors
             ?.map(
-              (e: { row: number; error: string }) => `Row ${e.row}: ${e.error}`,
+              (e: { row: number; error: string }) =>
+                `Fila ${e.row}: ${errorEs(e.error)}`,
             )
             .join("\n") ??
-          "Request failed",
+          "No se ha podido completar la solicitud",
       ),
       { status: response.status },
     );

@@ -21,7 +21,7 @@ export function payload(def: Resource, form: Record<string, unknown>) {
       let v = form[key];
       if (f.type === "number") v = v === "" || v === null ? null : Number(v);
       if (f.type === "json")
-        v = typeof v === "string" ? JSON.parse(v || "{}") : v;
+        v = typeof v === "string" ? parseRules(v || "{}") : v;
       if (f.type === "dates")
         v =
           typeof v === "string"
@@ -33,4 +33,12 @@ export function payload(def: Resource, form: Record<string, unknown>) {
       return [key, v];
     }),
   );
+}
+
+function parseRules(value: string) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw new Error("Las reglas deben contener un objeto JSON válido.");
+  }
 }

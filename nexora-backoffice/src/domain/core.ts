@@ -46,26 +46,27 @@ export interface Contract {
 export const operations = [
   {
     id: "orders",
-    name: "Multichannel orders",
+    name: "Pedidos multicanal",
     phase: "F2",
-    description: "Review incoming orders and approve proposed product matches.",
+    description:
+      "Revisa pedidos entrantes y aprueba las asociaciones de productos propuestas.",
   },
   {
     id: "menus",
-    name: "Menu planning",
+    name: "Planificación de menús",
     phase: "F3",
-    description: "Plan weekly menus by center, diet and service.",
+    description: "Planifica menús semanales por centro, dieta y servicio.",
   },
   {
     id: "documents",
-    name: "Supplier documents",
+    name: "Documentación de proveedores",
     phase: "F4",
-    description: "Review technical sheets, changes and expiry dates.",
+    description: "Revisa fichas técnicas, cambios y caducidades.",
   },
   {
     id: "waste",
-    name: "Food waste",
+    name: "Desperdicio alimentario",
     phase: "F5",
-    description: "Track losses, donations and prevention plans.",
+    description: "Gestiona mermas, donaciones y planes de prevención.",
   },
 ];
