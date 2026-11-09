@@ -39,6 +39,7 @@ const labels: Record<string, string> = {
   audit: "Historial de cambios",
   users: "Usuarios y roles",
   settings: "Configuración",
+  mainCategories: "Categorías principales",
   families: "Familias",
   products: "Productos",
   allergens: "Alérgenos",
@@ -503,7 +504,7 @@ function Access({
           </form>
           <p className="fine">
             {setup
-              ? "El catálogo contiene 10 familias y 200 productos ficticios. El resto de maestros empieza vacío."
+              ? "El catálogo contiene 3 categorías principales, 10 familias y 200 productos ficticios. El resto de maestros empieza vacío."
               : "El acceso se gestiona mediante el servicio local."}
           </p>
         </div>
@@ -775,7 +776,13 @@ function Master({
               ? `Editar registro de ${def.singular}`
               : `Nuevo registro de ${def.singular}`
           }
-          description="Los cambios se validarán y guardarán en la empresa activa."
+          description={
+            resource === "mainCategories"
+              ? "Es el nivel más alto del catálogo. No tiene categorías superiores."
+              : resource === "families"
+                ? "Vincula la familia a una categoría principal."
+                : "Los cambios se validarán y guardarán en la empresa activa."
+          }
         >
           <button className="secondary" onClick={() => setEditing(undefined)}>
             <ArrowLeft size={16} />

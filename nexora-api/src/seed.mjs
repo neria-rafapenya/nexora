@@ -1,3 +1,4 @@
+import { categoryNames } from "./migrate-main-categories.mjs";
 export const demoFamilies = [
   [
     "Grains and Rice",
@@ -263,6 +264,17 @@ export const demoFamilies = [
 export async function seedCatalog(store, tenantId, actorId) {
   // Explicitly called only for a fresh workspace; deterministic SKUs make re-runs safe.
   for (const [fi, [name, temperature, names]] of demoFamilies.entries()) {
+    const categoryName = categoryNames[temperature];
+    let category = (await store.list(tenantId, "mainCategories")).find(
+      (c) => c.data.name === categoryName,
+    );
+    if (!category)
+      category = await store.create(
+        tenantId,
+        "mainCategories",
+        { name: categoryName, description: null, active: true },
+        actorId,
+      );
     let family = (await store.list(tenantId, "families")).find(
       (x) => x.data.name === name,
     );
@@ -270,7 +282,7 @@ export async function seedCatalog(store, tenantId, actorId) {
       family = await store.create(
         tenantId,
         "families",
-        { name, temperature, parentId: null },
+        { name, temperature, mainCategoryId: category.id },
         actorId,
       );
     for (const [pi, title] of names.entries()) {

@@ -11,6 +11,7 @@ import {
   createDecipheriv,
 } from "node:crypto";
 import { resources, validate } from "./schema.mjs";
+import { migrateMainCategories } from "./migrate-main-categories.mjs";
 export const hashToken = (token) =>
   createHash("sha256").update(token).digest("hex");
 export function passwordHash(password) {
@@ -96,7 +97,7 @@ export class Store {
             ? ["sku", "ean"]
             : ["allergens", "diets"].includes(resource)
               ? ["code"]
-              : resource === "families"
+              : ["families", "mainCategories"].includes(resource)
                 ? ["name"]
                 : [];
         for (const key of keys)
@@ -116,6 +117,7 @@ export class Store {
       await this.query(
         "ALTER TABLE bo.users ADD COLUMN IF NOT EXISTS mfa_secret TEXT; ALTER TABLE bo.users ADD COLUMN IF NOT EXISTS mfa_pending TEXT; ALTER TABLE bo.users ADD COLUMN IF NOT EXISTS mfa_last_step BIGINT; INSERT INTO bo.migrations(version) VALUES(1),(2) ON CONFLICT DO NOTHING",
       );
+      await migrateMainCategories(this);
     });
   }
   async transaction(fn) {
@@ -272,16 +274,6 @@ export class Store {
       )
         throw new Error("Allergen already linked to this product");
     }
-    if (resource === "families" && data.parentId) {
-      let p = data.parentId;
-      const seen = new Set([id]);
-      while (p) {
-        if (seen.has(p))
-          throw new Error("Family hierarchy cannot contain a cycle");
-        seen.add(p);
-        p = (await this.get(tenant, "families", p))?.data.parentId;
-      }
-    }
     return data;
   }
   async create(tenant, resource, input, actor) {
@@ -295,7 +287,7 @@ export class Store {
         data.validatedAt = now;
       }
       await this.query(
-        `INSERT INTO bo."${resource}" VALUES($1,$2,$3,1,$4,$4,$5)`,
+        `INSERT INTO bo."${resource}"(id,tenant_id,data,version,created_at,updated_at,created_by) VALUES($1,$2,$3,1,$4,$4,$5)`,
         [id, tenant, JSON.stringify(data), now, actor],
       );
       await this.log(tenant, actor, "CREATE", resource, id, null, data);

@@ -1,5 +1,9 @@
 import type { Contract } from "../domain/core";
 const messages: Record<string, string> = {
+  "Main categories": "Categorías principales",
+  "Main category": "Categoría principal",
+  "main category": "categorías principales",
+  Description: "Descripción",
   Families: "Familias",
   Products: "Productos",
   Allergens: "Alérgenos",
@@ -194,7 +198,6 @@ const messages: Record<string, string> = {
   "diner count": "comensales",
   "product allergen": "alérgenos de productos",
   Temperature: "Temperatura",
-  "Parent family": "Familia superior",
   Brand: "Marca",
   Family: "Familia",
   Supplier: "Proveedor",

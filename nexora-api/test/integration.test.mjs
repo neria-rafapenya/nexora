@@ -72,15 +72,35 @@ test(
         (await api("/masters/products", "GET", null, b)).status,
         403,
       );
+      const category = await store.create(
+        a,
+        "mainCategories",
+        { name: "Test category", active: true },
+        u,
+      );
+      const otherCategory = await store.create(
+        b,
+        "mainCategories",
+        { name: "Other category", active: true },
+        null,
+      );
       let res = await api("/masters/families", "POST", {
-        data: { name: "Test grains", temperature: "AMBIENT" },
+        data: {
+          name: "Test grains",
+          temperature: "AMBIENT",
+          mainCategoryId: category.id,
+        },
       });
       assert.equal(res.status, 201, JSON.stringify(res));
       const family = res.data.record;
       const foreign = await store.create(
         b,
         "families",
-        { name: "Other family", temperature: "AMBIENT" },
+        {
+          name: "Other family",
+          temperature: "AMBIENT",
+          mainCategoryId: otherCategory.id,
+        },
         null,
       );
       assert.equal((await api("/masters/families/" + foreign.id)).status, 404);
@@ -133,21 +153,21 @@ test(
       );
       res = await api("/imports/families", "POST", {
         format: "csv",
-        content: "name,temperature\nNew family,AMBIENT\nNew family,AMBIENT",
+        content: `name,temperature,mainCategoryId\nNew family,AMBIENT,${category.id}\nNew family,AMBIENT,${category.id}`,
         commit: true,
       });
       assert.equal(res.status, 422, JSON.stringify(res));
       assert.equal((await store.list(a, "families")).length, 1);
       res = await api("/imports/families", "POST", {
         format: "csv",
-        content: "name,temperature\nImport family,AMBIENT",
+        content: `name,temperature,mainCategoryId\nImport family,AMBIENT,${category.id}`,
         commit: false,
       });
       assert.equal(res.status, 200, JSON.stringify(res));
       assert.equal((await store.list(a, "families")).length, 1);
       res = await api("/imports/families", "POST", {
         format: "csv",
-        content: "name,temperature\nImport family,AMBIENT",
+        content: `name,temperature,mainCategoryId\nImport family,AMBIENT,${category.id}`,
         commit: true,
       });
       assert.equal(res.status, 200, JSON.stringify(res));
@@ -223,7 +243,7 @@ test(
     } finally {
       if (server) await new Promise((resolve) => server.close(resolve));
       await store.transaction(async () => {
-        for (const r of Object.keys(resources))
+        for (const r of Object.keys(resources).reverse())
           await store.query(
             `DELETE FROM bo."${r}" WHERE tenant_id = ANY($1::text[])`,
             [[a, b]],

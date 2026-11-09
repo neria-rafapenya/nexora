@@ -25,15 +25,25 @@ const link = (label, resource, required = false) => ({
 });
 const boolean = (label) => ({ label, type: "checkbox" });
 export const resources = {
+  mainCategories: {
+    label: "Main categories",
+    singular: "main category",
+    fields: {
+      name: text("Name", true),
+      description: text("Description"),
+      active: boolean("Active"),
+    },
+    columns: ["name", "description", "active"],
+  },
   families: {
     label: "Families",
     singular: "family",
     fields: {
       name: text("Name", true),
       temperature: choice("Temperature", ["AMBIENT", "CHILLED", "FROZEN"]),
-      parentId: link("Parent family", "families"),
+      mainCategoryId: link("Main category", "mainCategories", true),
     },
-    columns: ["name", "temperature"],
+    columns: ["name", "mainCategoryId", "temperature"],
   },
   products: {
     label: "Products",
@@ -184,6 +194,7 @@ export function can(role, resource, write = false) {
       return [
         "products",
         "families",
+        "mainCategories",
         "clients",
         "centers",
         "allergens",
@@ -192,6 +203,7 @@ export function can(role, resource, write = false) {
       return [
         "products",
         "families",
+        "mainCategories",
         "allergens",
         "productAllergens",
         "diets",
@@ -202,6 +214,7 @@ export function can(role, resource, write = false) {
       return [
         "products",
         "families",
+        "mainCategories",
         "allergens",
         "productAllergens",
         "suppliers",

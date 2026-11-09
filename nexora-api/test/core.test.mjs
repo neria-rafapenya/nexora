@@ -5,7 +5,7 @@ import { parseCsv, convertRows, readImport } from "../src/imports.mjs";
 import { demoFamilies, seedCatalog } from "../src/seed.mjs";
 import { passwordHash, passwordMatches } from "../src/store.mjs";
 test("catalog has exactly 10 families, 20 English products per family and unique SKUs", async () => {
-  const rows = { families: [], products: [] };
+  const rows = { mainCategories: [], families: [], products: [] };
   const store = {
     list: async (t, r) => rows[r],
     create: async (t, r, data) => {
@@ -16,7 +16,13 @@ test("catalog has exactly 10 families, 20 English products per family and unique
   };
   await seedCatalog(store, "t", null);
   await seedCatalog(store, "t", null);
+  assert.equal(rows.mainCategories.length, 3);
   assert.equal(rows.families.length, 10);
+  assert(
+    rows.families.every((f) =>
+      rows.mainCategories.some((c) => c.id === f.data.mainCategoryId),
+    ),
+  );
   assert.equal(rows.products.length, 200);
   assert.equal(new Set(rows.products.map((x) => x.data.sku)).size, 200);
   for (const f of rows.families)
@@ -111,8 +117,9 @@ test("passwords are salted and verified without plaintext persistence", () => {
   assert(passwordMatches("Long test password!", a));
   assert(!passwordMatches("Wrong password", a));
 });
-test("all master structures are defined without seed data outside products/families", () => {
+test("all master structures include main categories, families and products", () => {
   assert.deepEqual(Object.keys(resources), [
+    "mainCategories",
     "families",
     "products",
     "allergens",

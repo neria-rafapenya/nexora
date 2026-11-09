@@ -34,7 +34,8 @@ The API is deliberately local. Public hosting, TLS for the web interface, manage
 
 | Master            | Initial records | Capabilities                                                                                 |
 | ----------------- | --------------: | -------------------------------------------------------------------------------------------- |
-| Families          |              10 | CRUD, parent hierarchy, temperature, cycle checks                                            |
+| Main categories   |               3 | Root level; no parent categories                                                             |
+| Families          |              10 | CRUD, required main category, temperature                                                    |
 | Products          |             200 | CRUD, family/supplier references, SKU/EAN, sales units, price, stock, temperature and claims |
 | Allergens         |               0 | Empty structure for the controlled reference catalog                                         |
 | Suppliers         |               0 | Company details, quality contact, approval expiry, active state                              |
@@ -119,3 +120,5 @@ F1 semantic product search requires an embedding provider and API key; none is c
 F2 orders, F3 menu planning, F4 supplier documents and F5 food waste remain explicitly marked as planned screens. No AI calls or automatic commercial/food-safety actions occur. AI proposals will require human approval.
 
 The final end-user application is separate from this private backoffice.
+
+Catalog hierarchy: **Main category → Family → Product**. Main categories cannot have parents, and families cannot contain other families. Migration 3 links the existing families to Ambient Food, Chilled Food and Frozen Food while preserving product IDs. Main categories used by families cannot be deleted.
