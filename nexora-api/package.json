@@ -11,7 +11,8 @@
     "start": "node --env-file=.env src/server.mjs",
     "test": "node --test test/*.test.mjs",
     "db:verify": "node --env-file=.env src/verify.mjs",
-    "test:integration": "node --env-file=.env --test test/integration.test.mjs"
+    "test:integration": "node --env-file=.env --test test/integration.test.mjs",
+    "db:seed-allergens": "node --env-file=.env src/seed-allergens.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

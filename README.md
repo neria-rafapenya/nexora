@@ -32,18 +32,18 @@ The API is deliberately local. Public hosting, TLS for the web interface, manage
 
 ## Master data
 
-| Master            | Initial records | Capabilities                                                                                 |
-| ----------------- | --------------: | -------------------------------------------------------------------------------------------- |
-| Main categories   |               3 | Root level; no parent categories                                                             |
-| Families          |              10 | CRUD, required main category, temperature                                                    |
-| Products          |             200 | CRUD, family/supplier references, SKU/EAN, sales units, price, stock, temperature and claims |
-| Allergens         |               0 | Empty structure for the controlled reference catalog                                         |
-| Suppliers         |               0 | Company details, quality contact, approval expiry, active state                              |
-| Clients           |               0 | ERP code, segment, order contact, active state                                               |
-| Centers           |               0 | Client, address, delivery days/windows, route, closure dates                                 |
-| Diets             |               0 | Code, excluded allergens and structured rules                                                |
-| Center diners     |               0 | Aggregated counts per center, diet and service                                               |
-| Product allergens |               0 | Contains/traces, source reference and Quality validation                                     |
+| Master            |                 Initial records | Capabilities                                                                                 |
+| ----------------- | ------------------------------: | -------------------------------------------------------------------------------------------- |
+| Main categories   |                               3 | Root level; no parent categories                                                             |
+| Families          |                              10 | CRUD, required main category, temperature                                                    |
+| Products          |                             200 | CRUD, family/supplier references, SKU/EAN, sales units, price, stock, temperature and claims |
+| Allergens         |          14 after explicit seed | EU reference catalog                                                                         |
+| Suppliers         |                               0 | Company details, quality contact, approval expiry, active state                              |
+| Clients           |                               0 | ERP code, segment, order contact, active state                                               |
+| Centers           |                               0 | Client, address, delivery days/windows, route, closure dates                                 |
+| Diets             |                               0 | Code, excluded allergens and structured rules                                                |
+| Center diners     |                               0 | Aggregated counts per center, diet and service                                               |
+| Product allergens | Explicit synthetic associations | Contains/traces, mock source, pending Quality validation                                     |
 
 There are exactly **20 fictional products per family**. Startup seeds only a brand-new workspace; it never refills a catalog after user edits or repeats seeding on restart. Sample products have no supplier, ingredient list or validated allergen data. No food-safety suitability is inferred from the sample catalog.
 
@@ -122,3 +122,11 @@ F2 orders, F3 menu planning, F4 supplier documents and F5 food waste remain expl
 The final end-user application is separate from this private backoffice.
 
 Catalog hierarchy: **Main category → Family → Product**. Main categories cannot have parents, and families cannot contain other families. Migration 3 links the existing families to Ambient Food, Chilled Food and Frozen Food while preserving product IDs. Main categories used by families cannot be deleted.
+
+## Allergen reference and mock associations
+
+Run `npm --prefix nexora-api run db:seed-allergens` to insert the 14 EU reference allergen categories and explicit example associations for the fictional Nexora catalog in the initial workspace. The script is transactional, tenant-scoped and idempotent, preserves existing links, and never validates an association. It only matches products with the sample brand and sample SKU pattern. `SEED_TENANT_ID` can explicitly select another authorized target.
+
+Associated sample products move from UNVERIFIED to PENDING_REVIEW; all links use a clear MOCK DATA source and `validated: false`. Traces are deliberately synthetic fixtures, not supplier declarations. An unlinked product is not a claim of allergen absence. Supplier documents and Quality approval remain necessary before any real use. No diets or other master records are inserted.
+
+Reference categories: https://food.ec.europa.eu/food-safety/campaign-2026/allergies_en
