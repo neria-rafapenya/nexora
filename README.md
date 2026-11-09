@@ -32,20 +32,20 @@ The API is deliberately local. Public hosting, TLS for the web interface, manage
 
 ## Master data
 
-| Master            |                 Initial records | Capabilities                                                                                 |
-| ----------------- | ------------------------------: | -------------------------------------------------------------------------------------------- |
-| Main categories   |                               3 | Root level; no parent categories                                                             |
-| Families          |                              10 | CRUD, required main category, temperature                                                    |
-| Products          |                             200 | CRUD, family/supplier references, SKU/EAN, sales units, price, stock, temperature and claims |
-| Allergens         |          14 after explicit seed | EU reference catalog                                                                         |
-| Suppliers         |                               0 | Company details, quality contact, approval expiry, active state                              |
-| Clients           |                               0 | ERP code, segment, order contact, active state                                               |
-| Centers           |                               0 | Client, address, delivery days/windows, route, closure dates                                 |
-| Diets             |                               0 | Code, excluded allergens and structured rules                                                |
-| Center diners     |                               0 | Aggregated counts per center, diet and service                                               |
-| Product allergens | Explicit synthetic associations | Contains/traces, mock source, pending Quality validation                                     |
+| Master            | Demo records after explicit seeds | Capabilities                                                                                 |
+| ----------------- | --------------------------------: | -------------------------------------------------------------------------------------------- |
+| Main categories   |                                 3 | Root level; no parent categories                                                             |
+| Families          |                                10 | CRUD, required main category, temperature                                                    |
+| Products          |                               200 | CRUD, family/supplier references, SKU/EAN, sales units, price, stock, temperature and claims |
+| Allergens         |            14 after explicit seed | EU reference catalog                                                                         |
+| Suppliers         |                                10 | Company details, quality contact, approval expiry, active state                              |
+| Clients           |                                 8 | ERP code, segment, order contact, active state                                               |
+| Centers           |                                16 | Client, address, delivery days/windows, route, closure dates                                 |
+| Diets             |                                 6 | Code, excluded allergens and structured rules                                                |
+| Center diners     |                               192 | Aggregated counts per center, diet and service                                               |
+| Product allergens |   Explicit synthetic associations | Contains/traces, mock source, pending Quality validation                                     |
 
-There are exactly **20 fictional products per family**. Startup seeds only a brand-new workspace; it never refills a catalog after user edits or repeats seeding on restart. Sample products have no supplier, ingredient list or validated allergen data. No food-safety suitability is inferred from the sample catalog.
+There are exactly **20 fictional products per family**. Startup seeds only a brand-new workspace; it never refills a catalog after user edits or repeats seeding on restart. The explicit master seed assigns sample suppliers to previously unassigned sample products. Sample products have no ingredient list or validated allergen data. No food-safety suitability is inferred from the sample catalog.
 
 Each master has a list, search, detail/edit form and permission-controlled create/delete actions. Referenced records cannot be deleted. Products have family and temperature filters. Text search supports approximate word matching; it is **not semantic search**.
 
@@ -138,3 +138,9 @@ The interface uses React Router with browser history. `/` is the summary. Each m
 Masters: `/categories`, `/families`, `/products`, `/allergens`, `/suppliers`, `/clients`, `/centers`, `/diets`, `/center-diners`, `/product-allergens`. Other pages: `/orders`, `/menus`, `/supplier-documents`, `/food-waste`, `/audit`, `/users`, `/settings`.
 
 Links for a company other than the user's default include `?company=<company-id>`; the API checks membership independently. Switching companies returns to the summary. Vite serves deep links locally. A future production server must serve `index.html` for non-API application paths, while keeping `/api/*` routed to the API.
+
+## Complete business demo data
+
+Run `npm --prefix nexora-api run db:seed-masters` to populate the initial workspace with 10 clearly named demo suppliers, 8 clients, 16 centers, 6 diets and 192 aggregated center/diet/service diner counts. The script first ensures the allergen reference fixtures exist, then links unassigned fictional Nexora products to family-specific suppliers. Centers link to clients, diets to their excluded allergens, and diner counts to centers and diets.
+
+The load is transactional and idempotent. Existing records and supplier assignments are preserved; non-sample products are untouched. Demo contacts use reserved `.test` email domains; phone numbers and supplier approval dates remain empty. Diet rules are explicitly demo data requiring Quality review. There are no individual diner/patient records, no user-account changes and no generated business documents. Future operational modules are not yet database models and are not fabricated by this seed.

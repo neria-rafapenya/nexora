@@ -550,7 +550,7 @@ function Access({
           </form>
           <p className="fine">
             {setup
-              ? "El catálogo contiene 3 categorías principales, 10 familias y 200 productos ficticios. El resto de maestros empieza vacío."
+              ? "El espacio de demostración utiliza datos ficticios. Crea tu cuenta para gestionar el catálogo y los maestros de la empresa."
               : "El acceso se gestiona mediante el servicio local."}
           </p>
         </div>
