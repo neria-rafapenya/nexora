@@ -234,8 +234,8 @@ export function can(role, resource, write = false) {
       (role === "commercial" && ["clients", "centers"].includes(resource)))
   );
 }
-export function validate(resource, input) {
-  const def = resources[resource];
+export function validate(resource, input, definitions = resources) {
+  const def = definitions[resource];
   if (!def) throw new Error("Unknown resource");
   if (!input || typeof input !== "object" || Array.isArray(input))
     throw new Error("Expected an object");
@@ -261,6 +261,7 @@ export function validate(resource, input) {
         typeof v !== "number" ||
         !Number.isFinite(v) ||
         v < (f.min ?? 0) ||
+        (f.max !== undefined && v > f.max) ||
         (f.integer && !Number.isInteger(v))
       )
         throw new Error(
@@ -281,7 +282,7 @@ export function validate(resource, input) {
       if (f.type === "dates" && v.some((x) => !validDate(x)))
         throw new Error("Invalid closure date");
     } else {
-      if (typeof v !== "string" || v.length > 4000)
+      if (typeof v !== "string" || v.length > (f.maxLength ?? 4000))
         throw new Error(`Invalid ${f.label}`);
       v = v.trim();
       if (f.required && !v) throw new Error(`${f.label} is required`);

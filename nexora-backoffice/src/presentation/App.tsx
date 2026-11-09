@@ -1,3 +1,4 @@
+import { Orders } from "./Orders";
 import { AllergenTags, ProductAllergens } from "./ProductAllergens";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -317,6 +318,17 @@ export function App() {
                   contract={contract}
                   navigate={navigate}
                   refresh={refresh}
+                />
+              ) : page === "orders" ? (
+                <Orders
+                  key={companyId}
+                  companyId={companyId}
+                  section={route.section}
+                  recordId={route.recordId}
+                  isNew={route.isNew}
+                  permissions={
+                    contract.orderPermissions ?? { read: false, write: false }
+                  }
                 />
               ) : contract.resources[page] ? (
                 <Master
@@ -649,7 +661,9 @@ function Overview({
                 <span className={"module-icon tone-" + i}>
                   <Icon size={23} />
                 </span>
-                <span className="module-phase">{m.phase} · Previsto</span>
+                <span className="module-phase">
+                  {m.phase} · {m.id === "orders" ? "Disponible" : "Previsto"}
+                </span>
                 <h3>{m.name}</h3>
                 <p>{m.description}</p>
                 <span className="card-link">

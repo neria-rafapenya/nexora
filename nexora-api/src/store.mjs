@@ -11,6 +11,9 @@ import {
   createDecipheriv,
 } from "node:crypto";
 import { resources, validate } from "./schema.mjs";
+import { orderResources } from "./order-schema.mjs";
+import { migrateOrders } from "./migrate-orders.mjs";
+const allResources = { ...resources, ...orderResources };
 import { migrateMainCategories } from "./migrate-main-categories.mjs";
 export const hashToken = (token) =>
   createHash("sha256").update(token).digest("hex");
@@ -37,7 +40,7 @@ const tables = [
   "sessions",
   "audit",
   "settings",
-  ...Object.keys(resources),
+  ...Object.keys(allResources),
 ];
 export class Store {
   constructor(connectionString) {
@@ -88,7 +91,7 @@ export class Store {
  CREATE TABLE IF NOT EXISTS bo.audit(id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL REFERENCES bo.tenants(id),actor_id TEXT REFERENCES bo.users(id),action TEXT NOT NULL,resource TEXT,record_id TEXT,before_data JSONB,after_data JSONB,at TIMESTAMPTZ NOT NULL);
  CREATE INDEX IF NOT EXISTS audit_scope ON bo.audit(tenant_id,at);
  CREATE TABLE IF NOT EXISTS bo.settings(tenant_id TEXT PRIMARY KEY REFERENCES bo.tenants(id),data JSONB NOT NULL);`);
-      for (const resource of Object.keys(resources)) {
+      for (const resource of Object.keys(allResources)) {
         await this.query(
           `CREATE TABLE IF NOT EXISTS bo."${resource}"(id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL REFERENCES bo.tenants(id),data JSONB NOT NULL CHECK(jsonb_typeof(data)='object'),version INTEGER NOT NULL DEFAULT 1,created_at TIMESTAMPTZ NOT NULL,updated_at TIMESTAMPTZ NOT NULL,created_by TEXT REFERENCES bo.users(id)); CREATE INDEX IF NOT EXISTS "${resource}_tenant" ON bo."${resource}"(tenant_id); ALTER TABLE bo."${resource}" ENABLE ROW LEVEL SECURITY;`,
         );
@@ -118,6 +121,7 @@ export class Store {
         "ALTER TABLE bo.users ADD COLUMN IF NOT EXISTS mfa_secret TEXT; ALTER TABLE bo.users ADD COLUMN IF NOT EXISTS mfa_pending TEXT; ALTER TABLE bo.users ADD COLUMN IF NOT EXISTS mfa_last_step BIGINT; INSERT INTO bo.migrations(version) VALUES(1),(2) ON CONFLICT DO NOTHING",
       );
       await migrateMainCategories(this);
+      await migrateOrders(this);
     });
   }
   async transaction(fn) {
@@ -217,7 +221,7 @@ export class Store {
     ).rows.map((row) => this.decode(row));
   }
   known(r) {
-    if (!resources[r]) throw new Error("Unknown resource");
+    if (!allResources[r]) throw new Error("Unknown resource");
   }
   decode(row) {
     return row
@@ -242,8 +246,8 @@ export class Store {
     );
   }
   async check(tenant, resource, input, id = null) {
-    const data = validate(resource, input);
-    for (const [key, f] of Object.entries(resources[resource].fields)) {
+    const data = validate(resource, input, allResources);
+    for (const [key, f] of Object.entries(allResources[resource].fields)) {
       const values =
         f.type === "relation"
           ? [data[key]]
@@ -329,7 +333,7 @@ export class Store {
           new Error("Record changed. Reload before deleting."),
           { status: 409 },
         );
-      for (const [other, def] of Object.entries(resources))
+      for (const [other, def] of Object.entries(allResources))
         for (const [key, f] of Object.entries(def.fields))
           if (
             f.resource === resource &&

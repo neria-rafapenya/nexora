@@ -39,6 +39,7 @@ export interface RecordRow {
   updatedAt: string;
 }
 export interface Contract {
+  orderPermissions?: { read: boolean; write: boolean };
   resources: Record<string, Resource>;
   permissions: Record<string, { read: boolean; write: boolean }>;
   roles: Record<string, string>;

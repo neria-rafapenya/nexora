@@ -325,6 +325,78 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  "Order amount exceeds supported limits":
+    "El importe supera los límites admitidos. Revisa cantidades y precios.",
+  "Center does not belong to the selected client":
+    "El centro no pertenece al cliente seleccionado.",
+  "Invalid message": "La entrada de pedido no es válida.",
+  "Unknown message field": "La entrada contiene campos no admitidos.",
+  "Message text or an attachment is required":
+    "Introduce el texto del pedido o adjunta un documento.",
+  "This message has already been received":
+    "Esta entrada ya existe. Consulta la bandeja para evitar duplicados.",
+  "Processed messages cannot be discarded":
+    "Los mensajes procesados no se pueden descartar.",
+  "Unknown order field": "El pedido contiene campos no admitidos.",
+  "This message cannot be processed":
+    "Esta entrada no se puede procesar en su estado actual.",
+  "Provide a text transcription before mock processing":
+    "Añade y guarda una transcripción antes de generar la propuesta simulada.",
+  "Provide between 1 and 200 order lines":
+    "Introduce entre 1 y 200 líneas de pedido.",
+  "Only draft or review orders can be edited":
+    "Solo se pueden editar pedidos en borrador o en revisión.",
+  "Maximum 200 order lines": "Un pedido admite como máximo 200 líneas.",
+  "Invalid order line": "Una línea del pedido no es válida.",
+  "Quantity must be a non-negative number with at most three decimals":
+    "La cantidad debe ser un número igual o mayor que cero, con hasta tres decimales.",
+  "Invalid sales unit": "La unidad de venta no es válida.",
+  "Line does not belong to this order": "La línea no pertenece a este pedido.",
+  "Duplicate order line": "El pedido contiene una línea duplicada.",
+  "Product does not belong to this company":
+    "El producto no pertenece a esta empresa.",
+  "Human review is required":
+    "La acción requiere una revisión humana autenticada.",
+  "Order cannot be confirmed in its current state":
+    "El pedido no se puede confirmar en su estado actual.",
+  "Select a client and center before confirming":
+    "Selecciona un cliente y un centro antes de confirmar.",
+  "Inactive clients cannot place confirmed orders":
+    "No se pueden confirmar pedidos de clientes inactivos.",
+  "A valid delivery date is required": "Indica una fecha de entrega válida.",
+  "Delivery date cannot be in the past":
+    "La fecha de entrega no puede ser anterior a hoy.",
+  "Delivery date does not match the center schedule":
+    "La fecha de entrega está fuera del calendario de reparto o coincide con un cierre del centro.",
+  "At least one order line is required":
+    "El pedido necesita al menos una línea.",
+  "Review every line and resolve product, quantity, unit and stock issues":
+    "Revisa todas las líneas y resuelve los problemas de producto, cantidad, unidad o stock antes de confirmar.",
+  "A product price is missing": "Falta el precio de uno de los productos.",
+  "Catalog prices changed. Save the review again":
+    "Han cambiado los precios del catálogo. Guarda de nuevo la revisión antes de confirmar.",
+  "Insufficient stock across duplicate product lines":
+    "La suma de las líneas del mismo producto supera el stock disponible.",
+  "Order cannot be cancelled in its current state":
+    "El pedido no se puede cancelar en su estado actual.",
+  "Only confirmed orders can be exported":
+    "Solo se pueden exportar pedidos confirmados o ya exportados.",
+  "Invalid export format": "El formato de exportación no es válido.",
+  "Invalid alert state": "El estado de la alerta no es válido.",
+  "Only unprocessed messages can be edited":
+    "Solo se puede modificar la transcripción de entradas sin procesar.",
+  "Message text is required": "Introduce el texto del pedido.",
+  "Invalid attachment": "El adjunto no es válido.",
+  "Only PDF, PNG and JPEG attachments are supported":
+    "Solo se admiten adjuntos PDF, PNG y JPEG.",
+  "Attachment maximum size is 1.5 MB": "El adjunto no puede superar 1,5 MB.",
+  "Invalid PDF file": "El archivo no es un PDF válido.",
+  "Invalid PNG file": "El archivo no es una imagen PNG válida.",
+  "Invalid JPEG file": "El archivo no es una imagen JPEG válida.",
+  "Maximum 20 PDF pages": "El PDF no puede superar las 20 páginas.",
+  "PDF text exceeds 20000 characters":
+    "El texto del PDF supera los 20.000 caracteres.",
+  "Invalid price": "El precio no es válido.",
   "A valid email is required": "Introduce un correo electrónico válido.",
   "Name is required": "El nombre es obligatorio.",
   "Password must have 12–128 characters":

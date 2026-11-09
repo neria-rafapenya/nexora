@@ -1,3 +1,5 @@
+import { handleOrders, startOrderJobs } from "./order-http.mjs";
+import { canOrders } from "./order-schema.mjs";
 import http from "node:http";
 import { randomUUID, randomBytes } from "node:crypto";
 import { dirname, resolve } from "node:path";
@@ -283,6 +285,20 @@ export function createServer(
       const membership = user.companies.find((c) => c.id === tenant);
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
+      if (
+        await handleOrders({
+          store,
+          path,
+          method,
+          body,
+          url,
+          tenant,
+          role,
+          user,
+          send,
+        })
+      )
+        return;
       if (path === "/api/schema" && method === "GET")
         return send(200, {
           resources: Object.fromEntries(
@@ -295,6 +311,10 @@ export function createServer(
             ]),
           ),
           roles: roleLabels,
+          orderPermissions: {
+            read: canOrders(role),
+            write: canOrders(role, true),
+          },
         });
       if (path === "/api/dashboard" && method === "GET")
         return send(200, {
@@ -603,6 +623,7 @@ if (
     throw new Error("DATABASE_URL is required in nexora-api/.env");
   const store = new Store(connection);
   await initialize(store);
+  const stopOrderJobs = startOrderJobs(store);
   const server = createServer(store, {
     secure: process.env.COOKIE_SECURE === "true",
   });
@@ -612,6 +633,7 @@ if (
   for (const signal of ["SIGINT", "SIGTERM"])
     process.on(signal, () =>
       server.close(async () => {
+        stopOrderJobs();
         await store.close();
         process.exit(0);
       }),

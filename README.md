@@ -117,7 +117,7 @@ CI runs offline tests and a production build, without Supabase credentials. TLS 
 
 F1 semantic product search requires an embedding provider and API key; none is connected. An initial candidate is OpenAI `text-embedding-3-small`. Do not confuse approximate word search with embeddings. The requested 200-product fixture replaces the original document's larger demo-catalog target.
 
-F2 orders, F3 menu planning, F4 supplier documents and F5 food waste remain explicitly marked as planned screens. No AI calls or automatic commercial/food-safety actions occur. AI proposals will require human approval.
+F2 orders now works locally with explicitly simulated proposals and authenticated human confirmation. F3 menu planning, F4 supplier documents and F5 food waste remain planned screens. No external AI calls or automatic order confirmations occur. F1 semantic search remains postponed.
 
 The final end-user application is separate from this private backoffice.
 
@@ -152,3 +152,32 @@ The load is transactional and idempotent. Existing records and supplier assignme
 The product list displays contains/traces badges, pending-validation labels and a neutral “no information” state. The product detail supports adding/editing/removing allergen links and reviewing their source and validation. Only Quality can approve. Missing or failed information is never shown as allergen-free. The reference catalog remains under Allergens; the standalone Product allergens entry and overview tile are hidden. Its old route/API remain available for existing bookmarks and internal compatibility. No associations or reference rows are removed from the database by this UI change.
 
 Offline component tests cover read-only consultation, scoped links, English payloads, Quality approval, deletion confirmation and missing/error states without creating accounts in Supabase.
+
+## F2 — local multichannel orders with mock proposals
+
+Routes: `/orders`, `/orders/new`, `/orders/:id`, `/orders/inbox`, `/orders/inbox/new`, `/orders/inbox/:id`, `/orders/review`, `/orders/alerts`, `/orders/baskets`.
+
+- Inbox: local entry of email/WhatsApp/manual/PDF-origin messages, immutable original text, editable transcription, stored original attachment, deduplication and discard/retry. No external mailbox or webhook is connected.
+- Attachments: PDF/PNG/JPEG, up to 1.5 MB, 20 PDF pages, 20,000 text characters. Digital PDFs are read locally; scanned PDFs/images require manual transcription. Files are kept in private Supabase tables for this local phase, not a public storage bucket.
+- Mock extraction: one line per product using `SKU | quantity | unit` or `quantity unit product name`. Exact references/literal names and deliberately doubtful lexical suggestions are supported. This is not an LLM or semantic search. Dates in explicit `Delivery: YYYY-MM-DD` headers can be proposed. All generated lines start unreviewed.
+- Review: original beside proposed lines, client/center/date selection, product search, manual substitutions, quantities, unit checks, catalog prices, confidence and per-line human acceptance. Saving is separate from confirmation. Associations and states cannot be changed through generic master CRUD/import endpoints.
+- Confirm: authenticated administrator/order-operations action; checks active client, center ownership, delivery calendar/closures, non-past date, reviewed valid lines, current prices and stock summed across duplicate product lines. Prices/totals use integer cents. Stock reservation, confirmed order and audit commit atomically.
+- Cancel: draft/review/confirmed orders can be cancelled; confirmed stock is restored once. Exported/cancelled orders cannot be edited or cancelled here. No actual sale or external ERP action occurs.
+- Export: confirmed orders download CSV/JSON. The first export sets EXPORTED and is audited; CSV cells escape spreadsheet formula prefixes. Stored line prices are retained even when catalog prices change later.
+- Alerts: unmatched/doubtful products, unit mismatch, stock, missing prices, client inactivity, delivery restrictions, missing usual products and atypical quantities. Dismissing an alert never bypasses confirmation checks.
+- Usual baskets: computed from confirmed/exported history; automatically rebuilt on confirm/cancel, manually on request, and daily while the API runs. Missing-usual and outlier alerts require at least three historical orders. No fictitious human confirmations are seeded.
+- Trace: MOCK provider, extraction output, source, duration, zero AI cost and human actions in audit. All orders/data remain scoped to their company. Sales/read-only roles can consult; administrator/order-operations can operate.
+
+Run `npm --prefix nexora-api run db:seed-orders` after business demo masters exist. It creates six English fictional messages and three IN_REVIEW proposals, including stock and matching issues, without reserving stock. It is idempotent and preserves subsequent operator changes. Baskets stay empty until genuine demo confirmations build history.
+
+Operational tables: `inboxMessages`, `orderAttachments`, `orders`, `orderLines`, `orderAlerts`, `usualBaskets`, `aiOrderRuns`; RLS enabled, private `bo` schema, tenant-aware foreign keys and unique message/order fingerprints. Migration 4 creates these structures.
+
+Dedicated API: `/api/orders/catalog`, `/api/orders`, `/api/orders/:id`, `/api/orders/:id/confirm`, `/cancel`, `/export`; `/api/order-inbox`, `/api/order-inbox/:id`, `/process`, `/discard`; `/api/order-alerts`, `/api/order-alerts/:id`; `/api/usual-baskets`, `/api/usual-baskets/recompute`. Mutations require write permission, company membership, same-origin requests and record versions.
+
+Tests include business/state/stock transactions in memory, HTTP permissions/tenant checks, original PDF text extraction, UI save/confirm separation, read-only access and routes. The opt-in PostgreSQL test uses a rollback-only transaction and does not create users or confirm orders:
+
+```sh
+NEXORA_ORDER_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/order-postgres.test.mjs
+```
+
+Still deferred: real AI/embeddings, OCR, live email/WhatsApp ingestion, automatic diet/allergen-compatible substitute selection, external ERP export/integration and real-order accuracy benchmarks. Substitutions are manual and require reviewing the product documentation; the unvalidated allergen demo data is never treated as proof of suitability. AWS production infrastructure remains a later phase.

@@ -54,3 +54,29 @@ describe("Backoffice URL routes", () => {
     expect(resolveRoute("/categories/a%20b").recordId).toBe("a b");
   });
 });
+
+it("resolves order inbox, review and record routes without treating sections as IDs", () => {
+  expect(resolveRoute("/orders/new")).toMatchObject({
+    page: "orders",
+    isNew: true,
+  });
+  expect(resolveRoute("/orders/inbox/new")).toMatchObject({
+    page: "orders",
+    section: "inbox",
+    isNew: true,
+  });
+  expect(resolveRoute("/orders/inbox/msg-id")).toMatchObject({
+    page: "orders",
+    section: "inbox",
+    recordId: "msg-id",
+  });
+  expect(resolveRoute("/orders/review")).toMatchObject({
+    page: "orders",
+    section: "review",
+    recordId: undefined,
+  });
+  expect(resolveRoute("/orders/order-id")).toMatchObject({
+    page: "orders",
+    recordId: "order-id",
+  });
+});

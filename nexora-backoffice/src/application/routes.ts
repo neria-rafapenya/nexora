@@ -26,8 +26,12 @@ export interface AppRoute {
   page: string;
   recordId?: string;
   isNew: boolean;
+  section?: string;
 }
-const routes = Object.entries(pagePaths).flatMap(([page, path]) => [
+const routes: Array<{
+  path: string;
+  handle: { page: string; isNew: boolean; section?: string };
+}> = Object.entries(pagePaths).flatMap(([page, path]) => [
   { path, handle: { page, isNew: false } },
   ...(masterPaths[page]
     ? [
@@ -36,6 +40,34 @@ const routes = Object.entries(pagePaths).flatMap(([page, path]) => [
       ]
     : []),
 ]);
+routes.push(
+  { path: "/orders/new", handle: { page: "orders", isNew: true } },
+  {
+    path: "/orders/inbox",
+    handle: { page: "orders", isNew: false, section: "inbox" },
+  },
+  {
+    path: "/orders/inbox/new",
+    handle: { page: "orders", isNew: true, section: "inbox" },
+  },
+  {
+    path: "/orders/inbox/:id",
+    handle: { page: "orders", isNew: false, section: "inbox" },
+  },
+  {
+    path: "/orders/review",
+    handle: { page: "orders", isNew: false, section: "review" },
+  },
+  {
+    path: "/orders/alerts",
+    handle: { page: "orders", isNew: false, section: "alerts" },
+  },
+  {
+    path: "/orders/baskets",
+    handle: { page: "orders", isNew: false, section: "baskets" },
+  },
+  { path: "/orders/:id", handle: { page: "orders", isNew: false } },
+);
 export function resolveRoute(pathname: string): AppRoute {
   const result = matchRoutes(routes, pathname)?.at(-1);
   if (!result) return { page: "notFound", isNew: false };
