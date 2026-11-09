@@ -22,7 +22,7 @@ npm run preview
 
 ## Decisiones aplicadas
 
-React, Vite, TypeScript, SCSS y Bootstrap exclusivamente para la cuadrícula. Diseño minimalista, multiempresa desde el inicio y funcionamiento local. La referencia funcional es el documento POC Backoffice IA Pedial; estas decisiones posteriores sustituyen la implementación inicial con Django Admin y el despliegue remoto previstos en ese documento.
+React, Vite, TypeScript, SCSS y Bootstrap exclusivamente para la cuadrícula. Diseño minimalista, multiempresa desde el inicio y funcionamiento local. La referencia funcional es el documento POC Backoffice IA Pedial. La interfaz privada se construye exclusivamente con React + Vite; las elecciones de infraestructura del documento original no se consideran decisiones aprobadas para Nexora. El servicio de API, la base de datos y las tareas de IA quedan pendientes de definir y conectar.
 
 ## Arquitectura hexagonal
 
@@ -50,7 +50,7 @@ La sesión vive en memoria y se pierde al recargar. La actividad persiste solo e
 
 F1: maestros e importación; F2: pedidos; F3: menús; F4: proveedores; F5: desperdicio. La IA propone y una persona aprueba. No se calculan ni validan alérgenos en esta fase.
 
-Infraestructura remota, Terraform, Supabase, Docker, 2FA y despliegue se difieren por la decisión de comenzar con frontend local. No se ha publicado ni desplegado esta copia.
+Infraestructura remota, Terraform, Supabase, Docker, 2FA y despliegue se difieren por la decisión de comenzar con frontend local. El código está publicado en GitHub; no hay despliegue remoto de la aplicación.
 
 ## Verificación
 
