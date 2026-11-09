@@ -80,6 +80,8 @@ test("center/diet structures reject invalid JSON, dates, missing relations and f
 });
 test("roles restrict masters and reserve allergen validation workflow for quality", () => {
   assert(can("admin", "families", true));
+  assert(can("operations_orders", "productAllergens"));
+  assert(!can("operations_orders", "productAllergens", true));
   assert(!can("read_only", "products", true));
   assert(!can("operations_orders", "products", true));
   assert(can("quality", "productAllergens", true));

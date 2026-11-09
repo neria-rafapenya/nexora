@@ -144,3 +144,11 @@ Links for a company other than the user's default include `?company=<company-id>
 Run `npm --prefix nexora-api run db:seed-masters` to populate the initial workspace with 10 clearly named demo suppliers, 8 clients, 16 centers, 6 diets and 192 aggregated center/diet/service diner counts. The script first ensures the allergen reference fixtures exist, then links unassigned fictional Nexora products to family-specific suppliers. Centers link to clients, diets to their excluded allergens, and diner counts to centers and diets.
 
 The load is transactional and idempotent. Existing records and supplier assignments are preserved; non-sample products are untouched. Demo contacts use reserved `.test` email domains; phone numbers and supplier approval dates remain empty. Diet rules are explicitly demo data requiring Quality review. There are no individual diner/patient records, no user-account changes and no generated business documents. Future operational modules are not yet database models and are not fabricated by this seed.
+
+## Product details and allergens
+
+`/products/:id` is the combined product consultation/editing screen. General fields respect product write permissions; the allergen panel independently respects association permissions. Product names in the list link to this record URL. Saving general fields keeps the product open; creating a product opens its new record so allergens can be added immediately. Allergen changes are saved separately using explicitly labelled actions.
+
+The product list displays contains/traces badges, pending-validation labels and a neutral “no information” state. The product detail supports adding/editing/removing allergen links and reviewing their source and validation. Only Quality can approve. Missing or failed information is never shown as allergen-free. The reference catalog remains under Allergens; the standalone Product allergens entry and overview tile are hidden. Its old route/API remain available for existing bookmarks and internal compatibility. No associations or reference rows are removed from the database by this UI change.
+
+Offline component tests cover read-only consultation, scoped links, English payloads, Quality approval, deletion confirmation and missing/error states without creating accounts in Supabase.

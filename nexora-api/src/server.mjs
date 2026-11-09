@@ -525,6 +525,7 @@ export function createServer(
           }
           for (const key of [
             "familyId",
+            "productId",
             "temperature",
             "supplierId",
             "active",

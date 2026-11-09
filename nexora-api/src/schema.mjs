@@ -198,6 +198,7 @@ export function can(role, resource, write = false) {
         "clients",
         "centers",
         "allergens",
+        "productAllergens",
       ].includes(resource);
     if (role === "nutrition_menus")
       return [

@@ -1136,3 +1136,103 @@ h1 {
 .sidebar nav > a {
   text-decoration: none;
 }
+.product-allergens {
+  margin-top: 24px;
+  height: auto;
+  max-width: 980px;
+}
+.product-allergens h2 {
+  font-size: 18px;
+}
+.allergen-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 160px;
+}
+.allergen-tag {
+  font-size: 10px;
+  line-height: 1.6;
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: #edf3e9;
+  color: #42633d;
+  border: 1px solid #dce7d7;
+}
+.allergen-tag.traces {
+  background: #faf2df;
+  border-color: #ece0bc;
+  color: #8a6c2b;
+}
+.allergen-tag > span {
+  display: block;
+  font-size: 8px;
+  opacity: 0.8;
+}
+.allergen-unknown {
+  font-size: 10px;
+  color: #89958c;
+}
+.allergen-cell {
+  min-width: 210px;
+  max-width: 360px;
+}
+.allergen-record {
+  display: flex;
+  gap: 15px;
+  justify-content: space-between;
+  border-top: 1px solid #edf0ed;
+  padding: 18px 0;
+}
+.allergen-record strong {
+  font-size: 13px;
+  margin-right: 10px;
+}
+.allergen-record .fine {
+  display: block;
+  margin: 6px 0;
+}
+.allergen-record p {
+  font-size: 11px;
+  margin: 7px 0;
+  overflow-wrap: anywhere;
+}
+.allergen-record small {
+  font-size: 10px;
+}
+.allergen-record .actions {
+  align-self: flex-start;
+  flex-wrap: nowrap;
+}
+.allergen-records {
+  margin-top: 20px;
+}
+.allergen-editor {
+  border-top: 1px solid #e0e7de;
+  padding-top: 22px;
+}
+.allergen-editor h3 {
+  font-size: 16px;
+}
+.allergen-editor .checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.allergen-editor .form-actions {
+  margin-top: 18px;
+}
+.product-allergens .section-heading {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.product-allergens .section-heading h2 {
+  margin: 0;
+}
+
+.record-link {
+  color: #285240;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}

@@ -1,3 +1,4 @@
+import { AllergenTags, ProductAllergens } from "./ProductAllergens";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   resolveRoute,
@@ -161,7 +162,9 @@ export function App() {
           </Link>
           <span className="sidebar-label">MAESTROS</span>
           {Object.keys(contract?.resources ?? {})
-            .filter((r) => contract?.permissions[r]?.read)
+            .filter(
+              (r) => r !== "productAllergens" && contract?.permissions[r]?.read,
+            )
             .map((r) => (
               <Link
                 key={r}
@@ -619,17 +622,19 @@ function Overview({
         <span>Tu empresa activa</span>
       </div>
       <div className="row g-3">
-        {Object.keys(contract.resources).map((r) => (
-          <div className="col-12 col-md-6 col-xl-3" key={r}>
-            <button className="stat-card" onClick={() => navigate(r)}>
-              <span>{labels[r]}</span>
-              <strong>{counts[r] ?? "—"}</strong>
-              <span className="card-link">
-                Gestionar registros <ArrowRight size={16} />
-              </span>
-            </button>
-          </div>
-        ))}
+        {Object.keys(contract.resources)
+          .filter((r) => r !== "productAllergens")
+          .map((r) => (
+            <div className="col-12 col-md-6 col-xl-3" key={r}>
+              <button className="stat-card" onClick={() => navigate(r)}>
+                <span>{labels[r]}</span>
+                <strong>{counts[r] ?? "—"}</strong>
+                <span className="card-link">
+                  Gestionar registros <ArrowRight size={16} />
+                </span>
+              </button>
+            </div>
+          ))}
       </div>
       <div className="section-heading mt">
         <h2>Próximas operaciones</h2>
@@ -681,6 +686,8 @@ function Master({
 }) {
   const [rows, setRows] = useState<RecordRow[]>([]),
     [lookups, setLookups] = useState<Record<string, RecordRow[]>>({}),
+    [lookupsLoading, setLookupsLoading] = useState(true),
+    [lookupsFailed, setLookupsFailed] = useState(false),
     [q, setQ] = useState(""),
     [family, setFamily] = useState(""),
     [temperature, setTemperature] = useState(""),
@@ -693,10 +700,12 @@ function Master({
     [showImport, setShowImport] = useState(false),
     [version, setVersion] = useState(0),
     [detailLoading, setDetailLoading] = useState(!!recordId),
-    [detailError, setDetailError] = useState("");
+    [detailError, setDetailError] = useState(""),
+    [saveNotice, setSaveNotice] = useState("");
   useEffect(() => {
     let live = true;
     setDetailError("");
+    setSaveNotice("");
     setError("");
     if (createNew) {
       setDetailLoading(false);
@@ -757,11 +766,14 @@ function Master({
   }, [resource, companyId, q, family, temperature, version]);
   useEffect(() => {
     let live = true;
+    setLookupsLoading(true);
+    setLookupsFailed(false);
     const needed = [
       ...new Set(
-        Object.values(def.fields)
-          .map((f) => f.resource)
-          .filter((x): x is string => !!x && !!contract.permissions[x]?.read),
+        [
+          ...Object.values(def.fields).map((f) => f.resource),
+          ...(resource === "products" ? ["productAllergens", "allergens"] : []),
+        ].filter((x): x is string => !!x && !!contract.permissions[x]?.read),
       ),
     ];
     Promise.all(
@@ -782,7 +794,13 @@ function Master({
         if (live) setLookups(Object.fromEntries(entries));
       })
       .catch((e) => {
-        if (live) setError(e.message);
+        if (live) {
+          setError(e.message);
+          setLookupsFailed(true);
+        }
+      })
+      .finally(() => {
+        if (live) setLookupsLoading(false);
       });
     return () => {
       live = false;
@@ -818,7 +836,7 @@ function Master({
     setBusy(true);
     setError("");
     try {
-      await request(
+      const result = await request<{ record: RecordRow }>(
         `/masters/${resource}${editing ? "/" + editing.id : ""}`,
         companyId,
         editing ? "PUT" : "POST",
@@ -828,7 +846,12 @@ function Master({
         },
       );
       changed();
-      onNavigate();
+      if (resource === "products") {
+        if (editing) {
+          openForm(result.record);
+          setSaveNotice("Datos generales del producto guardados.");
+        } else onNavigate(result.record.id);
+      } else onNavigate();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -879,16 +902,22 @@ function Master({
         <Heading
           eyebrow="MAESTROS"
           title={
-            editing
-              ? `Editar registro de ${def.singular}`
-              : `Nuevo registro de ${def.singular}`
+            resource === "products" && editing
+              ? String(editing.data.name)
+              : editing
+                ? `Editar registro de ${def.singular}`
+                : `Nuevo registro de ${def.singular}`
           }
           description={
-            resource === "mainCategories"
-              ? "Es el nivel más alto del catálogo. No tiene categorías superiores."
-              : resource === "families"
-                ? "Vincula la familia a una categoría principal."
-                : "Los cambios se validarán y guardarán en la empresa activa."
+            resource === "products"
+              ? writable
+                ? "Ficha del producto: consulta o edita sus datos y gestiona sus alérgenos."
+                : "Ficha del producto en modo de consulta."
+              : resource === "mainCategories"
+                ? "Es el nivel más alto del catálogo. No tiene categorías superiores."
+                : resource === "families"
+                  ? "Vincula la familia a una categoría principal."
+                  : "Los cambios se validarán y guardarán en la empresa activa."
           }
         >
           <button className="secondary" onClick={() => onNavigate()}>
@@ -901,6 +930,7 @@ function Master({
             {error}
           </div>
         )}
+        {saveNotice && <p role="status">{saveNotice}</p>}
         <form className="panel master-form" onSubmit={save}>
           <div className="row g-4">
             {Object.entries(def.fields).map(([key, f]) => (
@@ -1029,6 +1059,29 @@ function Master({
             )}
           </div>
         </form>
+        {resource === "products" &&
+          (editing ? (
+            contract.permissions.productAllergens?.read ? (
+              <ProductAllergens
+                key={editing.id}
+                productId={editing.id}
+                companyId={companyId}
+                writable={!!contract.permissions.productAllergens?.write}
+                canValidate={companyRole(contract) === "quality"}
+                onChanged={changed}
+              />
+            ) : (
+              <p>No tienes permisos para consultar los alérgenos.</p>
+            )
+          ) : (
+            <section className="panel product-allergens">
+              <h2>Alérgenos del producto</h2>
+              <p>
+                Guarda primero el producto para añadir sus alérgenos en esta
+                misma ficha.
+              </p>
+            </section>
+          ))}
       </>
     );
   return (
@@ -1129,6 +1182,7 @@ function Master({
                   {def.columns.map((k) => (
                     <th key={k}>{def.fields[k].label}</th>
                   ))}
+                  {resource === "products" && <th>Alérgenos</th>}
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -1137,7 +1191,14 @@ function Master({
                   <tr key={row.id}>
                     {def.columns.map((k) => (
                       <td key={k}>
-                        {k === "allergenStatus" ? (
+                        {resource === "products" && k === "name" ? (
+                          <Link
+                            className="record-link"
+                            to={routeURL("products", row.id, companyId)}
+                          >
+                            {display(k, row.data[k])}
+                          </Link>
+                        ) : k === "allergenStatus" ? (
                           <span className="pill warning">
                             {display(k, row.data[k])}
                           </span>
@@ -1146,6 +1207,20 @@ function Master({
                         )}
                       </td>
                     ))}
+                    {resource === "products" && (
+                      <td className="allergen-cell">
+                        <AllergenTags
+                          productId={row.id}
+                          links={lookups.productAllergens ?? []}
+                          allergens={lookups.allergens ?? []}
+                          loading={lookupsLoading}
+                          error={
+                            lookupsFailed ||
+                            !contract.permissions.productAllergens?.read
+                          }
+                        />
+                      </td>
+                    )}
                     <td>
                       <div className="actions">
                         <button
