@@ -1,0 +1,20 @@
+{
+  "name": "nexora",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "install:all": "npm --prefix nexora-api ci && npm --prefix nexora-backoffice ci",
+    "test": "npm --prefix nexora-api test && npm --prefix nexora-backoffice test",
+    "build": "npm --prefix nexora-backoffice run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.0"
+  }
+}
