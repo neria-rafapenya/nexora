@@ -1,3 +1,4 @@
+import { workflowOrderFields, workflowResources } from "./workflow-schema.mjs";
 const text = (label, required = false, maxLength = 4000) => ({
   label,
   type: "text",
@@ -25,6 +26,7 @@ const ref = (label, resource, required = false) => ({
 });
 const bool = (label) => ({ label, type: "checkbox" });
 export const orderResources = {
+  ...workflowResources,
   inboxMessages: {
     label: "Inbox messages",
     fields: {
@@ -56,6 +58,7 @@ export const orderResources = {
   orders: {
     label: "Orders",
     fields: {
+      ...workflowOrderFields,
       number: text("Number", true),
       clientId: ref("Client", "clients"),
       centerId: ref("Center", "centers"),
@@ -64,9 +67,11 @@ export const orderResources = {
       origin: select("Origin", ["MANUAL", "MOCK_MESSAGE"]),
       state: select("State", [
         "DRAFT",
+        "SUBMITTED",
         "IN_REVIEW",
-        "CONFIRMED",
-        "EXPORTED",
+        "AWAITING_CLIENT",
+        "APPROVED",
+        "REJECTED",
         "CANCELLED",
       ]),
       totalCents: num("Total in cents", true, true),

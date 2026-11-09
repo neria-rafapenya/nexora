@@ -10,6 +10,11 @@ import {
   Inbox,
   CheckCircle2,
 } from "lucide-react";
+import { OrderWorkflow } from "./OrderWorkflow";
+import {
+  customerAccepted,
+  type OrderPermissions,
+} from "../application/orderModel";
 import { request } from "../infrastructure/api";
 import type { RecordRow } from "../domain/core";
 import { enumEs, errorEs } from "../application/locale";
@@ -43,7 +48,7 @@ export function Orders({
   section?: string;
   recordId?: string;
   isNew: boolean;
-  permissions: { read: boolean; write: boolean };
+  permissions: OrderPermissions;
 }) {
   const [context, setContext] = useState<OrderContext | null>(null),
     [error, setError] = useState(""),
@@ -75,7 +80,7 @@ export function Orders({
         <div>
           <span className="eyebrow">OPERACIONES · F2</span>
           <h1>Pedidos multicanal</h1>
-          <p>Recibe, revisa y confirma pedidos desde un único espacio.</p>
+          <p>Recibe, revisa y aprueba pedidos para su envío al ERP.</p>
         </div>
         <span className="pill">IA SIMULADA · DATOS DE DEMOSTRACIÓN</span>
       </div>
@@ -141,6 +146,7 @@ export function Orders({
             <NewOrder companyId={companyId} context={context} />
           ) : recordId ? (
             <OrderDetail
+              permissions={permissions}
               companyId={companyId}
               id={recordId}
               context={context}
@@ -210,7 +216,9 @@ function OrderList({
     .filter(
       (r) =>
         (!reviewOnly ||
-          ["DRAFT", "IN_REVIEW"].includes(String(r.data.state))) &&
+          ["DRAFT", "SUBMITTED", "IN_REVIEW", "AWAITING_CLIENT"].includes(
+            String(r.data.state),
+          )) &&
         (!state || r.data.state === state) &&
         (!search ||
           [r.data.number, rowName(context.clients, r.data.clientId)]
@@ -251,13 +259,19 @@ function OrderList({
             onChange={(e) => setState(e.target.value)}
           >
             <option value="">Todos los estados</option>
-            {["DRAFT", "IN_REVIEW", "CONFIRMED", "EXPORTED", "CANCELLED"].map(
-              (s) => (
-                <option key={s} value={s}>
-                  {label(s)}
-                </option>
-              ),
-            )}
+            {[
+              "DRAFT",
+              "SUBMITTED",
+              "IN_REVIEW",
+              "AWAITING_CLIENT",
+              "APPROVED",
+              "REJECTED",
+              "CANCELLED",
+            ].map((s) => (
+              <option key={s} value={s}>
+                {label(s)}
+              </option>
+            ))}
           </select>
           <button
             className="icon-button"
@@ -307,6 +321,9 @@ function OrderList({
                     <td>{String(r.data.deliveryDate ?? "Pendiente")}</td>
                     <td>
                       <Status value={r.data.state} />
+                      <small className="block">
+                        ERP: {label(r.data.erpState ?? "NOT_SENT")}
+                      </small>
                     </td>
                     <td>{label(r.data.origin)}</td>
                     <td>{amount(r.data.totalCents)}</td>
@@ -997,6 +1014,7 @@ function MessageDetail({
   );
 }
 function OrderDetail({
+  permissions,
   companyId,
   id,
   context,
@@ -1006,6 +1024,7 @@ function OrderDetail({
   id: string;
   context: OrderContext;
   writable: boolean;
+  permissions: OrderPermissions;
 }) {
   const [view, setView] = useState<OrderView | null>(null),
     [catalog, setCatalog] = useState(context),
@@ -1045,7 +1064,9 @@ function OrderDetail({
       </>
     );
   const editable =
-    writable && ["DRAFT", "IN_REVIEW"].includes(String(view.order.data.state));
+    writable &&
+    !view.order.data.erpDeliveryId &&
+    ["DRAFT", "SUBMITTED", "IN_REVIEW"].includes(String(view.order.data.state));
   const dirty = JSON.stringify(draft) !== JSON.stringify(reviewDraft(view));
   function lineChange(
     index: number,
@@ -1077,7 +1098,7 @@ function OrderDetail({
       setView(d);
       setDraft(reviewDraft(d));
       setNotice(
-        "Revisión guardada. La confirmación es una acción independiente.",
+        "Revisión guardada. La aprobación interna es una acción independiente.",
       );
     } catch (e) {
       setError((e as Error).message);
@@ -1175,7 +1196,7 @@ function OrderDetail({
               )}
             </div>
             {!draft.lines.length && (
-              <p>No hay líneas. Añade al menos una antes de confirmar.</p>
+              <p>No hay líneas. Añade al menos una antes de aprobar.</p>
             )}
             {draft.lines.map((line, index) => {
               const product = catalog.products.find(
@@ -1293,7 +1314,7 @@ function OrderDetail({
                     </div>
                   </div>
                   <p className="fine">
-                    Stock del catálogo:{" "}
+                    Disponibilidad orientativa del catálogo:{" "}
                     {product?.data.stock === null ||
                     product?.data.stock === undefined
                       ? "Desconocido"
@@ -1381,6 +1402,13 @@ function OrderDetail({
               ))}
             </section>
           )}
+          <OrderWorkflow
+            companyId={companyId}
+            view={view}
+            permissions={permissions}
+            disabled={busy || dirty}
+            onChanged={() => setReload((x) => x + 1)}
+          />
           <div className="actions mt">
             {editable && (
               <button
@@ -1388,6 +1416,7 @@ function OrderDetail({
                 disabled={
                   busy ||
                   dirty ||
+                  !customerAccepted(view.order) ||
                   !draft.lines.length ||
                   draft.lines.some((l) => !l.reviewAccepted) ||
                   !draft.clientId ||
@@ -1409,13 +1438,19 @@ function OrderDetail({
                 onClick={() => setAction("confirm")}
               >
                 <CheckCircle2 size={17} />
-                Confirmar pedido
+                Aprobar internamente
               </button>
             )}
             {writable &&
-              ["DRAFT", "IN_REVIEW", "CONFIRMED"].includes(
-                String(view.order.data.state),
-              ) && (
+              !view.order.data.erpDeliveryId &&
+              [
+                "DRAFT",
+                "SUBMITTED",
+                "IN_REVIEW",
+                "AWAITING_CLIENT",
+                "APPROVED",
+                "REJECTED",
+              ].includes(String(view.order.data.state)) && (
                 <button
                   className="secondary danger"
                   disabled={busy || dirty}
@@ -1425,9 +1460,7 @@ function OrderDetail({
                 </button>
               )}
             {writable &&
-              ["CONFIRMED", "EXPORTED"].includes(
-                String(view.order.data.state),
-              ) && (
+              ["APPROVED"].includes(String(view.order.data.state)) && (
                 <>
                   <button
                     className="secondary"
@@ -1467,13 +1500,13 @@ function OrderDetail({
         <Confirm
           title={
             action === "confirm"
-              ? "¿Confirmar este pedido?"
+              ? "¿Aprobar internamente este pedido?"
               : "¿Cancelar este pedido?"
           }
           text={
             action === "confirm"
-              ? "Se comprobarán el calendario, las líneas revisadas y el stock acumulado. La confirmación reservará existencias del catálogo de demostración."
-              : "Se conservará el pedido como cancelado. Si estaba confirmado, se devolverá el stock reservado."
+              ? "Se validará la revisión aceptada por el cliente. El envío al ERP será una acción posterior; las existencias las gestionará el ERP."
+              : "Se conservará el pedido como cancelado."
           }
           busy={busy}
           onCancel={() => setAction(null)}
@@ -1481,14 +1514,22 @@ function OrderDetail({
             setBusy(true);
             setError("");
             try {
-              await request("/orders/" + id + "/" + action, companyId, "POST", {
-                version: view.order.version,
-              });
+              await request(
+                "/orders/" +
+                  id +
+                  "/" +
+                  (action === "confirm" ? "approve" : action),
+                companyId,
+                "POST",
+                {
+                  version: view.order.version,
+                },
+              );
               setAction(null);
               setReload((x) => x + 1);
               setNotice(
                 action === "confirm"
-                  ? "Pedido confirmado y stock reservado."
+                  ? "Pedido aprobado internamente. Pendiente de envío al ERP."
                   : "Pedido cancelado.",
               );
             } catch (e) {
@@ -1575,8 +1616,8 @@ function Alerts({
         <h2>Alertas de pedidos</h2>
       </div>
       <p className="fine">
-        Atender o descartar una alerta no evita las comprobaciones de
-        confirmación del pedido.
+        Atender o descartar una alerta no evita las comprobaciones de aprobación
+        del pedido.
       </p>
       <Problem error={error} />
       <section className="panel list-panel">
@@ -1717,14 +1758,14 @@ function Baskets({
         )}
       </div>
       <p>
-        Se calculan a partir de pedidos confirmados y exportados. Se actualizan
-        al confirmar o cancelar, y mediante una tarea diaria mientras la API
-        local está ejecutándose.
+        Se calculan con pedidos aceptados por el ERP. Una aprobación interna o
+        la descarga de un archivo no cuentan como compra realizada. Se
+        actualizan tras la recepción y mediante una tarea diaria.
       </p>
       <Problem error={error} />
       <section className="panel table-responsive">
         {!rows.length ? (
-          <Empty text="Aún no hay histórico confirmado para calcular cestas. Los borradores mock no cuentan como compras realizadas." />
+          <Empty text="Aún no hay histórico aceptado por el ERP para calcular cestas. Los borradores mock no cuentan como compras realizadas." />
         ) : (
           <table>
             <thead>

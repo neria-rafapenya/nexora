@@ -39,7 +39,13 @@ export interface RecordRow {
   updatedAt: string;
 }
 export interface Contract {
-  orderPermissions?: { read: boolean; write: boolean };
+  orderPermissions?: {
+    read: boolean;
+    write: boolean;
+    mockClient?: boolean;
+    mockErp?: boolean;
+    erpConfigured?: boolean;
+  };
   resources: Record<string, Resource>;
   permissions: Record<string, { read: boolean; write: boolean }>;
   roles: Record<string, string>;

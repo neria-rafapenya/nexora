@@ -1,3 +1,4 @@
+import { optionsFromEnv } from "./workflow-rules.mjs";
 import { OrdersService } from "./orders.mjs";
 import { canOrders } from "./order-schema.mjs";
 import { prepareAttachment } from "./order-attachments.mjs";
@@ -23,7 +24,7 @@ export async function handleOrders({
   )
     return false;
   if (!canOrders(role, method !== "GET")) fail(403, "Access denied");
-  const service = new OrdersService(store);
+  const service = new OrdersService(store, optionsFromEnv());
   if (path === "/api/orders/catalog" && method === "GET") {
     const pick = (rows, keys) =>
       rows.map((r) => ({
@@ -171,7 +172,7 @@ export async function handleOrders({
     }
   }
   const order = path.match(
-    /^\/api\/orders\/([a-zA-Z0-9-]+)(?:\/(confirm|cancel|export))?$/,
+    /^\/api\/orders\/([a-zA-Z0-9-]+)(?:\/(confirm|approve|submit|start-review|request-acceptance|mock-client-decision|reopen|reject|cancel|export|erp-queue|erp-send|erp-cancel-request))?$/,
   );
   if (order) {
     const [, id, action] = order;
@@ -183,10 +184,89 @@ export async function handleOrders({
       send(200, await service.saveReview(tenant, id, body, user.id));
       return true;
     }
-    if (method === "POST" && action === "confirm") {
-      send(200, {
-        record: await service.confirm(tenant, id, body.version, user.id),
-      });
+    if (
+      method === "POST" &&
+      [
+        "confirm",
+        "approve",
+        "submit",
+        "start-review",
+        "request-acceptance",
+        "mock-client-decision",
+        "reopen",
+        "reject",
+        "erp-queue",
+        "erp-send",
+        "erp-cancel-request",
+      ].includes(action)
+    ) {
+      let result;
+      if (action === "confirm" || action === "approve")
+        result = await service.approve(tenant, id, body.version, user.id);
+      else if (action === "submit")
+        result = await service.submitOriginal(
+          tenant,
+          id,
+          body.version,
+          user.id,
+          body.evidence,
+        );
+      else if (action === "start-review")
+        result = await service.beginReview(tenant, id, body.version, user.id);
+      else if (action === "request-acceptance")
+        result = await service.requestAcceptance(
+          tenant,
+          id,
+          body.version,
+          user.id,
+        );
+      else if (action === "reopen")
+        result = await service.reopen(tenant, id, body.version, user.id);
+      else if (action === "reject")
+        result = await service.reject(
+          tenant,
+          id,
+          body.version,
+          user.id,
+          body.reason,
+        );
+      else if (action === "erp-queue")
+        result = await service.queueErp(tenant, id, body.version, user.id);
+      else if (action === "erp-send")
+        result = await service.dispatchErp(
+          tenant,
+          id,
+          body.version,
+          user.id,
+          body.scenario ?? "SUCCESS",
+        );
+      else if (action === "erp-cancel-request")
+        result = await service.requestErpCancellation(
+          tenant,
+          id,
+          body.version,
+          user.id,
+          body.reason,
+        );
+      else {
+        if (role !== "admin" || !service.options.allowMockClient)
+          fail(403, "Mock client decisions are disabled");
+        if (
+          Object.keys(body).some(
+            (k) => !["version", "revision", "decision", "evidence"].includes(k),
+          )
+        )
+          fail(400, "Unknown order field");
+        const order = await service.required(tenant, "orders", id);
+        result = await service.customerDecision(tenant, id, body, {
+          kind: "MOCK",
+          tenantId: tenant,
+          clientId: order.data.clientId,
+          subject: "mock-client:" + order.data.clientId,
+          actorId: user.id,
+        });
+      }
+      send(200, { record: result });
       return true;
     }
     if (method === "POST" && action === "cancel") {

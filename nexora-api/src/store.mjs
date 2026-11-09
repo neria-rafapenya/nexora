@@ -12,6 +12,7 @@ import {
 } from "node:crypto";
 import { resources, validate } from "./schema.mjs";
 import { orderResources } from "./order-schema.mjs";
+import { migrateWorkflow } from "./migrate-workflow.mjs";
 import { migrateOrders } from "./migrate-orders.mjs";
 const allResources = { ...resources, ...orderResources };
 import { migrateMainCategories } from "./migrate-main-categories.mjs";
@@ -122,6 +123,7 @@ export class Store {
       );
       await migrateMainCategories(this);
       await migrateOrders(this);
+      await migrateWorkflow(this);
     });
   }
   async transaction(fn) {

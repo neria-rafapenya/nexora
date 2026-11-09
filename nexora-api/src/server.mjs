@@ -1,3 +1,4 @@
+import { optionsFromEnv } from "./workflow-rules.mjs";
 import { handleOrders, startOrderJobs } from "./order-http.mjs";
 import { canOrders } from "./order-schema.mjs";
 import http from "node:http";
@@ -314,6 +315,10 @@ export function createServer(
           orderPermissions: {
             read: canOrders(role),
             write: canOrders(role, true),
+            mockClient: role === "admin" && optionsFromEnv().allowMockClient,
+            mockErp:
+              canOrders(role, true) && optionsFromEnv().erpProvider === "mock",
+            erpConfigured: optionsFromEnv().erpProvider !== "unconfigured",
           },
         });
       if (path === "/api/dashboard" && method === "GET")

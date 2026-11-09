@@ -11,16 +11,38 @@ export interface OrderView {
   message: RecordRow | null;
   attachments: RecordRow[];
   run: RecordRow | null;
+  approvals?: RecordRow[];
+  erpDelivery?: RecordRow | null;
+  erpAttempts?: RecordRow[];
+  erpChangeRequests?: RecordRow[];
 }
 export const orderLabels: Record<string, string> = {
+  MOCK: "Simulación",
+  CUSTOMER: "Cliente",
+  STARTED: "Iniciado",
+  MOCK_REJECTION: "Rechazo del ERP simulado",
+  CONNECTION_TIMEOUT: "Sin respuesta del ERP",
+  ACKNOWLEDGEMENT_TIMEOUT:
+    "Respuesta perdida; recepción pendiente de comprobar",
+  OUTCOME_UNKNOWN: "Envío interrumpido; resultado desconocido",
+  ERP_SEND_FAILED: "Error de envío al ERP",
+  INVALID_ACKNOWLEDGEMENT: "Respuesta del ERP no válida",
   NEW: "Nuevo",
   PROCESSED: "Procesado",
   DISCARDED: "Descartado",
   ERROR: "Error",
   DRAFT: "Borrador",
   IN_REVIEW: "En revisión",
-  CONFIRMED: "Confirmado",
-  EXPORTED: "Exportado",
+  SUBMITTED: "Enviado por el cliente",
+  AWAITING_CLIENT: "Pendiente del cliente",
+  APPROVED: "Aprobado internamente",
+  REJECTED: "Rechazado",
+  NOT_SENT: "Sin enviar al ERP",
+  PENDING: "Pendiente",
+  SENDING: "Enviando al ERP",
+  ACCEPTED: "Aceptado",
+  REQUESTED: "Solicitada",
+  INVALIDATED: "Invalidada",
   CANCELLED: "Cancelado",
   MATCHED: "Asociado",
   DOUBTFUL: "Dudoso",
@@ -116,3 +138,16 @@ export function downloadOrder(result: {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+export interface OrderPermissions {
+  read: boolean;
+  write: boolean;
+  mockClient?: boolean;
+  mockErp?: boolean;
+  erpConfigured?: boolean;
+}
+export const customerAccepted = (order: RecordRow) =>
+  order.data.customerDeclinedRevision !== order.data.commercialRevision &&
+  (order.data.customerAcceptedRevision === order.data.commercialRevision ||
+    order.data.submittedRevision === order.data.commercialRevision) &&
+  typeof order.data.commercialRevision === "number";

@@ -39,6 +39,9 @@ beforeEach(() => {
         deliveryDate: "2030-01-07",
         origin: "MOCK_MESSAGE",
         totalCents: 500,
+        commercialRevision: 1,
+        submittedRevision: 1,
+        erpState: "NOT_SENT",
       },
       3,
     ),
@@ -112,13 +115,13 @@ beforeEach(() => {
         };
         return structuredClone(view) as never;
       }
-      if (path === "/orders/order/confirm") {
+      if (path === "/orders/order/approve") {
         view = {
           ...view,
           order: {
             ...view.order,
             version: 5,
-            data: { ...view.order.data, state: "CONFIRMED" },
+            data: { ...view.order.data, state: "APPROVED" },
           },
         };
         return { record: view.order } as never;
@@ -173,11 +176,11 @@ function button(text: string) {
 it("requires saving reviewed lines and a separate human confirmation", async () => {
   await render();
   expect(host.textContent).toContain("Entrada original");
-  expect(button("Confirmar pedido").disabled).toBe(true);
+  expect(button("Aprobar internamente").disabled).toBe(true);
   await act(async () =>
     host.querySelector<HTMLInputElement>("input[type=checkbox]")!.click(),
   );
-  expect(button("Confirmar pedido").disabled).toBe(true);
+  expect(button("Aprobar internamente").disabled).toBe(true);
   await act(async () =>
     host
       .querySelector("form")!
@@ -198,23 +201,23 @@ it("requires saving reviewed lines and a separate human confirmation", async () 
       ],
     }),
   );
-  expect(button("Confirmar pedido").disabled).toBe(false);
-  await act(async () => button("Confirmar pedido").click());
+  expect(button("Aprobar internamente").disabled).toBe(false);
+  await act(async () => button("Aprobar internamente").click());
   expect(host.querySelector("[role=dialog]")).toBeTruthy();
   expect(request).not.toHaveBeenCalledWith(
-    "/orders/order/confirm",
+    "/orders/order/approve",
     expect.anything(),
     expect.anything(),
     expect.anything(),
   );
   await act(async () => button("Confirmar acción").click());
   expect(request).toHaveBeenCalledWith(
-    "/orders/order/confirm",
+    "/orders/order/approve",
     "workspace",
     "POST",
     { version: 4 },
   );
-  expect(host.textContent).toContain("Pedido confirmado");
+  expect(host.textContent).toContain("Pedido aprobado internamente");
 });
 it("read-only users can consult the source and lines but cannot confirm or edit", async () => {
   await render(false);
@@ -222,7 +225,7 @@ it("read-only users can consult the source and lines but cannot confirm or edit"
   expect(
     host.querySelector<HTMLInputElement>("input[type=checkbox]")!.disabled,
   ).toBe(true);
-  expect(host.textContent).not.toContain("Confirmar pedido");
+  expect(host.textContent).not.toContain("Aprobar internamente");
   expect(host.textContent).not.toContain("Guardar revisión");
 });
 it("direct create routes remain restricted without write permissions", async () => {
@@ -255,4 +258,35 @@ it("the product search filters candidates without dropping the current selection
   });
   expect(select.options.length).toBeLessThan(before);
   expect(select.value).toBe("product");
+});
+
+it("approval stays disabled until the customer accepts this exact revision", async () => {
+  view.order.data.commercialRevision = 2;
+  view.lines[0].data.reviewAccepted = true;
+  await render();
+  expect(button("Aprobar internamente").disabled).toBe(true);
+  expect(host.textContent).toContain("Aceptación pendiente");
+});
+it("an approved order offers ERP preparation without implying external acceptance", async () => {
+  view.order.data.state = "APPROVED";
+  await render();
+  expect(host.textContent).toContain("Preparar envío al ERP");
+  expect(host.textContent).toContain("Sin enviar al ERP");
+  expect(host.textContent).toContain("Exportar CSV");
+  expect(host.textContent).not.toContain("Simular aceptación");
+});
+it("queued orders cannot be edited or cancelled locally", async () => {
+  view.order.data.state = "APPROVED";
+  view.order.data.erpDeliveryId = "delivery";
+  view.order.data.erpState = "PENDING";
+  view.erpDelivery = row("delivery", {
+    idempotencyKey: "stable-key",
+    state: "PENDING",
+  });
+  await render();
+  expect(host.textContent).not.toContain("Cancelar pedido");
+  expect(host.textContent).toContain("Solicitar cancelación al ERP");
+  expect(
+    host.querySelector<HTMLInputElement>("input[type=checkbox]")!.disabled,
+  ).toBe(true);
 });

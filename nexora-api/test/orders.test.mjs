@@ -138,7 +138,17 @@ async function fixture() {
     },
     null,
   );
-  return { s, service: new OrdersService(s), tenant, product, client, center };
+  return {
+    s,
+    service: new OrdersService(s, {
+      allowMockClient: true,
+      erpProvider: "mock",
+    }),
+    tenant,
+    product,
+    client,
+    center,
+  };
 }
 async function proposal(f, body = "SKU-A | 2 | KG") {
   const m = await f.service.createMessage("t", {
@@ -212,49 +222,69 @@ test("messages deduplicate and processing is idempotent", async () => {
   assert.equal((await f.s.list("t", "orders")).length, 1);
   assert.equal((await f.s.list("t", "aiOrderRuns")).length, 1);
 });
-test("confirmation requires human review, reserves stock once and export freezes editing", async () => {
+async function ready(f, body) {
+  const v = await proposal(f, body);
+  await f.service.submitOriginal(
+    "t",
+    v.order.id,
+    v.order.version,
+    "operator",
+    "Original email reference",
+  );
+  const fresh = await f.service.view("t", v.order.id);
+  return f.service.saveReview("t", v.order.id, review(fresh, f), "operator");
+}
+test("approval requires client acceptance, freezes revision and never reserves ERP stock", async () => {
   const f = await fixture(),
     v = await proposal(f);
   await assert.rejects(
-    () => f.service.confirm("t", v.order.id, v.order.version, null),
+    () => f.service.approve("t", v.order.id, v.order.version, null),
     /Human review/,
   );
   await assert.rejects(
-    () => f.service.confirm("t", v.order.id, v.order.version, "operator"),
-    /Review every line/,
+    () => f.service.approve("t", v.order.id, v.order.version, "operator"),
+    /Customer acceptance/,
   );
-  const saved = await f.service.saveReview(
+  const submitted = await f.service.submitOriginal(
     "t",
     v.order.id,
-    review(v, f),
+    v.order.version,
     "operator",
+    "Original email",
   );
-  const confirmed = await f.service.confirm(
+  await assert.rejects(
+    () => f.service.approve("t", v.order.id, submitted.version, "operator"),
+    /Review every line/,
+  );
+  const fresh = await f.service.view("t", v.order.id),
+    saved = await f.service.saveReview(
+      "t",
+      v.order.id,
+      review(fresh, f),
+      "operator",
+    );
+  const approved = await f.service.approve(
     "t",
     v.order.id,
     saved.order.version,
     "operator",
   );
-  assert.equal(confirmed.data.totalCents, 500);
-  assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 8);
-  assert.equal(
-    (await f.s.list("t", "usualBaskets"))[0].data.averageQuantity,
-    2,
-  );
-  await assert.rejects(
-    () => f.service.confirm("t", confirmed.id, confirmed.version, "operator"),
-    /current state/,
-  );
+  assert.equal(approved.data.state, "APPROVED");
+  assert.equal(approved.data.totalCents, 500);
+  assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 10);
+  assert.equal((await f.s.list("t", "usualBaskets")).length, 0);
   const result = await f.service.export(
     "t",
-    confirmed.id,
-    confirmed.version,
+    approved.id,
+    approved.version,
     "operator",
   );
   assert(result.content.includes("SKU-A"));
   assert(result.content.includes("5.00"));
-  const latest = await f.s.get("t", "orders", confirmed.id);
-  assert.equal(latest.data.state, "EXPORTED");
+  const latest = await f.s.get("t", "orders", approved.id);
+  assert.equal(latest.data.state, "APPROVED");
+  assert.equal(latest.data.erpState, "NOT_SENT");
+  assert(latest.data.exportedAt);
   await assert.rejects(
     () =>
       f.service.saveReview(
@@ -265,11 +295,11 @@ test("confirmation requires human review, reserves stock once and export freezes
       ),
     /Only draft/,
   );
-  assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 8);
 });
 test("duplicate product quantities are accumulated and stock rolls back on failure", async () => {
   const f = await fixture(),
     v = await proposal(f, "SKU-A | 6 | KG\nSKU-A | 6 | KG");
+
   const saved = await f.service.saveReview(
     "t",
     v.order.id,
@@ -277,7 +307,7 @@ test("duplicate product quantities are accumulated and stock rolls back on failu
     "operator",
   );
   await assert.rejects(
-    () => f.service.confirm("t", v.order.id, saved.order.version, "operator"),
+    () => f.service.prepareTerms("t", saved.order, true),
     /duplicate product lines/,
   );
   assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 10);
@@ -286,30 +316,23 @@ test("duplicate product quantities are accumulated and stock rolls back on failu
     "IN_REVIEW",
   );
 });
-test("cancellation restores stock and removes its contribution to usual baskets", async () => {
+test("cancellation before ERP leaves inventory unchanged", async () => {
   const f = await fixture(),
-    v = await proposal(f),
-    saved = await f.service.saveReview(
-      "t",
-      v.order.id,
-      review(v, f),
-      "operator",
-    );
-  const confirmed = await f.service.confirm(
+    v = await ready(f);
+  const approved = await f.service.approve(
     "t",
     v.order.id,
-    saved.order.version,
+    v.order.version,
     "operator",
   );
   const cancelled = await f.service.cancel(
     "t",
-    confirmed.id,
-    confirmed.version,
+    approved.id,
+    approved.version,
     "operator",
   );
   assert.equal(cancelled.data.state, "CANCELLED");
   assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 10);
-  assert.equal((await f.s.list("t", "usualBaskets")).length, 0);
   await assert.rejects(
     () => f.service.cancel("t", cancelled.id, cancelled.version, "operator"),
     /current state/,
@@ -363,7 +386,7 @@ test("stale versions, tenant mismatch, wrong client and price changes are reject
     "operator",
   );
   await assert.rejects(
-    () => f.service.confirm("t", v.order.id, saved.order.version, "operator"),
+    () => f.service.prepareTerms("t", saved.order, true),
     /prices changed/,
   );
   assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 10);
@@ -462,6 +485,21 @@ test("HTTP scopes companies, enforces roles and prevents generic CRUD from bypas
     assert.equal(proposal.status, 200, JSON.stringify(proposal));
     const view = await api("/orders/" + proposal.data.record.id);
     assert.equal(view.data.lines[0].data.reviewAccepted, false);
+    assert.equal(
+      (
+        await api(
+          "/orders/" + proposal.data.record.id + "/mock-client-decision",
+          "POST",
+          {
+            version: view.data.order.version,
+            revision: 1,
+            decision: "ACCEPTED",
+            evidence: "forged",
+          },
+        )
+      ).status,
+      403,
+    );
     role = "commercial";
     assert.equal((await api("/orders")).status, 200);
     assert.equal((await api("/orders/catalog")).status, 200);
@@ -471,4 +509,255 @@ test("HTTP scopes companies, enforces roles and prevents generic CRUD from bypas
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
+});
+
+const identity = (f) => ({
+  kind: "MOCK",
+  tenantId: "t",
+  clientId: f.client.id,
+  subject: "mock-client",
+  actorId: "operator",
+});
+async function decision(f, o, choice = "ACCEPTED", id = identity(f)) {
+  return f.service.customerDecision(
+    "t",
+    o.id,
+    {
+      version: o.version,
+      revision: o.data.commercialRevision,
+      decision: choice,
+      evidence: "Demonstration response",
+    },
+    id,
+  );
+}
+test("changed terms invalidate client consent and rejected revisions cannot bypass acceptance", async () => {
+  const f = await fixture();
+  let v = await ready(f);
+  const input = review(v, f);
+  input.lines[0].quantity = 3;
+  v = await f.service.saveReview("t", v.order.id, input, "operator");
+  assert.equal(v.order.data.commercialRevision, 2);
+  await assert.rejects(
+    () => f.service.approve("t", v.order.id, v.order.version, "operator"),
+    /Customer acceptance/,
+  );
+  await assert.rejects(
+    () =>
+      f.service.submitOriginal(
+        "t",
+        v.order.id,
+        v.order.version,
+        "operator",
+        "Another email",
+      ),
+    /already been recorded/,
+  );
+  let pending = await f.service.requestAcceptance(
+    "t",
+    v.order.id,
+    v.order.version,
+    "operator",
+  );
+  await assert.rejects(
+    () =>
+      decision(f, pending, "ACCEPTED", { ...identity(f), clientId: "other" }),
+    /cannot decide/,
+  );
+  await assert.rejects(
+    () =>
+      decision(f, pending, "ACCEPTED", { ...identity(f), tenantId: "other" }),
+    /identity/,
+  );
+  await assert.rejects(
+    () =>
+      decision(f, pending, "ACCEPTED", {
+        ...identity(f),
+        kind: "CUSTOMER",
+        centerIds: [],
+      }),
+    /cannot decide/,
+  );
+  const rejected = await decision(f, pending, "REJECTED");
+  await assert.rejects(
+    () => f.service.approve("t", rejected.id, rejected.version, "operator"),
+    /Customer acceptance/,
+  );
+  pending = await f.service.requestAcceptance(
+    "t",
+    rejected.id,
+    rejected.version,
+    "operator",
+  );
+  f.service.options.allowMockClient = false;
+  await assert.rejects(() => decision(f, pending), /disabled/);
+  f.service.options.allowMockClient = true;
+  await assert.rejects(
+    () =>
+      f.service.customerDecision(
+        "t",
+        pending.id,
+        {
+          version: pending.version,
+          revision: 1,
+          decision: "ACCEPTED",
+          evidence: "old",
+        },
+        identity(f),
+      ),
+    /obsolete/,
+  );
+  const accepted = await decision(f, pending);
+  const approved = await f.service.approve(
+    "t",
+    accepted.id,
+    accepted.version,
+    "operator",
+  );
+  assert.equal(approved.data.approvedRevision, 2);
+  const reopened = await f.service.reopen(
+    "t",
+    approved.id,
+    approved.version,
+    "operator",
+  );
+  v = await f.service.view("t", reopened.id);
+  const changed = review(v, f);
+  changed.lines[0].quantity = 4;
+  v = await f.service.saveReview("t", v.order.id, changed, "operator");
+  assert.equal(v.order.data.customerAcceptedRevision, null);
+});
+test("rejection of the original revision overrides its inbound acceptance", async () => {
+  const f = await fixture(),
+    v = await ready(f);
+  const pending = await f.service.requestAcceptance(
+    "t",
+    v.order.id,
+    v.order.version,
+    "operator",
+  );
+  const rejected = await decision(f, pending, "REJECTED");
+  await assert.rejects(
+    () => f.service.approve("t", rejected.id, rejected.version, "operator"),
+    /Customer acceptance/,
+  );
+});
+test("ERP lost acknowledgement retries use the same durable idempotency key", async () => {
+  const f = await fixture(),
+    v = await ready(f);
+  let o = await f.service.approve("t", v.order.id, v.order.version, "operator");
+  const d = await f.service.queueErp("t", o.id, o.version, "operator");
+  o = await f.s.get("t", "orders", o.id);
+  assert.equal(o.data.erpState, "PENDING");
+  assert.equal(
+    (await f.service.queueErp("t", o.id, o.version, "operator")).id,
+    d.id,
+  );
+  await assert.rejects(
+    () => f.service.cancel("t", o.id, o.version, "operator"),
+    /ERP delivery/,
+  );
+  await assert.rejects(
+    () => f.service.reopen("t", o.id, o.version, "operator"),
+    /ERP delivery/,
+  );
+  o = await f.service.dispatchErp(
+    "t",
+    o.id,
+    o.version,
+    "operator",
+    "TIMEOUT_AFTER_ACCEPT",
+  );
+  assert.equal(o.data.erpState, "ERROR");
+  assert.equal((await f.s.list("t", "mockErpReceipts")).length, 1);
+  assert.equal((await f.s.list("t", "usualBaskets")).length, 0);
+  const receipt = (await f.s.list("t", "mockErpReceipts"))[0];
+  o = await f.service.dispatchErp("t", o.id, o.version, "operator");
+  assert.equal(o.data.erpState, "ACCEPTED");
+  assert.equal(o.data.externalOrderId, receipt.data.externalId);
+  assert.equal((await f.s.list("t", "erpAttempts")).length, 2);
+  assert.equal((await f.s.list("t", "mockErpReceipts")).length, 1);
+  assert.equal(
+    (await f.s.list("t", "usualBaskets"))[0].data.averageQuantity,
+    2,
+  );
+  assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 10);
+  await f.service.dispatchErp("t", o.id, o.version, "operator");
+  assert.equal((await f.s.list("t", "erpAttempts")).length, 2);
+  const change = await f.service.requestErpCancellation(
+    "t",
+    o.id,
+    o.version,
+    "operator",
+    "Customer request",
+  );
+  assert.equal(change.data.state, "PENDING");
+  assert.equal(
+    (
+      await f.service.requestErpCancellation(
+        "t",
+        o.id,
+        o.version,
+        "operator",
+        "Retry",
+      )
+    ).id,
+    change.id,
+  );
+  assert.equal((await f.s.get("t", "orders", o.id)).data.erpState, "ACCEPTED");
+});
+test("ERP rejection and timeout do not count as purchases; unconfigured connector cannot send", async () => {
+  const f = await fixture(),
+    v = await ready(f);
+  let o = await f.service.approve("t", v.order.id, v.order.version, "operator");
+  await f.service.queueErp("t", o.id, o.version, "operator");
+  o = await f.s.get("t", "orders", o.id);
+  f.service.options.erpProvider = "unconfigured";
+  await assert.rejects(
+    () => f.service.dispatchErp("t", o.id, o.version, "operator"),
+    /not configured/,
+  );
+  f.service.options.erpProvider = "mock";
+  for (const scenario of ["REJECT", "TIMEOUT"]) {
+    o = await f.service.dispatchErp("t", o.id, o.version, "operator", scenario);
+    assert.equal(o.data.erpState, "ERROR");
+    assert.equal((await f.s.list("t", "mockErpReceipts")).length, 0);
+  }
+  assert.equal((await f.s.list("t", "usualBaskets")).length, 0);
+});
+
+test("commercial hashes survive PostgreSQL JSON object key ordering", async () => {
+  const { snapshotHash } = await import("../src/workflow-rules.mjs");
+  assert.equal(
+    snapshotHash({ z: [{ b: 2, a: 1 }], a: 3 }),
+    snapshotHash({ a: 3, z: [{ a: 1, b: 2 }] }),
+  );
+});
+
+test("in-flight ERP sends cannot overlap and retain one durable delivery", async () => {
+  const f = await fixture(),
+    v = await ready(f);
+  let o = await f.service.approve("t", v.order.id, v.order.version, "operator");
+  await f.service.queueErp("t", o.id, o.version, "operator");
+  o = await f.s.get("t", "orders", o.id);
+  let release, entered;
+  const started = new Promise((r) => (entered = r));
+  f.service.options.erpAdapter = {
+    send: async () => {
+      entered();
+      await new Promise((r) => (release = r));
+      return { accepted: true, externalId: "MOCK-CONCURRENT" };
+    },
+  };
+  const first = f.service.dispatchErp("t", o.id, o.version, "operator");
+  await started;
+  const sending = await f.s.get("t", "orders", o.id);
+  await assert.rejects(
+    () => f.service.dispatchErp("t", o.id, sending.version, "operator"),
+    /already in progress/,
+  );
+  release();
+  const result = await first;
+  assert.equal(result.data.erpState, "ACCEPTED");
+  assert.equal((await f.s.list("t", "erpAttempts")).length, 1);
 });

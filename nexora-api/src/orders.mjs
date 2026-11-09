@@ -1,12 +1,12 @@
+import { attachOrderWorkflow } from "./order-workflow.mjs";
+import { newWorkflowFields } from "./workflow-schema.mjs";
 import { randomUUID } from "node:crypto";
 import {
   messageHash,
   parseMockOrder,
   money,
   lineState,
-  validDate,
   deliveryProblems,
-  exportRows,
   lineAmount,
 } from "./order-rules.mjs";
 const error = (message, status = 400) => {
@@ -14,8 +14,13 @@ const error = (message, status = 400) => {
 };
 const now = () => new Date().toISOString();
 export class OrdersService {
-  constructor(store) {
+  constructor(store, options = {}) {
     this.store = store;
+    this.options = {
+      allowMockClient: false,
+      erpProvider: "unconfigured",
+      ...options,
+    };
   }
   async required(t, r, id) {
     const row = await this.store.get(t, r, id);
@@ -133,6 +138,7 @@ export class OrdersService {
       t,
       "orders",
       {
+        ...newWorkflowFields(),
         number: `NX-${now().slice(0, 10).replaceAll("-", "")}-${id}`,
         clientId: client?.id ?? null,
         centerId: center?.id ?? null,
@@ -223,7 +229,12 @@ export class OrdersService {
         t,
         "orders",
         order.id,
-        { ...order.data, totalCents, confidence },
+        await this.applyRevision(
+          t,
+          order,
+          { ...order.data, totalCents, confidence },
+          actor,
+        ),
         order.version,
         actor,
       );
@@ -276,6 +287,18 @@ export class OrdersService {
     );
     return {
       order,
+      approvals: (await this.store.list(t, "orderApprovals")).filter(
+        (a) => a.data.orderId === id,
+      ),
+      erpDelivery: order.data.erpDeliveryId
+        ? await this.required(t, "erpDeliveries", order.data.erpDeliveryId)
+        : null,
+      erpAttempts: (await this.store.list(t, "erpAttempts")).filter(
+        (a) => a.data.orderId === id,
+      ),
+      erpChangeRequests: (await this.store.list(t, "erpChangeRequests")).filter(
+        (a) => a.data.orderId === id,
+      ),
       lines,
       alerts,
       message: message?.message ?? null,
@@ -287,7 +310,7 @@ export class OrdersService {
     return this.store.transaction(async () => {
       await this.store.lock(t);
       const order = await this.required(t, "orders", id);
-      if (!["DRAFT", "IN_REVIEW"].includes(order.data.state))
+      if (!["DRAFT", "SUBMITTED", "IN_REVIEW"].includes(order.data.state))
         error("Only draft or review orders can be edited", 409);
       if (order.version !== input.version)
         error("Record changed. Reload before saving.", 409);
@@ -304,6 +327,11 @@ export class OrdersService {
         )
       )
         error("Unknown order field");
+      if (order.data.erpDeliveryId)
+        error(
+          "ERP delivery already exists. Commercial changes must be handled through the ERP.",
+          409,
+        );
       const { client, center } = await this.customer(
         t,
         input.clientId,
@@ -413,14 +441,19 @@ export class OrdersService {
         t,
         "orders",
         id,
-        {
-          ...order.data,
-          clientId: client?.id ?? null,
-          centerId: center?.id ?? null,
-          deliveryDate: input.deliveryDate || null,
-          totalCents,
-          state: "IN_REVIEW",
-        },
+        await this.applyRevision(
+          t,
+          order,
+          {
+            ...order.data,
+            clientId: client?.id ?? null,
+            centerId: center?.id ?? null,
+            deliveryDate: input.deliveryDate || null,
+            totalCents,
+            state: "IN_REVIEW",
+          },
+          actor,
+        ),
         order.version,
         actor,
       );
@@ -523,198 +556,11 @@ export class OrdersService {
         );
     }
   }
-  async confirm(t, id, version, actor) {
-    if (!actor) error("Human review is required", 403);
-    return this.store.transaction(async () => {
-      await this.store.lock(t);
-      const order = await this.required(t, "orders", id);
-      if (order.version !== version)
-        error("Record changed. Reload before saving.", 409);
-      if (!["DRAFT", "IN_REVIEW"].includes(order.data.state))
-        error("Order cannot be confirmed in its current state", 409);
-      const { client, center } = await this.customer(
-        t,
-        order.data.clientId,
-        order.data.centerId,
-      );
-      if (!client || !center)
-        error("Select a client and center before confirming");
-      if (!client.data.active)
-        error("Inactive clients cannot place confirmed orders");
-      if (
-        order.data.deliveryDate &&
-        order.data.deliveryDate <
-          new Intl.DateTimeFormat("en-CA", {
-            timeZone: "Europe/Madrid",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          }).format(new Date())
-      )
-        error("Delivery date cannot be in the past");
-      if (!validDate(order.data.deliveryDate))
-        error("A valid delivery date is required");
-      if (deliveryProblems(center, order.data.deliveryDate).length)
-        error("Delivery date does not match the center schedule");
-      const lines = (await this.store.list(t, "orderLines")).filter(
-        (l) => l.data.orderId === id,
-      );
-      if (!lines.length) error("At least one order line is required");
-      const quantities = new Map(),
-        products = await this.store.list(t, "products");
-      let totalCents = 0;
-      for (const l of lines) {
-        const p = products.find((p) => p.id === l.data.productId);
-        if (
-          !l.data.reviewAccepted ||
-          lineState(p, l.data.quantity, l.data.unit, true) !== "MATCHED"
-        )
-          error(
-            "Review every line and resolve product, quantity, unit and stock issues",
-          );
-        if (typeof p.data.price !== "number")
-          error("A product price is missing");
-        if (money(p.data.price) !== l.data.unitPriceCents)
-          error("Catalog prices changed. Save the review again");
-        quantities.set(p.id, (quantities.get(p.id) ?? 0) + l.data.quantity);
-        totalCents += lineAmount(l.data.quantity, l.data.unitPriceCents);
-        if (!Number.isSafeInteger(totalCents))
-          error("Order amount exceeds supported limits");
-      }
-      for (const [id, qty] of quantities) {
-        const p = products.find((p) => p.id === id);
-        if (qty > p.data.stock)
-          error("Insufficient stock across duplicate product lines");
-        await this.store.update(
-          t,
-          "products",
-          id,
-          { ...p.data, stock: Number((p.data.stock - qty).toFixed(3)) },
-          p.version,
-          actor,
-        );
-      }
-      const updated = await this.store.update(
-        t,
-        "orders",
-        id,
-        {
-          ...order.data,
-          state: "CONFIRMED",
-          totalCents,
-          reviewedBy: actor,
-          confirmedAt: now(),
-        },
-        order.version,
-        actor,
-      );
-      for (const a of (await this.store.list(t, "orderAlerts")).filter(
-        (a) => a.data.orderId === id && a.data.state === "OPEN",
-      ))
-        await this.store.update(
-          t,
-          "orderAlerts",
-          a.id,
-          { ...a.data, state: "ATTENDED" },
-          a.version,
-          actor,
-        );
-      await this.recomputeBaskets(t, actor);
-      return updated;
-    });
-  }
-  async cancel(t, id, version, actor) {
-    if (!actor) error("Human review is required", 403);
-    return this.store.transaction(async () => {
-      await this.store.lock(t);
-      const order = await this.required(t, "orders", id);
-      if (!["DRAFT", "IN_REVIEW", "CONFIRMED"].includes(order.data.state))
-        error("Order cannot be cancelled in its current state", 409);
-      if (order.version !== version)
-        error("Record changed. Reload before saving.", 409);
-      if (order.data.state === "CONFIRMED") {
-        const quantities = new Map();
-        for (const l of (await this.store.list(t, "orderLines")).filter(
-          (l) => l.data.orderId === id,
-        ))
-          quantities.set(
-            l.data.productId,
-            (quantities.get(l.data.productId) ?? 0) + l.data.quantity,
-          );
-        for (const [productId, qty] of quantities) {
-          const p = await this.required(t, "products", productId);
-          await this.store.update(
-            t,
-            "products",
-            productId,
-            { ...p.data, stock: Number((p.data.stock + qty).toFixed(3)) },
-            p.version,
-            actor,
-          );
-        }
-      }
-      const result = await this.store.update(
-        t,
-        "orders",
-        id,
-        { ...order.data, state: "CANCELLED" },
-        order.version,
-        actor,
-      );
-      for (const a of (await this.store.list(t, "orderAlerts")).filter(
-        (a) => a.data.orderId === id && a.data.state === "OPEN",
-      ))
-        await this.store.update(
-          t,
-          "orderAlerts",
-          a.id,
-          { ...a.data, state: "ATTENDED" },
-          a.version,
-          actor,
-        );
-      await this.recomputeBaskets(t, actor);
-      return result;
-    });
-  }
-  async export(t, id, version, actor, format = "csv") {
-    return this.store.transaction(async () => {
-      await this.store.lock(t);
-      const view = await this.view(t, id);
-      if (view.order.version !== version)
-        error("Record changed. Reload before saving.", 409);
-      if (!["CONFIRMED", "EXPORTED"].includes(view.order.data.state))
-        error("Only confirmed orders can be exported", 409);
-      if (!["csv", "json"].includes(format)) error("Invalid export format");
-      const content =
-        format === "csv"
-          ? exportRows(
-              view.order,
-              view.lines,
-              await this.store.list(t, "products"),
-            )
-          : JSON.stringify({ order: view.order, lines: view.lines }, null, 2);
-      if (view.order.data.state === "CONFIRMED")
-        await this.store.update(
-          t,
-          "orders",
-          id,
-          { ...view.order.data, state: "EXPORTED", exportedAt: now() },
-          view.order.version,
-          actor,
-        );
-      await this.store.log(t, actor, "EXPORT", "orders", id, null, { format });
-      return {
-        filename: view.order.data.number + "." + format,
-        mime: format === "csv" ? "text/csv;charset=utf-8" : "application/json",
-        content,
-      };
-    });
-  }
   async recomputeBaskets(t, actor = null) {
     return this.store.transaction(async () => {
       await this.store.lock(t);
-      const orders = (await this.store.list(t, "orders")).filter((o) =>
-        ["CONFIRMED", "EXPORTED"].includes(o.data.state),
+      const orders = (await this.store.list(t, "orders")).filter(
+        (o) => o.data.state === "APPROVED" && o.data.erpState === "ACCEPTED",
       );
       const lines = await this.store.list(t, "orderLines"),
         groups = new Map();
@@ -738,9 +584,10 @@ export class OrdersService {
               productId,
               orders: [],
             });
-          groups
-            .get(key)
-            .orders.push({ quantity, date: order.data.confirmedAt });
+          groups.get(key).orders.push({
+            quantity,
+            date: order.data.erpAcceptedAt ?? order.data.approvedAt,
+          });
         }
       }
       const existing = await this.store.list(t, "usualBaskets");
@@ -819,3 +666,5 @@ export class OrdersService {
     );
   }
 }
+
+attachOrderWorkflow(OrdersService);

@@ -325,6 +325,36 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  "Customer acceptance is required for the current revision":
+    "El cliente debe aceptar la revisión actual antes de aprobarla.",
+  "ERP delivery already exists. Commercial changes must be handled through the ERP.":
+    "El pedido ya tiene un envío al ERP. Los cambios deben tramitarse con el ERP.",
+  "Original submission has already been recorded; later changes require client acceptance":
+    "La solicitud original ya está registrada. Los cambios posteriores requieren aceptación del cliente.",
+  "The client decision belongs to an obsolete revision":
+    "La respuesta corresponde a una revisión anterior. Recarga el pedido.",
+  "Mock client decisions are disabled":
+    "La simulación del cliente está desactivada.",
+  "Order is not ready for internal approval":
+    "El estado actual no permite aprobar internamente el pedido.",
+  "Commercial terms changed. Save the review again":
+    "Las condiciones comerciales han cambiado. Guarda de nuevo la revisión.",
+  "Client acceptance cannot be requested in this state":
+    "El estado actual no permite solicitar aceptación al cliente.",
+  "ERP connector is not configured":
+    "El conector ERP todavía no está configurado.",
+  "An ERP attempt is already in progress":
+    "Ya hay un envío en curso. Espera a que termine o reintenta tras dos minutos si quedó interrumpido.",
+  "Only the approved and accepted revision can be queued for ERP":
+    "Solo puede enviarse al ERP la revisión aprobada y aceptada por el cliente.",
+  "Only approved orders can be exported":
+    "Solo pueden exportarse pedidos aprobados internamente.",
+  "A reason is required": "Indica el motivo para continuar.",
+  "A source reference is required to record the client submission":
+    "Indica una referencia de la solicitud original del cliente.",
+  "A decision and its reference are required":
+    "Indica la decisión y su referencia.",
+
   "Order amount exceeds supported limits":
     "El importe supera los límites admitidos. Revisa cantidades y precios.",
   "Center does not belong to the selected client":
