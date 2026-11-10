@@ -132,6 +132,7 @@ test("contact form handles success, failures and duplicate clicks without cleari
   ])
     w.document.getElementById(id).value = value;
   w.document.getElementById("contact-privacy").checked = true;
+  w.document.getElementById("contact-preference").value = "TARRAGONA";
   const form = w.document.querySelector("form");
   form.dispatchEvent(
     new w.Event("submit", { bubbles: true, cancelable: true }),
@@ -142,6 +143,10 @@ test("contact form handles success, failures and duplicate clicks without cleari
   );
   assert.equal(calls.length, 2);
   assert.equal(JSON.parse(calls[1].options.body).centerCount, 3);
+  assert.equal(
+    JSON.parse(calls[1].options.body).message,
+    "[Visita comercial · Tarragona]\nPlease arrange a demo.",
+  );
   assert(w.document.querySelector("button[type=submit]").disabled);
   resolveSubmit({ ok: false, json: async () => ({ error: "Temporal error" }) });
   await new Promise((r) => setTimeout(r, 0));

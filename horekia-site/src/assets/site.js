@@ -2,6 +2,8 @@ const form = document.querySelector("#contact-form");
 if (form) {
   const status = document.querySelector("#contact-status");
   const submit = document.querySelector("#contact-submit");
+  const preference = form.querySelector("#contact-preference");
+  if (new URLSearchParams(location.search).has("visita")) preference.focus();
   submit.disabled = false;
   let busy = false;
   const notify = (message, error = false) => {
@@ -43,7 +45,12 @@ if (form) {
           phone: "",
           sector: "",
           centerCount: Number(fields.get("centerCount")),
-          message: fields.get("message"),
+          message:
+            (fields.get("contactPreference") === "BARCELONA"
+              ? "[Visita comercial · Barcelona]\n"
+              : fields.get("contactPreference") === "TARRAGONA"
+                ? "[Visita comercial · Tarragona]\n"
+                : "") + fields.get("message"),
           website: fields.get("website"),
           privacyAcknowledged: fields.get("privacyAcknowledged") === "on",
           token: tokenData.token,

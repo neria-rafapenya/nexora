@@ -4,12 +4,14 @@
     href="https://calendar.app.google/itqQE6ph7aCm84zk6"
     target="_blank"
     rel="noopener noreferrer"
-    >Reserva 20 minutos ↗</a
+    >Reserva una llamada de 20 minutos ↗</a
   >
 </p>
 <p>
-  Reserva directamente en Google Calendar o envíanos el formulario. Al abrir la
-  reserva visitarás un servicio externo de Google.
+  Reserva una llamada en Google Calendar o solicita una visita comercial en las
+  provincias de Barcelona o Tarragona mediante el formulario. La visita se
+  confirmará contigo; no se reserva a través de Calendar. Al abrir la reserva
+  visitarás un servicio externo de Google.
 </p>
 <p>
   Cuéntanos cómo trabaja tu empresa y qué proceso te gustaría probar en un
@@ -22,6 +24,24 @@
     action="/api/public/contact"
     method="post"
   >
+    <label for="contact-preference"
+      >¿Cómo prefieres que hablemos?<select
+        id="contact-preference"
+        name="contactPreference"
+      >
+        <option value="">Consulta o solicitud de piloto</option>
+        <option value="BARCELONA">
+          Visita comercial · provincia de Barcelona
+        </option>
+        <option value="TARRAGONA">
+          Visita comercial · provincia de Tarragona
+        </option>
+      </select></label
+    >
+    <p>
+      Para una visita, indica en el mensaje el municipio y tu disponibilidad.
+      Confirmaremos los detalles por correo.
+    </p>
     <div class="form-pair">
       <label for="contact-name"
         >Nombre y apellidos <span aria-hidden="true">*</span
@@ -71,7 +91,7 @@
         rows="4"
         required
         minlength="10"
-        maxlength="3000"
+        maxlength="2900"
         placeholder="Cuéntanos cuántos centros coordináis, cómo recibís los pedidos y qué proceso os gustaría probar."
       ></textarea>
     </label>
