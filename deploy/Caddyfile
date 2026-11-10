@@ -40,7 +40,9 @@ www.horekia.com {
 	}
 	@immutable path_regexp assets ^/assets/site-[a-f0-9]+\.(css|js)$
 	header @immutable Cache-Control "public, max-age=31536000, immutable"
-	@html path / /privacidad /privacidad/ /aviso-legal /aviso-legal/ /cookies /cookies/ /404.html
+	@legal path /contacto /contacto/* /privacidad /privacidad/* /aviso-legal /aviso-legal/* /cookies /cookies/*
+	header @legal X-Robots-Tag "noindex, follow"
+	@html path / /privacidad /privacidad/ /aviso-legal /aviso-legal/ /cookies /cookies/ /contacto /contacto/ /404.html
 	header @html Cache-Control "no-cache"
 	@contact path /api/public/contact /api/public/contact-token
 	handle @contact {

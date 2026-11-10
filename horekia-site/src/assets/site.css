@@ -1387,3 +1387,25 @@ h3 {
 .hero-visual .order-card {
   top: 260px;
 }
+
+.contact-invitation h3 {
+  font-family: Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+.contact-invitation ul {
+  padding-left: 20px;
+  color: var(--muted);
+  margin-block: 24px;
+}
+.contact-invitation li {
+  margin-bottom: 9px;
+}
+.contact-invitation .button {
+  display: flex;
+}
+.contact-invitation .fine {
+  margin-bottom: 0;
+  margin-top: 18px;
+}

@@ -31,14 +31,22 @@ test("public content is server-readable and has one descriptive H1, canonical me
   assert(!html.includes("AggregateRating"));
   assert(d.querySelectorAll("details").length >= 8);
   assert(d.body.textContent.includes("integraciones parcialmente simuladas"));
-  assert(d.querySelectorAll("form").length === 1);
-  assert(d.querySelector("#contact-privacy").required);
-  assert(d.querySelector("#contact-email").required);
+  assert.equal(d.querySelectorAll("form").length, 0);
+  assert(!html.includes("Rafael Peña"));
+  assert(!html.includes("43735032A"));
+  assert(!html.includes("Ramon Soldevila"));
+  const contact = new JSDOM(
+    await readFile(root + "contacto/index.html", "utf8"),
+  ).window.document;
+  assert(contact.querySelector("#contact-privacy").required);
+  assert(contact.querySelector("#contact-email").required);
+  assert(contact.body.textContent.includes("Rafael Peña"));
   assert(!html.includes("GEMINI_API_KEY"));
 });
 test("every internal link/asset exists, IDs are unique, legal pages have canonical URLs, and sitemap contains only real pages", async () => {
   for (const page of [
     "index.html",
+    "contacto/index.html",
     "aviso-legal/index.html",
     "privacidad/index.html",
     "cookies/index.html",
@@ -69,14 +77,22 @@ test("every internal link/asset exists, IDs are unique, legal pages have canonic
   const sitemap = await readFile(root + "sitemap.xml", "utf8");
   assert(sitemap.includes("https://www.horekia.com/"));
   assert(!sitemap.includes("localhost"));
-  assert.equal((sitemap.match(/<loc>/g) ?? []).length, 4);
+  assert.equal((sitemap.match(/<loc>/g) ?? []).length, 1);
+  for (const slug of ["contacto", "privacidad", "aviso-legal", "cookies"]) {
+    assert(!sitemap.includes("/" + slug + "/"));
+    const legal = new JSDOM(await readFile(root + slug + "/index.html", "utf8"))
+      .window.document;
+    assert(
+      legal.querySelector('meta[name="robots"]').content.includes("noindex"),
+    );
+  }
   const robots = await readFile(root + "robots.txt", "utf8");
   assert(robots.includes("Allow: /"));
   assert(robots.includes("Sitemap: https://www.horekia.com/sitemap.xml"));
   assert((await readFile(root + "404.html", "utf8")).includes("noindex"));
 });
 test("contact form handles success, failures and duplicate clicks without clearing a failed message or using browser storage", async () => {
-  const html = await readFile(root + "index.html", "utf8"),
+  const html = await readFile(root + "contacto/index.html", "utf8"),
     script = await readFile(
       root +
         new JSDOM(html).window.document

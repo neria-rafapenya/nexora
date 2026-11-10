@@ -1,0 +1,116 @@
+<p>
+  Cuéntanos cómo trabaja tu empresa y qué tarea te gustaría agilizar con IA.
+  Utilizaremos tus datos para responder a tu solicitud.
+</p>
+<section id="formulario">
+  <form
+    id="contact-form"
+    class="contact-form"
+    action="/api/public/contact"
+    method="post"
+  >
+    <div class="form-pair">
+      <label for="contact-name"
+        >Nombre y apellidos <span aria-hidden="true">*</span
+        ><input
+          id="contact-name"
+          name="name"
+          autocomplete="name"
+          required
+          maxlength="120" /></label
+      ><label for="contact-email"
+        >Correo profesional <span aria-hidden="true">*</span
+        ><input
+          id="contact-email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          required
+          maxlength="254"
+      /></label>
+    </div>
+    <div class="form-pair">
+      <label for="contact-company"
+        >Empresa <span aria-hidden="true">*</span
+        ><input
+          id="contact-company"
+          name="company"
+          autocomplete="organization"
+          required
+          maxlength="160" /></label
+      ><label for="contact-phone"
+        >Teléfono <span class="optional">(opcional)</span
+        ><input
+          id="contact-phone"
+          name="phone"
+          type="tel"
+          autocomplete="tel"
+          maxlength="40"
+      /></label>
+    </div>
+    <label for="contact-sector"
+      >Tipo de empresa<select id="contact-sector" name="sector">
+        <option value="">Selecciona una opción</option>
+        <option value="CATERING">Catering y restauración colectiva</option>
+        <option value="PREPARED_FOOD">Fabricación de comida preparada</option>
+        <option value="SUPPLIER">Proveedor o distribuidor alimentario</option>
+        <option value="CENTER">Centro o empresa compradora</option>
+        <option value="OTHER">Otro</option>
+      </select></label
+    ><label for="contact-message"
+      >¿Cómo podemos ayudarte? <span aria-hidden="true">*</span
+      ><textarea
+        id="contact-message"
+        name="message"
+        rows="4"
+        required
+        minlength="10"
+        maxlength="3000"
+        placeholder="¿Qué tarea os gustaría agilizar con IA? Cuéntanos cómo trabajáis."
+      ></textarea>
+    </label>
+    <div class="honey-field" aria-hidden="true">
+      <label for="contact-website"
+        >Deja este campo vacío<input
+          id="contact-website"
+          name="website"
+          tabindex="-1"
+          autocomplete="off"
+      /></label>
+    </div>
+    <label class="checkbox-label" for="contact-privacy"
+      ><input
+        id="contact-privacy"
+        name="privacyAcknowledged"
+        type="checkbox"
+        required
+      /><span
+        >He leído la <a href="/privacidad/">política de privacidad</a> y la
+        información sobre el tratamiento de mi solicitud.</span
+      ></label
+    >
+    <p class="privacy-layer">
+      <strong>Responsable:</strong> Rafael Peña.
+      <strong>Finalidad:</strong> atender tu consulta o solicitud de
+      demostración. <strong>Base:</strong> interés legítimo o medidas
+      precontractuales, según corresponda. <strong>Derechos:</strong> puedes
+      ejercerlos en rafa@wad.cat. Consulta la
+      <a href="/privacidad/">información completa de privacidad</a>.
+    </p>
+    <button class="button" id="contact-submit" type="submit" disabled>
+      Enviar mi solicitud <span aria-hidden="true">↗</span>
+    </button>
+    <p
+      class="form-status"
+      id="contact-status"
+      role="status"
+      aria-live="polite"
+    ></p>
+    <noscript
+      ><p>
+        Para enviar el formulario necesitas JavaScript. También puedes escribir
+        a <a href="mailto:rafa@wad.cat">rafa@wad.cat</a>.
+      </p></noscript
+    >
+  </form>
+</section>
