@@ -1,3 +1,4 @@
+import { SemanticProducts } from "./SemanticProducts";
 import { FoodWaste } from "./FoodWaste";
 import { SupplierDocuments } from "./SupplierDocuments";
 import { Menus } from "./Menus";
@@ -754,6 +755,7 @@ function Master({
     [lookupsLoading, setLookupsLoading] = useState(true),
     [lookupsFailed, setLookupsFailed] = useState(false),
     [q, setQ] = useState(""),
+    [semantic, setSemantic] = useState(false),
     [family, setFamily] = useState(""),
     [temperature, setTemperature] = useState(""),
     [editing, setEditing] = useState<RecordRow | null | undefined>(undefined),
@@ -803,6 +805,7 @@ function Master({
   }, [recordId, createNew, resource, companyId, def]);
   useEffect(() => {
     let live = true;
+    if (semantic && resource === "products") return;
     setLoading(true);
     const timer = setTimeout(() => {
       const params = new URLSearchParams({
@@ -828,7 +831,7 @@ function Master({
       live = false;
       clearTimeout(timer);
     };
-  }, [resource, companyId, q, family, temperature, version]);
+  }, [resource, companyId, q, family, temperature, version, semantic]);
   useEffect(() => {
     let live = true;
     setLookupsLoading(true);
@@ -1190,6 +1193,34 @@ function Master({
           }}
         />
       )}
+      {resource === "products" && (
+        <div className="actions mt">
+          <button
+            className="secondary"
+            aria-pressed={semantic}
+            onClick={() => {
+              setSemantic((x) => !x);
+              setRows([]);
+              setError("");
+            }}
+          >
+            {semantic
+              ? "Volver a búsqueda por texto"
+              : "Buscar por significado con IA"}
+          </button>
+        </div>
+      )}
+      {resource === "products" && semantic && (
+        <SemanticProducts
+          key={version}
+          companyId={companyId}
+          familyId={family}
+          temperature={temperature}
+          canIndex={writable}
+          onResults={setRows}
+          onLoading={setLoading}
+        />
+      )}
       <section className="panel list-panel">
         <div className="list-toolbar">
           <label className="search">
@@ -1197,6 +1228,7 @@ function Master({
             <span className="sr-only">Buscar {def.label}</span>
             <input
               value={q}
+              disabled={semantic && resource === "products"}
               onChange={(e) => setQ(e.target.value)}
               placeholder={`Buscar ${def.label.toLowerCase()}…`}
             />
@@ -1247,6 +1279,11 @@ function Master({
                   {def.columns.map((k) => (
                     <th key={k}>{def.fields[k].label}</th>
                   ))}
+                  {resource === "products" && semantic && (
+                    <th title="Similitud coseno; no es una probabilidad ni una validación sanitaria">
+                      Similitud
+                    </th>
+                  )}
                   {resource === "products" && <th>Alérgenos</th>}
                   <th>Acciones</th>
                 </tr>
@@ -1272,6 +1309,16 @@ function Master({
                         )}
                       </td>
                     ))}
+                    {resource === "products" && semantic && (
+                      <td>
+                        {typeof (row as RecordRow & { score?: number })
+                          .score === "number"
+                          ? (
+                              row as RecordRow & { score: number }
+                            ).score.toFixed(3)
+                          : "—"}
+                      </td>
+                    )}
                     {resource === "products" && (
                       <td className="allergen-cell">
                         <AllergenTags

@@ -47,7 +47,7 @@ The API is deliberately local. Public hosting, TLS for the web interface, manage
 
 There are exactly **20 fictional products per family**. Startup seeds only a brand-new workspace; it never refills a catalog after user edits or repeats seeding on restart. The explicit master seed assigns sample suppliers to previously unassigned sample products. Sample products have no ingredient list or validated allergen data. No food-safety suitability is inferred from the sample catalog.
 
-Each master has a list, search, detail/edit form and permission-controlled create/delete actions. Referenced records cannot be deleted. Products have family and temperature filters. Text search supports approximate word matching; it is **not semantic search**.
+Each master has a list, search, detail/edit form and permission-controlled create/delete actions. Referenced records cannot be deleted. Products have family and temperature filters. Text search supports approximate word matching. Products also offer an explicit Gemini semantic search mode backed by pgvector (see F1 acceptance below).
 
 The database uses one table per master, with tenant/identity/version/audit columns and a JSONB business-data document. The shared field contract validates these documents. Unique catalog keys are indexed in PostgreSQL; cross-master references and hierarchy rules are checked transactionally by the API. This is not a collection of frontend-only mock objects.
 
@@ -115,9 +115,9 @@ CI runs offline tests and a production build, without Supabase credentials. TLS 
 
 ## Remaining phases
 
-F1 semantic product search requires an embedding provider and API key; none is connected. An initial candidate is OpenAI `text-embedding-3-small`. Do not confuse approximate word search with embeddings. The requested 200-product fixture replaces the original document's larger demo-catalog target.
+F1 semantic product search uses Gemini `gemini-embedding-001`, 768 dimensions, and Supabase pgvector. The key remains server-side. Approximate word search remains a separate mode. The requested 200-product fixture replaces the original document's larger demo-catalog target.
 
-F2 orders now works locally with explicitly simulated proposals and revision-specific customer acceptance and internal approval. F3 has a local menu-to-procurement workflow, weekly calendar, CSV/Excel import, configurable nutrition checks and reviewed order proposals. F4 supplier documents now has a local version/review/expiry workflow. F5 food waste now provides a local measurement, destination and prevention workflow. No external AI calls or automatic order confirmations occur. F1 semantic search remains postponed.
+F2 orders now works locally with simulated or Gemini proposals and revision-specific customer acceptance and internal approval. F3 has a local menu-to-procurement workflow, weekly calendar, CSV/Excel import, configurable nutrition checks and reviewed order proposals. F4 supplier documents now has a local version/review/expiry workflow. F5 food waste now provides a local measurement, destination and prevention workflow. Real Gemini extraction and embeddings are explicitly enabled for the POC; order approvals remain manual. F1 semantic search is implemented and validated as documented below.
 
 The final end-user application is separate from this private backoffice.
 
@@ -184,11 +184,11 @@ Tests include revision invalidation, customer rejection, scoped identities, perm
 NEXORA_ORDER_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/order-postgres.test.mjs
 ```
 
-Still deferred: real AI/embeddings, OCR, live email/WhatsApp ingestion, automatic diet/allergen-compatible substitute selection, real ERP connector and cancellation protocol, authenticated customer frontend and real-order accuracy benchmarks. Substitutions are manual and require reviewing the product documentation; the unvalidated allergen demo data is never treated as proof of suitability. AWS production infrastructure remains a later phase.
+Still deferred: OCR, live email/WhatsApp ingestion, automatic diet/allergen-compatible substitute selection, real ERP connector and cancellation protocol, authenticated customer frontend and real-order accuracy benchmarks. Substitutions are manual and require reviewing the product documentation; the unvalidated allergen demo data is never treated as proof of suitability. AWS production infrastructure remains a later phase.
 
 ## F3 — local POC menu planning, nutrition and procurement
 
-F3's agreed local scope is implemented. The customer frontend, real AI and ERP integration remain separate deferred work. UI is Spanish; models and demo records remain English. Routes: `/menus`, `/menus/new`, `/menus/:id`, `/menus/ingredients[/new|/:id]`, `/menus/recipes[/new|/:id]`, `/menus/nutrition`.
+F3's agreed local scope is implemented. The customer frontend, real menu-generation AI and ERP integration remain separate deferred work. UI is Spanish; models and demo records remain English. Routes: `/menus`, `/menus/new`, `/menus/:id`, `/menus/ingredients[/new|/:id]`, `/menus/recipes[/new|/:id]`, `/menus/nutrition`.
 
 ### Planning and imports
 
@@ -230,7 +230,7 @@ NEXORA_MENU_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/men
 ## Deferred integration backlog
 
 - Gemini Developer API free tier is queued for the POC. No provider is connected and no billing is enabled by this work. Start with F2 order interpretation, then menu interpretation/proposals; keep provider adapters replaceable for AWS later.
-- F1 semantic embeddings, live F2 email/WhatsApp/OCR and real ERP handoff/cancellation remain deferred.
+- Live F2 email/WhatsApp/OCR and real ERP handoff/cancellation remain deferred. F1 embeddings are completed for the POC scope below.
 - Customer frontend/authentication and external review requests remain future work. Specialist records here are private backoffice actions, not authenticated customer-frontend decisions.
 - Live center inventory, supplier-specific purchasing/logistics, verified food composition datasets and external document ingestion require their actual sources/integrations.
 - AWS production infrastructure remains deferred. Supplier portal ingestion, OCR/AI document analysis, external notifications and production object storage remain outside the local F4 workflow.
@@ -261,7 +261,7 @@ Offline tests cover scope, roles, stale reviews, private metadata/downloads, ver
 NEXORA_DOCUMENT_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/document-postgres.test.mjs
 ```
 
-Remaining integrations are still deferred: Gemini for POC AI, real customer/supplier frontends, ERP, external document sources, OCR/AI classification, email notifications and AWS production services. Real documents and professional validation must replace synthetic fixtures before real operations.
+Remaining integrations are still deferred: AI document analysis, real customer/supplier frontends, ERP, external document sources, OCR/AI classification, email notifications and AWS production services. Real documents and professional validation must replace synthetic fixtures before real operations.
 
 ## F5 — local food waste observations and prevention
 
@@ -295,15 +295,15 @@ Tests cover snapshots/costs, idempotency, unit separation, absence of stock/ERP 
 NEXORA_WASTE_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/waste-postgres.test.mjs
 ```
 
-Outstanding integrations remain the agreed backlog: Gemini free-tier POC integration, F1 embeddings, live channels/OCR, customer/supplier frontends, ERP, live inventory, external notifications and AWS production deployment. Real measurements, operating procedures and professional decisions must replace demo fixtures for real use.
+Outstanding integrations remain the agreed backlog: live channels/OCR, customer/supplier frontends, ERP, live inventory, external notifications and AWS production deployment. Real measurements, operating procedures and professional decisions must replace demo fixtures for real use.
 
 ## F5 functional acceptance closure — local POC
 
 Functional technical validation is closed for the agreed local scope. It is not an approval of real food handling or a customer production sign-off. The executable rollback scenario now covers disposal, a simulated Quality-reviewed donation, a supplier return, service-count comparison and an improvement action progressed to completion with evidence. Confirmed destination totals are checked separately, repeated requests do not duplicate observations, voiding removes the corrected record from indicators while retaining evidence, and stock/order counts stay unchanged. UI tests cover explicit confirmation/evidence and immutable completed records. No real Quality approvals, completed sample donations, users or external movements are created by validation.
 
-The original F0–F5 delivery sequence is complete for the documented local POC scopes, with the already deferred F1 semantic search and external integrations still pending. There is no previously defined F6. The recommended next workstream is the queued Gemini POC adapter for F2 order interpretation, followed by customer frontend work as selected by the user. Actual Gemini activation needs a user-provided API key and confirmation of the project's free-tier configuration; no billing is enabled automatically.
+The original F0–F5 delivery sequence is complete for the documented local POC scopes, with external integrations still pending; F1 semantic search is now completed for the POC. There is no previously defined F6. Gemini order interpretation and F1 semantic search are now enabled locally with the user-provided key and free-tier confirmation. Customer frontend work and the remaining integrations are deferred until selected by the user. No billing is enabled automatically.
 
-### Next workstream — Gemini POC order extraction (prepared, disabled)
+### Gemini POC order extraction
 
 The first real-provider slice is text extraction in the F2 order inbox. The existing simulated proposal remains available. Gemini proposes catalog references and quantities; server-side catalog prices and validations remain authoritative. Every line requires review, followed by the existing client acceptance and internal approval. It does not submit orders to an ERP, reserve stock, approve allergens, or implement menu generation/embeddings.
 
@@ -311,6 +311,28 @@ Configuration is server-only in `nexora-api/.env`: `GEMINI_ENABLED`, `GEMINI_API
 
 Each request requires confirmation that the message contains only fictitious POC data. Only saved text and active `Nexora Sample` SKU/name/unit references are sent; sender/client metadata and catalog prices are excluded. Do not include real personal or confidential information in the message. Usage tokens are recorded when returned; monetary cost is unknown rather than reported as zero. Local attempts, including failed attempts, consume the daily allowance. There is no automatic retry, provider fallback, or model fallback; provider quota errors are displayed. An in-flight lease prevents duplicate processing, and source/catalog changes invalidate the response before any proposal is committed.
 
-Migration 10 adds tenant-scoped request tracing and an in-flight uniqueness constraint. Automated adapter/service/UI checks use simulated provider responses. The PostgreSQL check can run with `NEXORA_AI_DB_TEST=1 node --env-file=.env --test test/gemini.test.mjs` from the API directory and rolls back its fixtures. A live adapter smoke test with fictitious data passed using `gemini-3.5-flash-lite`. The older 2.5 Flash-Lite returned 404 for this project. The current REST responseFormat schema uses basic types; strict bounds and unknown-field rejection remain enforced locally. Full live order workflow acceptance remains separate from this extraction smoke test. AWS remains the future target; this provider is isolated behind an extraction adapter.
+Migration 10 adds tenant-scoped request tracing and an in-flight uniqueness constraint. Automated adapter/service/UI checks use simulated provider responses. The PostgreSQL check can run with `NEXORA_AI_DB_TEST=1 node --env-file=.env --test test/gemini.test.mjs` from the API directory and rolls back its fixtures. A live adapter smoke test with fictitious data passed using `gemini-3.5-flash-lite`. The older 2.5 Flash-Lite returned 404 for this project. The current REST responseFormat schema uses basic types; strict bounds and unknown-field rejection remain enforced locally. Full live order workflow acceptance has also passed; see acceptance evidence below. AWS remains the future target; this provider is isolated behind an extraction adapter.
 
 Official references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing), [structured output](https://ai.google.dev/gemini-api/docs/structured-output), [generateContent API](https://ai.google.dev/api/generate-content).
+
+### F2 live Gemini functional acceptance — 2026-11-10
+
+`test/gemini-workflow.test.mjs` completed a real Gemini extraction against the fictitious catalog and the existing workflow services in Supabase. It verifies an unreviewed proposal, server-side prices, reviewed corrections, rejection of internal approval without acceptance, rejection of an obsolete customer decision, simulated client acceptance of the corrected revision, internal approval, and mock ERP handoff. A lost acknowledgement after mock ERP acceptance followed by retry produces two attempts but exactly one receipt/external order. Repeated dispatch stays idempotent; product stock is unchanged and another tenant cannot read the order. All business fixtures, test approvals and mock ERP receipts roll back; no users, sessions or memberships are created. This is technical POC acceptance with a **simulated customer and ERP**, not a real customer's approval or external ERP integration.
+
+Run from `nexora-api`: `NEXORA_AI_WORKFLOW_DB_TEST=1 NEXORA_GEMINI_LIVE=1 node --env-file=.env --test test/gemini-workflow.test.mjs`. Omitting `NEXORA_GEMINI_LIVE=1` uses an injected extraction response, while retaining the real database workflow. The live option sends fictitious data to Google.
+
+### F1 semantic search — POC implementation and acceptance
+
+Products offer “Buscar por significado con IA”, separate from the existing text search. Explicit queries in Spanish or English use Gemini `gemini-embedding-001` with `RETRIEVAL_QUERY`; product documents use `RETRIEVAL_DOCUMENT`. Vectors are normalized to 768 dimensions. Migration 11 enables pgvector and creates private RLS-enabled `bo.product_embeddings`, `bo.embedding_queries` and `bo.embedding_requests` tables. Vectors have tenant/product foreign keys and cascade away with deleted products. An exact cosine scan is appropriate for the current 200-product catalog; approximate vector indexes are not required at this size. Scores describe relative similarity, not confidence or nutritional/allergen suitability.
+
+Only active `Nexora Sample` products are embedded in this POC. Text includes SKU, name, family/category names, format, unit, temperature and ingredients. Prices, stock, client identities, supplier contact details and allergen approvals are excluded. Product/family/category changes invalidate source hashes; stale and inactive entries are excluded immediately and administrators can update the index. Only changed/new documents are sent. Queries re-read current products after the provider response. A provider failure never silently switches to lexical search or approves a product substitution.
+
+Server configuration: `GEMINI_EMBEDDINGS_ENABLED=true`, `GEMINI_API_KEY`, `GEMINI_FREE_TIER_CONFIRMED=true`, and `GEMINI_EMBEDDING_MAX_DAILY_REQUESTS=50` (default). Each uncached query consumes one local request unit; indexing reserves one unit per synchronous batch of up to 20 products, with 15-second spacing between batches. Failed/reserved attempts count conservatively against the daily limit in Europe/Madrid. This local allowance does not replace Google's project quotas or guarantee billing status. There are no automatic retries or provider/model fallbacks. Hash-only query caches are scoped by company/model and expire after 24 hours for reuse; query text is not persisted in those tables. Explicit fictitious-data confirmation is required before indexing/searching. Product readers can search; only administrators can trigger indexing.
+
+The API routes are `GET /api/product-search/status`, `POST /api/product-search` and administrator-only `POST /api/product-search/index`. Responses expose current products and similarity scores, not vectors or credentials. Indexing reports current/pending counts so interrupted or rate-limited runs can be resumed manually without re-embedding unchanged products. AWS remains a later provider migration behind the adapter.
+
+`test/embeddings.test.mjs`, `test/search-postgres.test.mjs` and `SemanticProducts.test.tsx` cover request shape, invalid vectors, strict permissions, quotas, cache reuse, incremental updates, deactivation, tenant isolation, foreign keys and UI consent/filter behavior. The database test rolls back its fixtures and makes no real provider calls. Run it with `NEXORA_SEARCH_DB_TEST=1 node --env-file=.env --test test/search-postgres.test.mjs` from the API directory. `npm run ai:validate-search` explicitly indexes the existing 200 demo products and checks Spanish-to-English catalog retrieval plus cache reuse using the live provider; it does not modify commercial catalog data.
+
+References: [Gemini embeddings](https://ai.google.dev/gemini-api/docs/embeddings), [free-tier pricing](https://ai.google.dev/gemini-api/docs/pricing), [Supabase pgvector](https://supabase.com/docs/guides/database/extensions/pgvector).
+
+Live acceptance result (2026-11-10): **200/200** demo products indexed, no pending entries. Four Spanish queries each returned the expected English reference at rank 1: “arroz basmati para cocinar” → Basmati Rice; “aceite de oliva virgen extra” → Extra Virgin Olive Oil; “filetes de merluza congelados” with FROZEN filter → Hake Fillets; “leche entera” → Whole Milk. Repeating the rice query reused the persisted query vector without a provider call. An initial rate-limited run retained 80 successful entries; manual continuation with batch pacing completed the remaining 120 without re-embedding those 80. These examples demonstrate the POC retrieval behavior; they are not a broad accuracy benchmark.

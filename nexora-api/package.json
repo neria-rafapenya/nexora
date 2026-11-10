@@ -18,7 +18,8 @@
     "db:seed-waste": "node --env-file=.env src/seed-waste.mjs",
     "db:seed-documents": "node --env-file=.env src/seed-documents.mjs",
     "db:seed-menus": "node --env-file=.env src/seed-menus.mjs",
-    "db:seed-orders": "node --env-file=.env src/seed-orders.mjs"
+    "db:seed-orders": "node --env-file=.env src/seed-orders.mjs",
+    "ai:validate-search": "node --env-file=.env src/validate-search.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

@@ -325,6 +325,32 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  EMBEDDINGS_NOT_CONFIGURED: "La búsqueda semántica no está configurada.",
+  EMBEDDINGS_DEMO_CONFIRMATION_REQUIRED:
+    "Confirma que solo se usarán datos ficticios de la POC.",
+  EMBEDDINGS_IN_PROGRESS:
+    "Ya hay una solicitud en curso. Espera a que termine.",
+  EMBEDDINGS_DAILY_LIMIT:
+    "Se ha alcanzado el límite diario de solicitudes de búsqueda semántica.",
+  EMBEDDINGS_RATE_LIMITED:
+    "Google ha limitado las solicitudes. No se reintentará automáticamente.",
+  EMBEDDINGS_UNAVAILABLE: "El servicio de embeddings no está disponible.",
+  EMBEDDINGS_AUTH_FAILED:
+    "La clave no permite acceder al servicio de embeddings.",
+  EMBEDDINGS_MODEL_UNAVAILABLE: "El modelo de embeddings no está disponible.",
+  EMBEDDINGS_TIMEOUT: "El servicio de embeddings ha tardado demasiado.",
+  EMBEDDINGS_INVALID_OUTPUT: "El servicio ha devuelto un vector no válido.",
+  EMBEDDINGS_PROCESSING_FAILED:
+    "No se ha podido completar la solicitud de búsqueda semántica.",
+  EMBEDDINGS_QUERY_REQUIRED:
+    "Introduce una descripción de entre 2 y 300 caracteres.",
+  EMBEDDINGS_INVALID_INPUT: "Revisa los datos de la consulta.",
+  EMBEDDINGS_REQUEST_SUPERSEDED:
+    "La solicitud ha caducado. Actualiza antes de continuar.",
+  EMBEDDINGS_CATALOG_LIMIT:
+    "El catálogo supera el máximo de 250 productos para esta POC.",
+  EMBEDDINGS_DOCUMENT_TOO_LARGE:
+    "La descripción de un producto es demasiado larga para indexarla.",
   GEMINI_DISABLED:
     "La conexión con Gemini está desactivada. Puedes usar la propuesta simulada.",
   GEMINI_KEY_MISSING: "Falta configurar la clave de Gemini en el servidor.",

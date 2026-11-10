@@ -1,3 +1,4 @@
+import { handleSearch } from "./search-http.mjs";
 import { handleWaste } from "./waste-http.mjs";
 import { wastePermissions } from "./waste-schema.mjs";
 import { handleDocuments } from "./document-http.mjs";
@@ -292,6 +293,19 @@ export function createServer(
       const membership = user.companies.find((c) => c.id === tenant);
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
+      if (
+        await handleSearch({
+          store,
+          path,
+          method,
+          body,
+          tenant,
+          role,
+          user,
+          send,
+        })
+      )
+        return;
       if (
         await handleWaste({
           store,
