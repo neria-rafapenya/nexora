@@ -1851,3 +1851,9 @@ h3 {
     gap: 28px;
   }
 }
+
+.header-cta,
+.hero-actions .button,
+.contact-invitation .button {
+  border-radius: 25px;
+}
