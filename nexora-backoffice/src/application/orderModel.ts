@@ -57,6 +57,7 @@ export const orderLabels: Record<string, string> = {
   PDF: "PDF",
   MANUAL: "Manual",
   MOCK_MESSAGE: "Propuesta mock",
+  AI_MESSAGE: "Propuesta de IA",
   LOW_CONFIDENCE: "Baja confianza",
   DELIVERY_DAY: "Día fuera de reparto",
   CLOSED_CENTER: "Centro cerrado",

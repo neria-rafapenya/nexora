@@ -1,3 +1,4 @@
+import { attachOrderAi } from "./order-ai.mjs";
 import { attachOrderWorkflow } from "./order-workflow.mjs";
 import { newWorkflowFields } from "./workflow-schema.mjs";
 import { randomUUID } from "node:crypto";
@@ -171,6 +172,13 @@ export class OrdersService {
   async processMessage(t, id, version, actor = null) {
     return this.store.transaction(async () => {
       await this.store.lock(t);
+      const pending = (await this.store.list(t, "aiOrderRequests")).find(
+        (r) =>
+          r.data.messageId === id &&
+          r.data.state === "PROCESSING" &&
+          Date.parse(r.data.leaseUntil) > Date.now(),
+      );
+      if (pending) error("GEMINI_REQUEST_IN_PROGRESS", 409);
       const started = Date.now(),
         message = await this.required(t, "inboxMessages", id);
       const existing = (await this.store.list(t, "orders")).find(
@@ -668,3 +676,5 @@ export class OrdersService {
 }
 
 attachOrderWorkflow(OrdersService);
+
+attachOrderAi(OrdersService);

@@ -1,3 +1,4 @@
+import { GeminiIntake } from "./GeminiIntake";
 import { useState, useEffect, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -82,7 +83,7 @@ export function Orders({
           <h1>Pedidos multicanal</h1>
           <p>Recibe, revisa y aprueba pedidos para su envío al ERP.</p>
         </div>
-        <span className="pill">IA SIMULADA · DATOS DE DEMOSTRACIÓN</span>
+        <span className="pill">POC · DATOS DE DEMOSTRACIÓN</span>
       </div>
       <nav className="order-tabs" aria-label="Secciones de pedidos">
         {sections.map(([id, path, name]) => (
@@ -968,6 +969,16 @@ function MessageDetail({
                       Descartar entrada
                     </button>
                   </div>
+                  <GeminiIntake
+                    companyId={companyId}
+                    messageId={id}
+                    version={view.message.version}
+                    disabled={busy || text !== view.message.data.body}
+                    onBusy={setBusy}
+                    onOrder={(o) =>
+                      nav(orderPath("/orders/" + o.id, companyId))
+                    }
+                  />
                   <p className="fine">
                     Guarda los cambios de la transcripción antes de procesar. Si
                     ya se procesó, se reutiliza su pedido sin crear duplicados.
@@ -1482,12 +1493,32 @@ function OrderDetail({
           </div>
           {view.run && (
             <details className="mt">
-              <summary>Trazabilidad de la propuesta simulada</summary>
+              <summary>
+                Trazabilidad de la propuesta{" "}
+                {view.run.data.provider === "MOCK" ? "simulada" : "de IA"}
+              </summary>
               <p>
-                Proveedor: MOCK · Modelo: {String(view.run.data.model)} · Coste:{" "}
-                {amount(view.run.data.costCents)} · Duración:{" "}
-                {String(view.run.data.durationMs)} ms
+                Proveedor: {String(view.run.data.provider)} · Modelo:{" "}
+                {String(view.run.data.model)} · Coste:{" "}
+                {view.run.data.costCents == null
+                  ? "No informado por el proveedor"
+                  : amount(view.run.data.costCents)}{" "}
+                · Duración: {String(view.run.data.durationMs)} ms
               </p>
+              {view.run.data.provider === "GEMINI" && (
+                <p>
+                  Tokens de entrada:{" "}
+                  {String(
+                    (view.run.data.output as { inputTokens?: number })
+                      ?.inputTokens ?? "No informado",
+                  )}{" "}
+                  · Tokens de salida:{" "}
+                  {String(
+                    (view.run.data.output as { outputTokens?: number })
+                      ?.outputTokens ?? "No informado",
+                  )}
+                </p>
+              )}
               <p>
                 El documento original y las correcciones humanas quedan
                 registrados.

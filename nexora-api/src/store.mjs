@@ -1,3 +1,4 @@
+import { migrateAi } from "./migrate-ai.mjs";
 import { wasteResources } from "./waste-schema.mjs";
 import { migrateWaste } from "./migrate-waste.mjs";
 import { documentResources } from "./document-schema.mjs";
@@ -147,6 +148,7 @@ export class Store {
       await migrateMenuDetails(this);
       await migrateDocuments(this);
       await migrateWaste(this);
+      await migrateAi(this);
     });
   }
   async transaction(fn) {

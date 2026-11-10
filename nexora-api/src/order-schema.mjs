@@ -1,3 +1,4 @@
+import { aiResources } from "./ai-schema.mjs";
 import { workflowOrderFields, workflowResources } from "./workflow-schema.mjs";
 const text = (label, required = false, maxLength = 4000) => ({
   label,
@@ -26,6 +27,7 @@ const ref = (label, resource, required = false) => ({
 });
 const bool = (label) => ({ label, type: "checkbox" });
 export const orderResources = {
+  ...aiResources,
   ...workflowResources,
   inboxMessages: {
     label: "Inbox messages",
@@ -64,7 +66,7 @@ export const orderResources = {
       centerId: ref("Center", "centers"),
       messageId: ref("Message", "inboxMessages"),
       deliveryDate: { label: "Delivery date", type: "date" },
-      origin: select("Origin", ["MANUAL", "MOCK_MESSAGE"]),
+      origin: select("Origin", ["MANUAL", "MOCK_MESSAGE", "AI_MESSAGE"]),
       state: select("State", [
         "DRAFT",
         "SUBMITTED",
@@ -145,14 +147,14 @@ export const orderResources = {
     columns: [],
   },
   aiOrderRuns: {
-    label: "Mock extraction runs",
+    label: "Order extraction runs",
     fields: {
       messageId: ref("Message", "inboxMessages", true),
       orderId: ref("Order", "orders", true),
-      provider: select("Provider", ["MOCK"]),
+      provider: select("Provider", ["MOCK", "GEMINI"]),
       model: text("Model", true),
       output: { label: "Output", type: "json" },
-      costCents: num("Cost", true, true),
+      costCents: num("Cost", false, true),
       durationMs: num("Duration", true, true),
       createdAt: text("Created at", true),
     },

@@ -235,7 +235,7 @@ it("direct create routes remain restricted without write permissions", async () 
 });
 it("inbox records have deep links and clearly identify simulated channels", async () => {
   await render(true, "inbox", null);
-  expect(host.textContent).toContain("IA SIMULADA");
+  expect(host.textContent).toContain("DATOS DE DEMOSTRACIÓN");
   const link = [...host.querySelectorAll("a")].find(
     (a) => a.textContent === "Demo source",
   );

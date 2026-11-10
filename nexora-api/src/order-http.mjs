@@ -25,6 +25,10 @@ export async function handleOrders({
     return false;
   if (!canOrders(role, method !== "GET")) fail(403, "Access denied");
   const service = new OrdersService(store, optionsFromEnv());
+  if (path === "/api/orders/ai/status" && method === "GET") {
+    send(200, await service.aiStatus(tenant));
+    return true;
+  }
   if (path === "/api/orders/catalog" && method === "GET") {
     const pick = (rows, keys) =>
       rows.map((r) => ({
@@ -79,7 +83,7 @@ export async function handleOrders({
     }
   }
   const message = path.match(
-    /^\/api\/order-inbox\/([a-zA-Z0-9-]+)(?:\/(process|discard))?$/,
+    /^\/api\/order-inbox\/([a-zA-Z0-9-]+)(?:\/(process|process-ai|discard))?$/,
   );
   if (message) {
     const [, id, action] = message;
@@ -116,6 +120,12 @@ export async function handleOrders({
             user.id,
           );
         }),
+      });
+      return true;
+    }
+    if (method === "POST" && action === "process-ai") {
+      send(200, {
+        record: await service.processGemini(tenant, id, body, user.id),
       });
       return true;
     }

@@ -325,6 +325,46 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  GEMINI_DISABLED:
+    "La conexión con Gemini está desactivada. Puedes usar la propuesta simulada.",
+  GEMINI_KEY_MISSING: "Falta configurar la clave de Gemini en el servidor.",
+  GEMINI_FREE_TIER_NOT_CONFIRMED:
+    "El responsable debe confirmar que el proyecto de Gemini está en nivel gratuito.",
+  GEMINI_MODEL_NOT_ALLOWED:
+    "El modelo configurado no está habilitado para esta POC.",
+  GEMINI_MODEL_UNAVAILABLE:
+    "El modelo no está disponible para este proyecto. Revisa la configuración; no se cambiará a otro automáticamente.",
+  GEMINI_DEMO_CONFIRMATION_REQUIRED:
+    "Confirma que el texto contiene únicamente datos ficticios de la POC.",
+  GEMINI_MESSAGE_NOT_READY:
+    "Guarda una transcripción válida antes de interpretar el pedido.",
+  GEMINI_DEMO_CATALOG_REQUIRED:
+    "Esta integración requiere entre 1 y 250 productos activos del catálogo ficticio.",
+  GEMINI_REQUEST_IN_PROGRESS:
+    "Ya hay una interpretación en curso para esta entrada.",
+  GEMINI_DAILY_LIMIT:
+    "Se ha alcanzado el límite diario de solicitudes de esta empresa.",
+  GEMINI_INPUT_TOO_LARGE:
+    "El texto o catálogo supera el tamaño admitido para esta POC.",
+  GEMINI_RATE_LIMITED:
+    "Gemini ha agotado su cuota o límite de solicitudes. No se reintentará ni se activará pago automáticamente.",
+  GEMINI_TIMEOUT:
+    "Gemini no respondió a tiempo. La solicitud puede haber consumido cuota; compruébalo antes de reintentar.",
+  GEMINI_UNAVAILABLE:
+    "No se ha podido contactar con Gemini. La entrada se conserva para reintentar manualmente.",
+  GEMINI_AUTH_FAILED:
+    "Gemini no acepta la clave o permisos del proyecto configurado.",
+  GEMINI_INVALID_OUTPUT:
+    "La respuesta de Gemini no cumple las validaciones. No se ha creado el pedido.",
+  GEMINI_INPUT_CHANGED:
+    "La transcripción cambió durante la interpretación. Revísala y vuelve a solicitar la propuesta.",
+  GEMINI_CATALOG_CHANGED:
+    "El catálogo cambió durante la interpretación. Revisa los datos antes de reintentar.",
+  GEMINI_REQUEST_SUPERSEDED:
+    "Otra operación ha sustituido esta interpretación. Recarga la entrada.",
+  GEMINI_PROCESSING_FAILED:
+    "No se pudo guardar la interpretación. La entrada se conserva y no se aprobará ningún pedido.",
+
   "Waste observations require a valid non-future date":
     "La observación requiere una fecha válida que no sea futura.",
   "A service, source and data classification are required":
