@@ -38,26 +38,19 @@
           autocomplete="organization"
           required
           maxlength="160" /></label
-      ><label for="contact-phone"
-        >Teléfono <span class="optional">(opcional)</span
+      ><label for="contact-centers"
+        >Número de centros <span aria-hidden="true">*</span
         ><input
-          id="contact-phone"
-          name="phone"
-          type="tel"
-          autocomplete="tel"
-          maxlength="40"
+          id="contact-centers"
+          name="centerCount"
+          type="number"
+          min="1"
+          max="10000"
+          step="1"
+          required
       /></label>
     </div>
-    <label for="contact-sector"
-      >Tipo de empresa<select id="contact-sector" name="sector">
-        <option value="">Selecciona una opción</option>
-        <option value="CATERING">Catering y restauración colectiva</option>
-        <option value="PREPARED_FOOD">Fabricación de comida preparada</option>
-        <option value="SUPPLIER">Proveedor o distribuidor alimentario</option>
-        <option value="CENTER">Centro o empresa compradora</option>
-        <option value="OTHER">Otro</option>
-      </select></label
-    ><label for="contact-message"
+    <label for="contact-message"
       >¿Cómo podemos ayudarte? <span aria-hidden="true">*</span
       ><textarea
         id="contact-message"

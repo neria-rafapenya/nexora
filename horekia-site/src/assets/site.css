@@ -1649,3 +1649,49 @@ h3 {
 .hero-maker:hover {
   color: var(--ink);
 }
+
+.wad-logo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  width: 240px;
+}
+.footer-wad {
+  width: 120px;
+  background: white;
+  border-radius: 4px;
+  padding: 8px;
+}
+.security-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.demo-calculation,
+.diet-alert {
+  padding: 12px;
+  border-radius: 8px;
+  background: #eef3eb;
+}
+.diet-alert {
+  background: #fff3da;
+}
+.demo-lines {
+  table-layout: fixed;
+  width: 100%;
+}
+.demo-lines td {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .security-grid {
+    grid-template-columns: 1fr;
+  }
+  .demo-lines th,
+  .demo-lines td {
+    padding: 8px 5px;
+  }
+  .demo-lines th:last-child {
+    width: 42%;
+  }
+}

@@ -127,6 +127,7 @@ test("contact form handles success, failures and duplicate clicks without cleari
     ["contact-name", "Person"],
     ["contact-email", "test@example.invalid"],
     ["contact-company", "Example"],
+    ["contact-centers", "3"],
     ["contact-message", "Please arrange a demo."],
   ])
     w.document.getElementById(id).value = value;
@@ -140,6 +141,7 @@ test("contact form handles success, failures and duplicate clicks without cleari
     new w.Event("submit", { bubbles: true, cancelable: true }),
   );
   assert.equal(calls.length, 2);
+  assert.equal(JSON.parse(calls[1].options.body).centerCount, 3);
   assert(w.document.querySelector("button[type=submit]").disabled);
   resolveSubmit({ ok: false, json: async () => ({ error: "Temporal error" }) });
   await new Promise((r) => setTimeout(r, 0));

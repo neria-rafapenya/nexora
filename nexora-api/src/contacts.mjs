@@ -41,6 +41,7 @@ export function contactData(input) {
     "name",
     "email",
     "company",
+    "centerCount",
     "phone",
     "sector",
     "message",
@@ -48,10 +49,20 @@ export function contactData(input) {
     "privacyAcknowledged",
     "token",
   ]);
+  if (
+    input.centerCount !== undefined &&
+    (!Number.isInteger(input.centerCount) ||
+      input.centerCount < 1 ||
+      input.centerCount > 10000)
+  )
+    fail(400, "Introduce un número de centros entre 1 y 10000.");
   const data = {
     name: text(input.name, 120, true),
     email: text(input.email, 254, true).toLowerCase(),
     company: text(input.company, 160, true),
+    ...(input.centerCount !== undefined
+      ? { centerCount: input.centerCount }
+      : {}),
     phone: text(input.phone, 40),
     sector: text(input.sector, 40),
     message: text(input.message, 3000, true),

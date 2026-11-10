@@ -15,6 +15,7 @@ export interface ContactLead {
     name: string;
     email: string;
     company: string;
+    centerCount?: number;
     phone: string;
     sector: string;
     message: string;
@@ -153,6 +154,8 @@ export function ContactInbox({ companyId }: { companyId: string }) {
                 {view.data.email}
               </a>
             </dd>
+            <dt>Número de centros</dt>
+            <dd>{view.data.centerCount ?? "—"}</dd>
             <dt>Teléfono</dt>
             <dd>{view.data.phone || "—"}</dd>
             <dt>Tipo de empresa</dt>

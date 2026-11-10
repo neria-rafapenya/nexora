@@ -209,3 +209,10 @@ test("only current administrators of the receiving company can read leads; proxy
     records: [],
   });
 });
+
+test("center count is stored and rejects malformed or out-of-range input", () => {
+  assert.equal(contactData({ ...input(), centerCount: 4 }).centerCount, 4);
+  for (const centerCount of [0, -1, 1.5, 10001, "4", null]) {
+    assert.throws(() => contactData({ ...input(), centerCount }));
+  }
+});
