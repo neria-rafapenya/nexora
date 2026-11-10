@@ -71,7 +71,7 @@ test("every internal link/asset exists, IDs are unique, legal pages have canonic
         assert(d.getElementById(value.slice(1)), value);
         continue;
       }
-      const path = value.split("#")[0];
+      const path = new URL(value, "https://www.horekia.com").pathname;
       if (!path || path.startsWith("/api/")) continue;
       const target =
         path === "/"
