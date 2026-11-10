@@ -229,7 +229,7 @@ summary {
 .hero-note {
   margin-top: 27px;
   margin-bottom: 0;
-  color: #788479;
+  color: #596b56;
 }
 .hero-visual {
   position: relative;
@@ -293,7 +293,7 @@ summary {
   align-items: center;
   gap: 9px;
   font-size: var(--content);
-  color: #6b7e63;
+  color: #596b56;
   letter-spacing: 1px;
   margin-bottom: 16px;
 }
@@ -345,7 +345,7 @@ svg {
 .recipe-line small,
 .sample-product small {
   display: block;
-  color: #798471;
+  color: #596b56;
   font-size: var(--content);
   line-height: 1.5;
 }
@@ -421,7 +421,7 @@ svg {
   justify-content: space-between;
   border-top: 1px solid var(--line);
   padding-top: 10px;
-  color: #6f7a68;
+  color: #596b56;
 }
 .trace-note {
   position: absolute;
@@ -446,7 +446,7 @@ svg {
 .sector-strip > span:first-child {
   font-size: var(--content);
   letter-spacing: 1px;
-  color: #7d887a;
+  color: #596b56;
   max-width: 150px;
   line-height: 1.5;
 }
@@ -472,7 +472,7 @@ svg {
   margin: 0;
 }
 .section-number {
-  color: #7f8d7d;
+  color: #596b56;
   letter-spacing: 1px;
   font-size: var(--content);
   white-space: nowrap;
@@ -526,7 +526,7 @@ h3 {
 }
 .capability > span {
   font-size: var(--content);
-  color: #73816b;
+  color: #596b56;
 }
 .capability-accent {
   background: #eff3e9;
@@ -549,7 +549,7 @@ h3 {
   border-top: 1px solid #cfd8c9;
 }
 .audience-list article > span {
-  color: #7e9373;
+  color: #596b56;
 }
 .audience-list article h3 {
   font-size: 20px;
@@ -739,7 +739,7 @@ h3 {
   width: 100%;
   min-width: 0;
   padding: 11px 12px;
-  border: 1px solid #d4decc;
+  border: 1px solid #819174;
   background: #fff;
   border-radius: 5px;
   color: var(--ink);
@@ -749,7 +749,7 @@ h3 {
 .contact-form input:focus,
 .contact-form textarea:focus,
 .contact-form select:focus {
-  outline: 2px solid #91ad80;
+  outline: 2px solid #526b49;
   outline-offset: 2px;
 }
 .contact-form textarea {
@@ -757,11 +757,11 @@ h3 {
   min-height: 115px;
 }
 .contact-form ::placeholder {
-  color: #7b8576;
+  color: #596b56;
   opacity: 1;
 }
 .optional {
-  color: #7b8576;
+  color: #596b56;
   font-weight: 400;
 }
 .contact-form .checkbox-label {
@@ -781,7 +781,7 @@ h3 {
 .privacy-layer {
   font-size: var(--content);
   line-height: 1.7;
-  color: #6b7965;
+  color: #596b56;
 }
 .contact-form .button {
   width: 100%;
@@ -838,7 +838,7 @@ h3 {
 }
 .footer-top a:not(.wordmark) {
   text-decoration: none;
-  color: #6b7a65;
+  color: #596b56;
 }
 .footer-top a:hover {
   text-decoration: underline;
@@ -850,7 +850,7 @@ h3 {
   justify-content: space-between;
   gap: 25px;
   align-items: center;
-  color: #74816d;
+  color: #596b56;
 }
 .footer-bottom > div {
   display: flex;
