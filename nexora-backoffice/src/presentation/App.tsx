@@ -1,3 +1,4 @@
+import { RecordDates, RecordTime } from "./RecordDates";
 import { SemanticProducts } from "./SemanticProducts";
 import { FoodWaste } from "./FoodWaste";
 import { SupplierDocuments } from "./SupplierDocuments";
@@ -999,6 +1000,7 @@ function Master({
           </div>
         )}
         {saveNotice && <p role="status">{saveNotice}</p>}
+        {editing && <RecordDates record={editing} />}
         <form className="panel master-form" onSubmit={save}>
           <div className="row g-4">
             {Object.entries(def.fields).map(([key, f]) => (
@@ -1285,6 +1287,8 @@ function Master({
                     </th>
                   )}
                   {resource === "products" && <th>Alérgenos</th>}
+                  <th title="Hora de Madrid">Fecha de creación</th>
+                  <th title="Hora de Madrid">Última edición</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -1333,6 +1337,12 @@ function Master({
                         />
                       </td>
                     )}
+                    <td className="record-date">
+                      <RecordTime value={row.createdAt} />
+                    </td>
+                    <td className="record-date">
+                      <RecordTime value={row.updatedAt} />
+                    </td>
                     <td>
                       <div className="actions">
                         <button

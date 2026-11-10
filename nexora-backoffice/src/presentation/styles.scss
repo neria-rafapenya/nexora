@@ -1496,3 +1496,24 @@ h1 {
   overflow: auto;
   overflow-wrap: anywhere;
 }
+
+.record-date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.record-timestamps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  padding: 1rem 1.5rem;
+  align-items: center;
+}
+.record-timestamps dt {
+  font-size: 0.8rem;
+  color: #63766e;
+  margin-bottom: 0.25rem;
+}
+.record-timestamps dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

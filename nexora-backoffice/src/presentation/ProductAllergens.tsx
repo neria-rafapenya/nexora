@@ -1,3 +1,4 @@
+import { RecordDates, RecordTime } from "./RecordDates";
 import { useEffect, useState, type FormEvent } from "react";
 import { Plus, Pencil, Trash2, ShieldCheck } from "lucide-react";
 import { request } from "../infrastructure/api";
@@ -210,12 +211,14 @@ export function ProductAllergens({
                       : "Pendiente de validación por Calidad"}
                   </span>
                   <p>Origen: {String(row.data.source)}</p>
+                  <p className="fine">
+                    Creación: <RecordTime value={row.createdAt} /> · Última
+                    edición: <RecordTime value={row.updatedAt} />
+                  </p>
                   {row.data.validatedAt ? (
                     <small>
                       Validado el{" "}
-                      {new Date(String(row.data.validatedAt)).toLocaleString(
-                        "es-ES",
-                      )}
+                      <RecordTime value={String(row.data.validatedAt)} />
                     </small>
                   ) : null}
                 </div>
@@ -249,6 +252,7 @@ export function ProductAllergens({
       {editing !== undefined && (
         <form className="master-form allergen-editor" onSubmit={save}>
           <h3>{editing ? "Editar asociación" : "Añadir alérgeno"}</h3>
+          {editing && <RecordDates record={editing} />}
           <div className="row g-3">
             <div className="col-12 col-md-6">
               <label htmlFor="product-allergen-id">Alérgeno</label>
