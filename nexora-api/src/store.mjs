@@ -1,3 +1,5 @@
+import { wasteResources } from "./waste-schema.mjs";
+import { migrateWaste } from "./migrate-waste.mjs";
 import { documentResources } from "./document-schema.mjs";
 import { migrateDocuments } from "./migrate-documents.mjs";
 import { migrateMenuDetails } from "./migrate-menu-details.mjs";
@@ -24,6 +26,7 @@ const allResources = {
   ...orderResources,
   ...menuResources,
   ...documentResources,
+  ...wasteResources,
 };
 import { migrateMainCategories } from "./migrate-main-categories.mjs";
 export const hashToken = (token) =>
@@ -143,6 +146,7 @@ export class Store {
       await migrateMenus(this);
       await migrateMenuDetails(this);
       await migrateDocuments(this);
+      await migrateWaste(this);
     });
   }
   async transaction(fn) {

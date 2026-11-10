@@ -117,7 +117,7 @@ CI runs offline tests and a production build, without Supabase credentials. TLS 
 
 F1 semantic product search requires an embedding provider and API key; none is connected. An initial candidate is OpenAI `text-embedding-3-small`. Do not confuse approximate word search with embeddings. The requested 200-product fixture replaces the original document's larger demo-catalog target.
 
-F2 orders now works locally with explicitly simulated proposals and revision-specific customer acceptance and internal approval. F3 has a local menu-to-procurement workflow, weekly calendar, CSV/Excel import, configurable nutrition checks and reviewed order proposals. F4 supplier documents now has a local version/review/expiry workflow. F5 food waste remains a planned screen. No external AI calls or automatic order confirmations occur. F1 semantic search remains postponed.
+F2 orders now works locally with explicitly simulated proposals and revision-specific customer acceptance and internal approval. F3 has a local menu-to-procurement workflow, weekly calendar, CSV/Excel import, configurable nutrition checks and reviewed order proposals. F4 supplier documents now has a local version/review/expiry workflow. F5 food waste now provides a local measurement, destination and prevention workflow. No external AI calls or automatic order confirmations occur. F1 semantic search remains postponed.
 
 The final end-user application is separate from this private backoffice.
 
@@ -233,7 +233,7 @@ NEXORA_MENU_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/men
 - F1 semantic embeddings, live F2 email/WhatsApp/OCR and real ERP handoff/cancellation remain deferred.
 - Customer frontend/authentication and external review requests remain future work. Specialist records here are private backoffice actions, not authenticated customer-frontend decisions.
 - Live center inventory, supplier-specific purchasing/logistics, verified food composition datasets and external document ingestion require their actual sources/integrations.
-- F5 waste tracking and AWS production infrastructure are subsequent phases. Supplier portal ingestion, OCR/AI document analysis, external notifications and production object storage remain outside the local F4 workflow.
+- AWS production infrastructure remains deferred. Supplier portal ingestion, OCR/AI document analysis, external notifications and production object storage remain outside the local F4 workflow.
 
 ## F3 weekly validation
 
@@ -262,3 +262,37 @@ NEXORA_DOCUMENT_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test
 ```
 
 Remaining integrations are still deferred: Gemini for POC AI, real customer/supplier frontends, ERP, external document sources, OCR/AI classification, email notifications and AWS production services. Real documents and professional validation must replace synthetic fixtures before real operations.
+
+## F5 — local food waste observations and prevention
+
+Routes: `/food-waste` (indicators), `/food-waste/events[/new|/:id]`, `/food-waste/actuals[/new|/:id]`, `/food-waste/actions[/new|/:id]`. Spanish UI; English models/demo data. This phase records observations and decisions. It never adjusts catalog stock, creates an inventory ledger movement, creates an order or sends anything to an ERP.
+
+### Observed losses and destinations
+
+- Waste events identify center, non-future date, service, cause, a product or immutable recipe version, measured quantity, optional diet/published menu, traceability and intended destination. Product observations use the catalog sales unit. Recipe observations use equivalent portions. Weight, volume, sales units and portions remain separate; they are never summed into one waste total.
+- Linked menus must be published/archived, match client/center/date/service/diet, and contain the selected recipe/product. Historical menu snapshots are used even if today's technical sources changed: recording an observation is not new food approval or purchase authorization.
+- Indicative valuation is captured with its source context. Products use catalog price or the linked menu's preserved product price. Recipe portions use batch servings, ingredient mappings and product prices; there is no assumption about purchase pack rounding or cooking yield. Missing prices/conversions are unvalued, not zero. Recorded valuations remain frozen after price changes.
+- DRAFT → RECORDED → VOID. Confirmation is separate from saving. Confirmed facts cannot be edited; correction voids the original with a reason and creates a replacement. Audit and destination evidence remain. Reusing a creation key with the same payload returns the same record; different data with that key is rejected. Generic master CRUD/import cannot change operational states.
+- Destinations are disposal, supplier return or possible donation. Return/donation requires recipient, batch and traceability; only Quality may approve/reject. Donation candidates require a declared use-by date; expiry, deterioration and plate leftovers are excluded by this POC workflow. Current date is rechecked at approval/execution. These are conservative application gates, not a legal or food-safety determination; Quality must substantiate suitability externally.
+- Quality approval does not mean execution. An operator separately records execution evidence; only then do disposal/returned/donated quantities appear as completed. A pending/rejected/approved-but-unexecuted non-disposal destination may be rerouted to disposal with a reason, preserving the previous decision. Voiding a record corrects reporting; it does not reverse an actual handover.
+
+### Service volumes and improvement actions
+
+- Actual-service observations store produced and served integer portions by center/date/service/diet. Served cannot exceed produced. Planned counts come from a linked published menu or the habitual diner baseline at capture time; missing baseline is unknown. There is at most one RECORDED observation for those dimensions, enforced by the service and a PostgreSQL unique partial index. Void/correction preserves history.
+- Produced minus served is unserved portions, not inferred waste. No waste event is generated automatically and no diner/menu baseline is overwritten. Period reports compare planned, produced and served counts; descriptive mean served/produced references appear only after three confirmed observations per center/service/diet. These are not AI recommendations and do not apply future quantities automatically.
+- Improvement actions contain center, target cause, responsible person's name, deadline, optional reduction target, related confirmed waste records and an action plan. OPEN → IN_PROGRESS → COMPLETED/CANCELLED requires progress/outcome evidence. Closed actions remain immutable; overdue open actions are highlighted. A reduction target is declared, not a computed or verified achievement. No assignment messages or notifications are sent.
+- Dashboard filters date/center/service/cause, preserves unit-specific totals, separates pending versus executed destinations, shows known valuation plus unvalued counts, service comparisons, historical references and action follow-up. Cause filters affect waste; production/service comparisons are not assigned causes. Action follow-up uses center/cause rather than the observation date range. CSV exports escape spreadsheet formula prefixes.
+
+Migration 9 creates `wasteEvents`, `serviceActuals`, `wasteActions`, with RLS, tenant-scoped FKs, unique creation keys and confirmed-service uniqueness. All mutations are transactional/audited and use optimistic record versions. Admin/order operations/menu planning/Quality may record observations and actions; only Quality reviews restricted destinations. Sales/read-only roles may consult. No destructive deletion endpoints are exposed.
+
+API: `/api/food-waste/catalog`, `/report`, `/events`, `/actuals`, `/actions`, record routes and `/record`, `/void`, `/approve`, `/reject`, `/discard`, `/complete`, `/progress` transitions as applicable.
+
+`npm --prefix nexora-api run db:seed-waste` adds six explicitly synthetic recorded measurements, six recorded service-count observations and one open improvement action to the initial demo workspace. `recordedBy=MOCK_SEED` distinguishes generated telemetry from a real human observation. All return/donation decisions remain pending; no destination is marked executed. The seed preserves existing data on repeat, does not create accounts or professional approvals, and never changes stock/orders.
+
+Tests cover snapshots/costs, idempotency, unit separation, absence of stock/ERP effects, Quality permissions, destination traces, voiding, unique service observations, partial baselines, three-observation references, action evidence, tenant scope and UI save/confirmation separation. PostgreSQL verification uses rollback-only fixtures and existing actor references without creating accounts:
+
+```sh
+NEXORA_WASTE_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/waste-postgres.test.mjs
+```
+
+Outstanding integrations remain the agreed backlog: Gemini free-tier POC integration, F1 embeddings, live channels/OCR, customer/supplier frontends, ERP, live inventory, external notifications and AWS production deployment. Real measurements, operating procedures and professional decisions must replace demo fixtures for real use.

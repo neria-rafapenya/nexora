@@ -115,3 +115,22 @@ it("resolves supplier document list, creation and detail URLs", () => {
     isNew: false,
   });
 });
+
+it("resolves F5 report, measurement, actual count and improvement action deep links", () => {
+  expect(resolveRoute("/food-waste")).toMatchObject({
+    page: "waste",
+    isNew: false,
+  });
+  for (const section of ["events", "actuals", "actions"]) {
+    expect(resolveRoute("/food-waste/" + section + "/new")).toMatchObject({
+      page: "waste",
+      section,
+      isNew: true,
+    });
+    expect(resolveRoute("/food-waste/" + section + "/record")).toMatchObject({
+      page: "waste",
+      section,
+      recordId: "record",
+    });
+  }
+});

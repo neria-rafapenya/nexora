@@ -41,6 +41,14 @@ const routes: Array<{
     : []),
 ]);
 routes.push(
+  ...["events", "actuals", "actions"].flatMap((section) => {
+    const path = "/food-waste/" + section;
+    return [
+      { path, handle: { page: "waste", isNew: false, section } },
+      { path: path + "/new", handle: { page: "waste", isNew: true, section } },
+      { path: path + "/:id", handle: { page: "waste", isNew: false, section } },
+    ];
+  }),
   {
     path: "/supplier-documents/new",
     handle: { page: "documents", isNew: true },

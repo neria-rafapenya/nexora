@@ -1,3 +1,5 @@
+import { handleWaste } from "./waste-http.mjs";
+import { wastePermissions } from "./waste-schema.mjs";
 import { handleDocuments } from "./document-http.mjs";
 import { documentPermissions } from "./document-schema.mjs";
 import { handleMenus } from "./menu-http.mjs";
@@ -291,6 +293,20 @@ export function createServer(
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
       if (
+        await handleWaste({
+          store,
+          path,
+          method,
+          body,
+          url,
+          tenant,
+          role,
+          user,
+          send,
+        })
+      )
+        return;
+      if (
         await handleDocuments({
           store,
           path,
@@ -342,6 +358,7 @@ export function createServer(
             ]),
           ),
           roles: roleLabels,
+          wastePermissions: wastePermissions(role),
           documentPermissions: documentPermissions(role),
           menuPermissions: menuPermissions(role),
           orderPermissions: {

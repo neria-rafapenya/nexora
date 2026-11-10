@@ -1,3 +1,4 @@
+import { wasteResources } from "../../src/waste-schema.mjs";
 import { documentResources } from "../../src/document-schema.mjs";
 import { resources, validate } from "../../src/schema.mjs";
 import { orderResources } from "../../src/order-schema.mjs";
@@ -7,6 +8,7 @@ const defs = {
   ...orderResources,
   ...menuResources,
   ...documentResources,
+  ...wasteResources,
 };
 export class MenuStore {
   constructor() {

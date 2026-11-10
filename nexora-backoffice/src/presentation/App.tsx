@@ -1,3 +1,4 @@
+import { FoodWaste } from "./FoodWaste";
 import { SupplierDocuments } from "./SupplierDocuments";
 import { Menus } from "./Menus";
 import { Orders } from "./Orders";
@@ -48,6 +49,7 @@ const icons = [ShoppingBasket, Utensils, Building2, Sprout];
 const labels: Record<string, string> = {
   menus: "Planificación de menús",
   documents: "Documentación de proveedores",
+  waste: "Desperdicio alimentario",
   dashboard: "Resumen",
   audit: "Historial de cambios",
   users: "Usuarios y roles",
@@ -356,6 +358,20 @@ export function App() {
                   isNew={route.isNew}
                   permissions={
                     contract.documentPermissions ?? {
+                      read: false,
+                      write: false,
+                      quality: false,
+                    }
+                  }
+                />
+              ) : page === "waste" ? (
+                <FoodWaste
+                  companyId={companyId}
+                  section={route.section}
+                  recordId={route.recordId}
+                  isNew={route.isNew}
+                  permissions={
+                    contract.wastePermissions ?? {
                       read: false,
                       write: false,
                       quality: false,
@@ -695,7 +711,7 @@ function Overview({
                 </span>
                 <span className="module-phase">
                   {m.phase} ·{" "}
-                  {["orders", "menus", "documents"].includes(m.id)
+                  {["orders", "menus", "documents", "waste"].includes(m.id)
                     ? "Disponible"
                     : "Previsto"}
                 </span>

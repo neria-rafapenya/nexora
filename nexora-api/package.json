@@ -15,6 +15,7 @@
     "db:seed-allergens": "node --env-file=.env src/seed-allergens.mjs",
     "db:seed-masters": "node --env-file=.env src/seed-masters.mjs",
     "db:seed-menu-details": "node --env-file=.env src/seed-menu-details.mjs",
+    "db:seed-waste": "node --env-file=.env src/seed-waste.mjs",
     "db:seed-documents": "node --env-file=.env src/seed-documents.mjs",
     "db:seed-menus": "node --env-file=.env src/seed-menus.mjs",
     "db:seed-orders": "node --env-file=.env src/seed-orders.mjs"

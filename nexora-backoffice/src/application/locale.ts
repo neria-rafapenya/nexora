@@ -325,6 +325,69 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  "Waste observations require a valid non-future date":
+    "La observación requiere una fecha válida que no sea futura.",
+  "A service, source and data classification are required":
+    "Indica servicio, referencia y si los datos son ficticios.",
+  "Select a published menu matching center, service, date and diet":
+    "Selecciona un menú publicado que corresponda a ese centro, fecha, servicio y dieta.",
+  "Diet has no slot in the selected published menu":
+    "La dieta no tiene una posición en ese menú publicado.",
+  "A cause and positive measured quantity are required":
+    "Indica una causa y una cantidad mayor que cero, con un máximo de tres decimales.",
+  "Select exactly one waste source":
+    "Selecciona un único producto o una única receta como origen.",
+  "Product waste must use the catalog sales unit":
+    "La cantidad del producto debe utilizar su unidad de venta del catálogo.",
+  "Product is not in the selected menu context":
+    "El producto no aparece en el contexto del menú publicado seleccionado.",
+  "Recipe waste must use servings and one recipe version":
+    "La merma de receta debe indicar una versión y medirse en raciones equivalentes.",
+  "Recipe is not in the selected menu slot":
+    "La receta no corresponde a la fecha, dieta y centro del menú seleccionado.",
+  "Return or donation needs destination, batch and traceability":
+    "Indica destinatario, lote y referencia de trazabilidad para devolución o posible donación.",
+  "This waste cause cannot be proposed for donation":
+    "Este flujo no admite propuestas de donación por caducidad, deterioro o restos de platos.",
+  "Donation candidates require a non-expired use-by date":
+    "Una posible donación requiere una fecha límite de uso no anterior a la observación.",
+  "Served counts must be whole numbers and cannot exceed produced counts":
+    "Las raciones deben ser enteras; las servidas no pueden superar las producidas.",
+  "Menu serving counts are inconsistent":
+    "Las raciones previstas en el menú no son coherentes.",
+  "Recorded observations are immutable. Void and replace the record":
+    "Una observación confirmada no se edita. Anúlala con un motivo y registra la corrección.",
+  "Creation key was used with different data":
+    "La solicitud de creación ya se utilizó con otros datos. Recarga el formulario.",
+  "Confirm a draft observation before recording":
+    "Confirma expresamente el borrador antes de registrar la observación.",
+  "A service observation already exists. Void it before replacing":
+    "Ya hay una observación confirmada para ese centro, fecha, servicio y dieta. Anúlala antes de sustituirla.",
+  "Confirm the void and provide its reason":
+    "Confirma la anulación e indica su motivo.",
+  "Record the waste observation before processing its destination":
+    "Registra primero la observación de merma antes de tramitar su destino.",
+  "Only Quality can review waste destinations":
+    "Solo Calidad puede revisar las devoluciones y posibles donaciones.",
+  "Confirm the pending destination review and provide evidence":
+    "Confirma la revisión del destino pendiente y aporta una referencia.",
+  "The donation candidate is no longer eligible for review":
+    "La posible donación ya no cumple las condiciones de fecha o causa de este flujo.",
+  "Only an unfinished non-disposal destination can be changed with a reason":
+    "Solo se puede cambiar a desecho un destino todavía no ejecutado, indicando el motivo.",
+  "An authorized destination and execution evidence are required":
+    "El destino debe estar autorizado y debe aportarse evidencia de su ejecución.",
+  "Closed improvement actions cannot be edited":
+    "Las acciones cerradas o canceladas conservan sus datos sin edición.",
+  "Complete the improvement action details":
+    "Completa título, centro, responsable, plazo, causa y plan de actuación.",
+  "Link recorded waste from the same center":
+    "Vincula únicamente mermas confirmadas del mismo centro.",
+  "An open action and progress evidence are required":
+    "Selecciona una acción abierta y aporta evidencia del progreso o cierre.",
+  "Invalid waste report date range": "Revisa el período del informe.",
+  "Invalid waste report filters": "Los filtros del informe no son válidos.",
+
   "Technical composition must match the selected document declaration":
     "La composición debe coincidir con la declaración del documento seleccionado.",
   "Product allergen associations differ from the selected document":
