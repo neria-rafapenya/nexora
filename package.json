@@ -10,7 +10,7 @@
     "dev": "node scripts/dev.mjs",
     "install:all": "npm --prefix nexora-api ci && npm --prefix nexora-backoffice ci",
     "test": "npm --prefix nexora-api test && npm --prefix nexora-backoffice test",
-    "build": "npm --prefix nexora-backoffice run build",
+    "build": "npm --prefix nexora-backoffice run build && npm --prefix horekia-site run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "start": "node --env-file=.env nexora-api/src/server.mjs",
