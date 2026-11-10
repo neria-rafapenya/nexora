@@ -1,3 +1,4 @@
+import { ContactInbox } from "./ContactInbox";
 import {
   UserManagement,
   SelfProfile,
@@ -58,6 +59,7 @@ import {
   Package,
   RefreshCw,
   Download,
+  Mail,
 } from "lucide-react";
 import {
   operations,
@@ -79,6 +81,8 @@ const labels: Record<string, string> = {
   users: "Usuarios y roles",
   profile: "Mi perfil",
   assistant: "Asistente IA",
+  contacts: "Solicitudes web",
+  contactLeads: "Solicitud web",
   assistantConfig: "Configuración del asistente",
   assistantKnowledge: "Contenido de ayuda del asistente",
   settings: "Configuración",
@@ -283,6 +287,16 @@ export function App() {
           {company?.role === "admin" && (
             <>
               <span className="sidebar-label">SISTEMA</span>
+              {contract?.contactManagement && (
+                <Link
+                  title="Solicitudes web"
+                  className={page === "contacts" ? "active" : ""}
+                  to={urlFor("contacts")}
+                >
+                  <Mail size={18} />
+                  <span>Solicitudes web</span>
+                </Link>
+              )}
               <Link
                 title="Asistente IA"
                 className={page === "assistant" ? "active" : ""}
@@ -401,7 +415,8 @@ export function App() {
                   message="La dirección no corresponde a ninguna página del backoffice."
                   onBack={() => navigate("dashboard")}
                 />
-              ) : (masterPaths[page] && !contract.resources[page]) ||
+              ) : (page === "contacts" && !contract.contactManagement) ||
+                (masterPaths[page] && !contract.resources[page]) ||
                 (["audit", "users", "settings", "assistant"].includes(page) &&
                   company?.role !== "admin") ? (
                 <RouteNotice
@@ -417,6 +432,8 @@ export function App() {
                   navigate={navigate}
                   refresh={refresh}
                 />
+              ) : page === "contacts" ? (
+                <ContactInbox key={companyId} companyId={companyId} />
               ) : page === "assistant" ? (
                 <AssistantManagement key={companyId} companyId={companyId} />
               ) : page === "orders" ? (

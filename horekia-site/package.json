@@ -1,0 +1,13 @@
+{
+  "name": "horekia-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "dev": "node preview.mjs"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

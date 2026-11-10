@@ -6,6 +6,9 @@ import {
   masterPaths,
 } from "./routes";
 describe("Backoffice URL routes", () => {
+  it("resolves the private website enquiries inbox", () => {
+    expect(resolveRoute("/contacts").page).toBe("contacts");
+  });
   it("resolves own-profile and account activation routes", () => {
     expect(resolveRoute("/profile").page).toBe("profile");
     expect(resolveRoute("/activate").page).toBe("activate");

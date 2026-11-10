@@ -45,6 +45,7 @@ export interface RecordRow {
   updatedAt: string;
 }
 export interface Contract {
+  contactManagement?: boolean;
   wastePermissions?: { read: boolean; write: boolean; quality: boolean };
   documentPermissions?: { read: boolean; write: boolean; quality: boolean };
   menuPermissions?: {

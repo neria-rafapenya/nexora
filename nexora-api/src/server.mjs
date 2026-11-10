@@ -1,3 +1,9 @@
+import {
+  Contacts,
+  handleContacts,
+  contactClientKey,
+  startContactMaintenance,
+} from "./contacts.mjs";
 import { Accounts, handleAccounts } from "./accounts.mjs";
 import { handleAssistant } from "./assistant.mjs";
 import { handleProductMedia } from "./product-media-http.mjs";
@@ -64,8 +70,10 @@ export function createServer(
 ) {
   const attempts = new Map();
   const accounts = new Accounts(store);
+  const contacts = new Contacts(store);
   const server = http.createServer(async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("Referrer-Policy", "no-referrer");
@@ -95,7 +103,10 @@ export function createServer(
           size = 0;
         for await (const chunk of req) {
           size += chunk.length;
-          if (size > 3_000_000) fail(413, "Request too large");
+          if (
+            size > (path.startsWith("/api/public/contact") ? 16000 : 3_000_000)
+          )
+            fail(413, "Request too large");
           raw += chunk.toString();
         }
         try {
@@ -110,6 +121,20 @@ export function createServer(
         return send(200, { ok: true });
       if (path === "/api/setup" && method === "GET")
         return send(200, { required: !(await store.ready()) });
+      if (path.startsWith("/api/public/contact")) {
+        if (
+          await handleContacts({
+            service: contacts,
+            path,
+            method,
+            body,
+            send,
+            origin: req.headers.origin,
+            clientKey: contactClientKey(req),
+          })
+        )
+          return;
+      }
       const token = (req.headers.cookie ?? "")
         .split(";")
         .map((x) => x.trim())
@@ -333,6 +358,19 @@ export function createServer(
       const membership = user.companies.find((c) => c.id === tenant);
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
+      if (
+        await handleContacts({
+          service: contacts,
+          path,
+          method,
+          body,
+          tenant,
+          role,
+          user,
+          send,
+        })
+      )
+        return;
       if (await handleAccounts({ ...accountRequest, tenant, role })) return;
       if (
         await handleAssistant({
@@ -439,6 +477,8 @@ export function createServer(
             ]),
           ),
           roles: roleLabels,
+          contactManagement:
+            role === "admin" && tenant === contacts.config.tenant,
           wastePermissions: wastePermissions(role),
           documentPermissions: documentPermissions(role),
           menuPermissions: menuPermissions(role),
@@ -669,6 +709,7 @@ if (
   const store = new Store(connection);
   await initialize(store);
   const stopOrderJobs = startOrderJobs(store);
+  const stopContactJobs = startContactMaintenance(new Contacts(store));
   const options = runtimeOptions();
   const server = createServer(store, options);
   server.listen(options.port, "127.0.0.1", () =>
@@ -678,6 +719,7 @@ if (
     process.on(signal, () =>
       server.close(async () => {
         stopOrderJobs();
+        stopContactJobs();
         await store.close();
         process.exit(0);
       }),

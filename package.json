@@ -13,7 +13,10 @@
     "build": "npm --prefix nexora-backoffice run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "start": "node --env-file=.env nexora-api/src/server.mjs"
+    "start": "node --env-file=.env nexora-api/src/server.mjs",
+    "build:site": "npm --prefix horekia-site run build",
+    "test:site": "npm --prefix horekia-site test",
+    "dev:site": "npm --prefix horekia-site run dev"
   },
   "devDependencies": {
     "prettier": "^3.6.0"

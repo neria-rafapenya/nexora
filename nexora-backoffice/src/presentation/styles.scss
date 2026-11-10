@@ -1916,3 +1916,30 @@ textarea::placeholder {
   width: 100%;
   max-width: 380px;
 }
+
+.contact-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+  gap: 1rem;
+}
+.contact-details {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 0.65rem 1rem;
+}
+.contact-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.contact-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .contact-filters {
+    grid-template-columns: 1fr;
+  }
+  .contact-details {
+    grid-template-columns: 1fr;
+  }
+}

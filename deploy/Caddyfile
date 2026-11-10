@@ -1,19 +1,62 @@
 backoffice.horekia.com {
- encode zstd gzip
- header {
-  X-Content-Type-Options nosniff
-  X-Frame-Options DENY
-  Referrer-Policy no-referrer
- }
- handle /api/* {
-  reverse_proxy 127.0.0.1:3000 {
-   header_up Host 127.0.0.1:3000
-  }
- }
- handle {
-  root * /var/www/horekia/nexora-backoffice/dist
-  try_files {path} /index.html
-  header Cache-Control "no-cache"
-  file_server
- }
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		X-Robots-Tag "noindex, nofollow"
+	}
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3000 {
+			header_up Host 127.0.0.1:3000
+		}
+	}
+	handle {
+		root * /var/www/horekia/nexora-backoffice/dist
+		try_files {path} /index.html
+		header Cache-Control "no-cache"
+		file_server
+	}
+}
+
+http://horekia.com, http://www.horekia.com {
+	redir https://www.horekia.com{uri} 301
+}
+
+horekia.com {
+	redir https://www.horekia.com{uri} 301
+}
+
+www.horekia.com {
+	encode zstd gzip
+	root * /var/www/horekia/horekia-site/dist
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+	}
+	@immutable path_regexp assets ^/assets/site-[a-f0-9]+\.(css|js)$
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	@html path / /privacidad /privacidad/ /aviso-legal /aviso-legal/ /cookies /cookies/ /404.html
+	header @html Cache-Control "no-cache"
+	@contact path /api/public/contact /api/public/contact-token
+	handle @contact {
+		reverse_proxy 127.0.0.1:3000 {
+			header_up Host 127.0.0.1:3000
+			header_up -Cookie
+		}
+	}
+	handle /api/* {
+		respond 404
+	}
+	handle {
+		file_server
+	}
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
 }

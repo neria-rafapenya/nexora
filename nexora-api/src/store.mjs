@@ -1,3 +1,4 @@
+import { migrateContacts } from "./contact-schema.mjs";
 import { migrateAccounts } from "./account-schema.mjs";
 import { migrateAssistant } from "./assistant.mjs";
 import {
@@ -163,6 +164,7 @@ export class Store {
       await migrateProductMedia(this);
       await migrateAssistant(this);
       await migrateAccounts(this);
+      await migrateContacts(this);
     });
   }
   async transaction(fn) {

@@ -24,6 +24,7 @@ export const pagePaths: Record<string, string> = {
   activate: "/activate",
   settings: "/settings",
   assistant: "/assistant",
+  contacts: "/contacts",
 };
 export interface AppRoute {
   page: string;
