@@ -2,7 +2,11 @@ import { mkdir, writeFile, readFile, lstat } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
-export const fileResources = ["documentFiles", "orderAttachments"];
+export const fileResources = [
+  "documentFiles",
+  "orderAttachments",
+  "productFiles",
+];
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const fail = (code, status = 500) => {
   throw Object.assign(new Error(code), { code, status });

@@ -6,6 +6,7 @@ const messages: Record<string, string> = {
   Description: "Descripción",
   Families: "Familias",
   Products: "Productos",
+  "Product files": "Archivos de producto",
   Allergens: "Alérgenos",
   Suppliers: "Proveedores",
   Clients: "Clientes",
@@ -325,6 +326,18 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  PRODUCT_FILE_INVALID: "El archivo no es válido. Selecciona otro archivo.",
+  PRODUCT_IMAGE_TOO_LARGE: "La imagen supera el máximo de 1 MB.",
+  PRODUCT_DOCUMENT_TOO_LARGE: "El documento supera el máximo de 1 MB.",
+  PRODUCT_IMAGE_TYPE: "La imagen solo puede ser de tipo JPG, PNG o WEBP.",
+  PRODUCT_IMAGE_INVALID:
+    "La imagen no es válida o no coincide con su tipo. Usa JPG, PNG o WEBP.",
+  PRODUCT_IMAGE_PROCESSED_TOO_LARGE:
+    "La imagen procesada supera 1 MB. Usa una imagen más pequeña.",
+  PRODUCT_DOCUMENT_TYPE: "El documento solo puede ser de tipo PDF o DOC.",
+  PRODUCT_DOCUMENT_INVALID: "El documento no es un PDF o DOC válido.",
+  PRODUCT_IMAGE_CHANGED:
+    "La imagen ha cambiado desde que abriste la ficha. Actualiza e inténtalo de nuevo.",
   FILE_STORAGE_WRITE_FAILED:
     "No se ha podido guardar el archivo. Inténtalo de nuevo.",
   FILE_STORAGE_READ_FAILED:

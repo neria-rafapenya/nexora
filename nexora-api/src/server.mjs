@@ -1,3 +1,4 @@
+import { handleProductMedia } from "./product-media-http.mjs";
 import { runtimeOptions } from "./runtime.mjs";
 import { handleSearch } from "./search-http.mjs";
 import { handleWaste } from "./waste-http.mjs";
@@ -294,6 +295,19 @@ export function createServer(
       const membership = user.companies.find((c) => c.id === tenant);
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
+      if (
+        await handleProductMedia({
+          store,
+          path,
+          method,
+          body,
+          tenant,
+          role,
+          user,
+          send,
+        })
+      )
+        return;
       if (
         await handleSearch({
           store,

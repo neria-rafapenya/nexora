@@ -1,3 +1,7 @@
+import {
+  productMediaResources,
+  migrateProductMedia,
+} from "./product-media-schema.mjs";
 import { LocalFiles, fileResources } from "./file-storage.mjs";
 import { migrateSearch } from "./migrate-search.mjs";
 import { migrateAi } from "./migrate-ai.mjs";
@@ -25,6 +29,7 @@ import { migrateOrders } from "./migrate-orders.mjs";
 import { menuResources } from "./menu-schema.mjs";
 import { migrateMenus } from "./migrate-menus.mjs";
 const allResources = {
+  ...productMediaResources,
   ...resources,
   ...orderResources,
   ...menuResources,
@@ -153,6 +158,7 @@ export class Store {
       await migrateWaste(this);
       await migrateAi(this);
       await migrateSearch(this);
+      await migrateProductMedia(this);
     });
   }
   async transaction(fn) {

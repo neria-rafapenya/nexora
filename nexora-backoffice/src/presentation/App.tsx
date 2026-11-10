@@ -1,3 +1,4 @@
+import { ProductMedia } from "./ProductMedia";
 import { DataFreshness } from "./DataFreshness";
 import { useDataRefresh } from "../infrastructure/useDataRefresh";
 import {
@@ -1073,6 +1074,14 @@ function Master({
         )}
         {saveNotice && <p role="status">{saveNotice}</p>}
         {editing && <RecordDates record={editing} />}
+        {resource === "products" && (
+          <ProductMedia
+            key={companyId + ":" + (editing?.id ?? "new")}
+            productId={editing?.id}
+            companyId={companyId}
+            writable={writable}
+          />
+        )}
         <form className="panel master-form" onSubmit={save}>
           <div className="row g-4">
             {Object.entries(def.fields).map(([key, f]) => (
