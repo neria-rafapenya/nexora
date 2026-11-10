@@ -41,6 +41,14 @@ const routes: Array<{
     : []),
 ]);
 routes.push(
+  ...["", "recipes", "ingredients"].flatMap((section) => {
+    const path = "/menus" + (section ? "/" + section : "");
+    return [
+      { path, handle: { page: "menus", isNew: false, section } },
+      { path: path + "/new", handle: { page: "menus", isNew: true, section } },
+      { path: path + "/:id", handle: { page: "menus", isNew: false, section } },
+    ];
+  }),
   { path: "/orders/new", handle: { page: "orders", isNew: true } },
   {
     path: "/orders/inbox",

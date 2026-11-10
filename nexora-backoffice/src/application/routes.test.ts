@@ -80,3 +80,22 @@ it("resolves order inbox, review and record routes without treating sections as 
     recordId: "order-id",
   });
 });
+
+it("resolves F3 ingredient, recipe and planning deep links", () => {
+  for (const section of ["ingredients", "recipes"]) {
+    expect(resolveRoute("/menus/" + section + "/new")).toMatchObject({
+      page: "menus",
+      section,
+      isNew: true,
+    });
+    expect(resolveRoute("/menus/" + section + "/record")).toMatchObject({
+      page: "menus",
+      section,
+      recordId: "record",
+    });
+  }
+  expect(resolveRoute("/menus/plan")).toMatchObject({
+    page: "menus",
+    recordId: "plan",
+  });
+});

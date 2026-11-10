@@ -117,7 +117,7 @@ CI runs offline tests and a production build, without Supabase credentials. TLS 
 
 F1 semantic product search requires an embedding provider and API key; none is connected. An initial candidate is OpenAI `text-embedding-3-small`. Do not confuse approximate word search with embeddings. The requested 200-product fixture replaces the original document's larger demo-catalog target.
 
-F2 orders now works locally with explicitly simulated proposals and revision-specific customer acceptance and internal approval. F3 menu planning, F4 supplier documents and F5 food waste remain planned screens. No external AI calls or automatic order confirmations occur. F1 semantic search remains postponed.
+F2 orders now works locally with explicitly simulated proposals and revision-specific customer acceptance and internal approval. F3 has an initial local menu-to-procurement workflow with mock proposals. F4 supplier documents and F5 food waste remain planned screens. No external AI calls or automatic order confirmations occur. F1 semantic search remains postponed.
 
 The final end-user application is separate from this private backoffice.
 
@@ -185,3 +185,30 @@ NEXORA_ORDER_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/or
 ```
 
 Still deferred: real AI/embeddings, OCR, live email/WhatsApp ingestion, automatic diet/allergen-compatible substitute selection, real ERP connector and cancellation protocol, authenticated customer frontend and real-order accuracy benchmarks. Substitutions are manual and require reviewing the product documentation; the unvalidated allergen demo data is never treated as proof of suitability. AWS production infrastructure remains a later phase.
+
+## F3 — first local menu-to-procurement workflow
+
+This is the initial F3 implementation, not a production nutrition or food-safety engine. UI is Spanish; business data and mock fixtures are English. Routes: `/menus`, `/menus/new`, `/menus/:id`, `/menus/ingredients`, `/menus/ingredients/new`, `/menus/ingredients/:id`, `/menus/recipes`, `/menus/recipes/new`, `/menus/recipes/:id`.
+
+- **Kitchen ingredients and purchase mappings:** conceptual ingredients have KG/L/UNIT units. An explicit, referenced mapping selects a commercial catalog product and the kitchen quantity contained in one sales unit. No conversion is guessed from product names. Ingredient units cannot change once referenced. Initial scope has one purchase mapping per ingredient; alternative supplier/product selection remains future work.
+- **Recipes and versions:** batch servings, ingredient quantities, preparation notes and optional client ownership. Every save appends an immutable recipe snapshot. Plans pin a specific version, so later recipe edits cannot rewrite existing menus. Recipes shared across clients have no owner. Ingredients/recipes can be deactivated; destructive deletion is not exposed.
+- **Client menu plans:** up to 31 days, one service, multiple centers belonging to the client, date/diet/course slots, common recipes and center-specific replacements. Existing customer menus can be manually transcribed and identified by a source reference. Automatic document/CSV menu import is not implemented. Plan copies are editable drafts with a parent link; published plans are immutable.
+- **Diners and requirements:** habitual center/diet/service counts, replaced by explicit date overrides, including zero for no service. Each person must be counted in exactly one planning diet per service; combined dietary requirements need a corresponding combined diet. Positive diner counts without a menu for that diet/date prevent approval. Recipe quantities scale by batch servings, aggregate per center/date/ingredient, then apply a separately visible margin. No actual center inventory is assumed or subtracted.
+- **Procurement forecast:** explicit mapping converts kitchen quantities to sales quantities; BOX/UNIT round upward to whole units and KG/L upward to three decimals, per center/date. Surplus from packaging and estimated catalog cost are displayed. Ambiguous reuse of one product for distinct ingredients is flagged for review. No stock is reserved and no purchase/order/ERP action is automatic.
+- **Professional review:** DRAFT → IN_REVIEW → APPROVED → PUBLISHED → ARCHIVED. Only `nutrition_menus` records Nutrition approval and only `quality` records Quality approval. Administrator is not a specialist override. Current approvals by both roles are required to publish. Approval evidence, operator, time and a canonical hash capture recipe versions, counts, product/mapping/technical information and diets; changed inputs require renewed approvals. These are private backoffice specialist records, not authenticated decisions by users of the future customer frontend.
+- **Quality gates:** incomplete product composition, unvalidated allergen links, excluded allergens/traces, missing mappings, inactive ingredients/products and missing diet/count references prevent Quality approval. Products with zero allergen links are explicitly unknown, not allergen-free; Quality must review documentation and record its evidence. Other diet rules, nutrient balance, cross-contamination and clinical suitability are not inferred by this calculation and require professional assessment. Published snapshots retain the approved calculation and technical context.
+- **Simulated proposal:** a deterministic rotation of existing recipes into main-course slots for a chosen diet. It starts in DRAFT, is labelled MOCK, sends no external AI requests and has no automatic approval or nutritional guarantee.
+
+Migration 6 adds `menuIngredients`, `ingredientProducts`, `recipes`, `recipeVersions`, `menuPlans`, RLS, tenant-aware foreign keys and unique ingredient mapping/recipe revision indexes. Nested schedule/count/recipe references are validated by the transactional service. Generic master CRUD/import cannot alter operational menu states.
+
+Run `npm --prefix nexora-api run db:seed-menus` for the initial workspace demonstration: four kitchen ingredients and mappings, three fictional recipes, and a five-day client menu for its centers and available diets. It is idempotent, does not overwrite existing examples, does not modify product technical/allergen data, and creates no approvals/publications/accounts. The menu deliberately retains technical issues from unvalidated mock masters.
+
+Dedicated API: `/api/menus/catalog`, `/api/menu-ingredients`, `/api/ingredient-products`, `/api/recipes`, `/api/menus` and scoped record routes; menu actions `/forecast`, `/copy`, `/mock`, `/review`, `/nutrition`, `/quality`, `/publish`, `/archive`. Sessions, company scope, origin checks, role checks, audit and optimistic versions apply.
+
+Tests cover recipe pinning, quantities/rounding/margins, center replacements, zero/date overrides, diet coverage, specialist permissions, stale approvals, immutable publication, English payloads/Spanish UI and demo seed idempotency. Optional PostgreSQL verification uses only rollback fixtures without creating accounts:
+
+```sh
+NEXORA_MENU_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/menu-postgres.test.mjs
+```
+
+Next F3 increments: easier calendar editing and client-menu file import; reliable nutrient/recipe data and more complete dietary checks; real customer frontend/authentication and review requests; actual AI proposals/benchmarks; center inventory and ERP-backed order proposals. F1 embeddings and live F2 integrations remain deferred. F4/F5 and AWS production deployment are later phases.

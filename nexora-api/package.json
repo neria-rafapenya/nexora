@@ -14,6 +14,7 @@
     "test:integration": "node --env-file=.env --test test/integration.test.mjs",
     "db:seed-allergens": "node --env-file=.env src/seed-allergens.mjs",
     "db:seed-masters": "node --env-file=.env src/seed-masters.mjs",
+    "db:seed-menus": "node --env-file=.env src/seed-menus.mjs",
     "db:seed-orders": "node --env-file=.env src/seed-orders.mjs"
   },
   "dependencies": {

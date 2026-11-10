@@ -14,7 +14,9 @@ import { resources, validate } from "./schema.mjs";
 import { orderResources } from "./order-schema.mjs";
 import { migrateWorkflow } from "./migrate-workflow.mjs";
 import { migrateOrders } from "./migrate-orders.mjs";
-const allResources = { ...resources, ...orderResources };
+import { menuResources } from "./menu-schema.mjs";
+import { migrateMenus } from "./migrate-menus.mjs";
+const allResources = { ...resources, ...orderResources, ...menuResources };
 import { migrateMainCategories } from "./migrate-main-categories.mjs";
 export const hashToken = (token) =>
   createHash("sha256").update(token).digest("hex");
@@ -57,6 +59,12 @@ export class Store {
       max: 3,
       connectionTimeoutMillis: 15000,
       idleTimeoutMillis: 30000,
+    });
+    this.pool.on("error", (error) => {
+      console.error(
+        "Database connection interrupted:",
+        error.code ?? "CONNECTION_ERROR",
+      );
     });
     this.context = new AsyncLocalStorage();
     this.db = {
@@ -124,6 +132,7 @@ export class Store {
       await migrateMainCategories(this);
       await migrateOrders(this);
       await migrateWorkflow(this);
+      await migrateMenus(this);
     });
   }
   async transaction(fn) {

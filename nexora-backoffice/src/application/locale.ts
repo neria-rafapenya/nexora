@@ -325,6 +325,54 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  "Referenced ingredient units cannot be changed":
+    "No puedes cambiar la unidad de un ingrediente que ya tiene recetas o equivalencias. Crea otro ingrediente.",
+  "A positive pack conversion is required":
+    "La equivalencia de compra debe ser mayor que cero.",
+  "Select active ingredients and products":
+    "Selecciona ingredientes y productos activos.",
+  "Recipe servings must be a positive integer":
+    "Indica un número entero de raciones mayor que cero.",
+  "Recipes require 1 to 100 ingredients":
+    "Añade entre 1 y 100 ingredientes a la receta.",
+  "Invalid or duplicate recipe ingredient":
+    "Revisa los ingredientes: deben estar activos, no repetirse y tener cantidades positivas.",
+  "Invalid menu date range": "Revisa las fechas de inicio y fin del menú.",
+  "Menu plans support up to 31 days":
+    "Cada planificación admite un máximo de 31 días.",
+  "Select an active client": "Selecciona un cliente activo.",
+  "Select unique centers for the menu":
+    "Selecciona al menos un centro, sin repetirlo.",
+  "Recipe belongs to another client": "La receta pertenece a otro cliente.",
+  "Duplicate menu slot":
+    "Hay dos recetas para la misma fecha, dieta, posición y centro.",
+  "Invalid diner overrides": "Revisa los ajustes de comensales por fecha.",
+  "Duplicate diner override":
+    "Hay dos ajustes para la misma fecha, centro y dieta.",
+  "Client menus require a source reference":
+    "Indica la referencia del menú aportado por el cliente.",
+  "Published menus are immutable. Create a new revision.":
+    "El menú publicado se conserva sin cambios. Crea una nueva revisión.",
+  "Mock generation requires an empty menu":
+    "La propuesta simulada requiere un menú vacío.",
+  "Create at least one recipe before generating a proposal":
+    "Crea al menos una receta antes de generar una propuesta.",
+  "Only published menus can be archived":
+    "Solo se pueden archivar menús publicados.",
+  "Add recipes to the menu before review":
+    "Añade recetas al menú antes de enviarlo a revisión.",
+  "Submit the menu for review first": "Envía primero el menú a revisión.",
+  "Current nutrition and quality approvals are required":
+    "Nutrición y Calidad deben aprobar los datos actuales y resolver sus incidencias.",
+  "Only the assigned specialist can approve this menu":
+    "Solo el rol profesional correspondiente puede realizar esta aprobación.",
+  "An approval reference is required":
+    "Indica una referencia de la revisión profesional.",
+  "Resolve menu technical issues before quality approval":
+    "Resuelve las incidencias técnicas antes de la aprobación de Calidad.",
+  "Resolve menu planning issues before approval":
+    "Resuelve las incidencias de planificación antes de aprobar.",
+
   "Customer acceptance is required for the current revision":
     "El cliente debe aceptar la revisión actual antes de aprobarla.",
   "ERP delivery already exists. Commercial changes must be handled through the ERP.":

@@ -1,3 +1,4 @@
+import { Menus } from "./Menus";
 import { Orders } from "./Orders";
 import { AllergenTags, ProductAllergens } from "./ProductAllergens";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -44,6 +45,7 @@ import { request } from "../infrastructure/api";
 import { emptyForm, payload } from "../application/forms";
 const icons = [ShoppingBasket, Utensils, Building2, Sprout];
 const labels: Record<string, string> = {
+  menus: "Planificación de menús",
   dashboard: "Resumen",
   audit: "Historial de cambios",
   users: "Usuarios y roles",
@@ -328,6 +330,21 @@ export function App() {
                   isNew={route.isNew}
                   permissions={
                     contract.orderPermissions ?? { read: false, write: false }
+                  }
+                />
+              ) : page === "menus" ? (
+                <Menus
+                  companyId={companyId}
+                  section={route.section}
+                  recordId={route.recordId}
+                  isNew={route.isNew}
+                  permissions={
+                    contract.menuPermissions ?? {
+                      read: false,
+                      write: false,
+                      nutrition: false,
+                      quality: false,
+                    }
                   }
                 />
               ) : contract.resources[page] ? (
@@ -662,7 +679,10 @@ function Overview({
                   <Icon size={23} />
                 </span>
                 <span className="module-phase">
-                  {m.phase} · {m.id === "orders" ? "Disponible" : "Previsto"}
+                  {m.phase} ·{" "}
+                  {["orders", "menus"].includes(m.id)
+                    ? "Disponible"
+                    : "Previsto"}
                 </span>
                 <h3>{m.name}</h3>
                 <p>{m.description}</p>

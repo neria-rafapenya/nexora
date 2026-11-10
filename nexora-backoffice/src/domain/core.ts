@@ -39,6 +39,12 @@ export interface RecordRow {
   updatedAt: string;
 }
 export interface Contract {
+  menuPermissions?: {
+    read: boolean;
+    write: boolean;
+    nutrition: boolean;
+    quality: boolean;
+  };
   orderPermissions?: {
     read: boolean;
     write: boolean;

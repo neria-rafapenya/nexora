@@ -1458,3 +1458,13 @@ h1 {
     margin-bottom: 20px;
   }
 }
+
+.menu-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.menu-fields > label {
+  margin-bottom: 1rem;
+}

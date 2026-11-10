@@ -1,3 +1,5 @@
+import { handleMenus } from "./menu-http.mjs";
+import { menuPermissions } from "./menu-schema.mjs";
 import { optionsFromEnv } from "./workflow-rules.mjs";
 import { handleOrders, startOrderJobs } from "./order-http.mjs";
 import { canOrders } from "./order-schema.mjs";
@@ -287,6 +289,19 @@ export function createServer(
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
       if (
+        await handleMenus({
+          store,
+          path,
+          method,
+          body,
+          tenant,
+          role,
+          user,
+          send,
+        })
+      )
+        return;
+      if (
         await handleOrders({
           store,
           path,
@@ -312,6 +327,7 @@ export function createServer(
             ]),
           ),
           roles: roleLabels,
+          menuPermissions: menuPermissions(role),
           orderPermissions: {
             read: canOrders(role),
             write: canOrders(role, true),
