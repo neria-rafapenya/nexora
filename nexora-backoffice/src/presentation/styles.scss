@@ -1670,3 +1670,85 @@ h1 {
     gap: 1rem;
   }
 }
+
+.managed-table-frame {
+  width: 100%;
+  min-width: 0;
+}
+.managed-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+.managed-table th {
+  position: relative;
+  vertical-align: middle;
+}
+.managed-table td,
+.managed-table tbody th {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.managed-table input:not([type="checkbox"]),
+.managed-table select {
+  max-width: 100%;
+  min-width: 0;
+}
+.table-sort {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  border: 0;
+  padding: 0 6px 0 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.column-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+  border-right: 2px solid transparent;
+}
+.column-resizer:hover,
+.column-resizer:focus-visible,
+.column-resizer.resizing {
+  border-right-color: #38815d;
+  background: #38815d18;
+}
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  border-top: 1px solid #e5ebe7;
+  font-size: 0.8rem;
+}
+.table-pagination label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+.table-pagination select {
+  width: auto;
+  padding: 0.4rem;
+}
+.table-pagination input {
+  width: 65px;
+  padding: 0.35rem;
+}
+.table-pagination button {
+  min-width: 32px;
+  padding: 0.35rem 0.6rem;
+}

@@ -123,3 +123,59 @@ export function companyFromSearch(
     companies.find((c) => c.id === requested)?.id ?? companies[0]?.id ?? ""
   );
 }
+
+function tableScope(path: string) {
+  const segments = path.split("/").filter(Boolean);
+  const group = segments[0] ?? "";
+  if (
+    ["orders", "menus", "food-waste"].includes(group) &&
+    [
+      "inbox",
+      "review",
+      "alerts",
+      "baskets",
+      "recipes",
+      "ingredients",
+      "nutrition",
+      "events",
+      "actuals",
+      "actions",
+    ].includes(segments[1])
+  )
+    return group + "/" + segments[1];
+  return group;
+}
+export function preserveTableURL(target: string, current?: string) {
+  const source =
+    current ??
+    (typeof window !== "undefined"
+      ? window.location.pathname + window.location.search
+      : "");
+  if (!source) return target;
+  const from = new URL(source, "http://table.local"),
+    to = new URL(target, "http://table.local");
+  if (tableScope(from.pathname) !== tableScope(to.pathname)) return target;
+  if (
+    from.searchParams.has("company") &&
+    to.searchParams.has("company") &&
+    from.searchParams.get("company") !== to.searchParams.get("company")
+  )
+    return target;
+  for (const [key, value] of from.searchParams)
+    if (
+      [
+        "page",
+        "pageSize",
+        "sort",
+        "dir",
+        "q",
+        "familyId",
+        "temperature",
+      ].includes(key) ||
+      /\.(page|pageSize|sort|dir)$/.test(key)
+    )
+      to.searchParams.set(key, value);
+  return (
+    to.pathname + (to.searchParams.size ? "?" + to.searchParams : "") + to.hash
+  );
+}

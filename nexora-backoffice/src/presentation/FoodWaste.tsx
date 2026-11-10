@@ -1,3 +1,4 @@
+import { DataTable, useResetTablePage } from "./DataTable";
 import { useDataRefresh } from "../infrastructure/useDataRefresh";
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -191,7 +192,7 @@ export function FoodWaste({
               )}
             </div>
             <section className="panel table-responsive">
-              <table>
+              <DataTable id="waste-list" primary>
                 <thead>
                   <tr>
                     <th>Centro / fecha</th>
@@ -236,7 +237,7 @@ export function FoodWaste({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
               {!rows.length && (
                 <p className="empty-copy">
                   Todavía no hay registros en esta sección.
@@ -1053,6 +1054,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
     [reason, setReason] = useState(""),
     [data, setData] = useState<WasteReport | null>(null),
     [error, setError] = useState("");
+  useResetTablePage(JSON.stringify([start, end, center, service, reason]));
   const refreshTick = useDataRefresh(company);
   useEffect(() => {
     let live = true;
@@ -1191,7 +1193,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
               tienen evidencia. Borradores y anulados quedan excluidos.
             </p>
             <div className="table-responsive">
-              <table>
+              <DataTable id="waste-destinations">
                 <thead>
                   <tr>
                     <th>Centro / unidad</th>
@@ -1216,11 +1218,11 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
             </div>
             <h3 className="mt">Causas observadas</h3>
             <div className="table-responsive">
-              <table>
+              <DataTable id="waste-causes">
                 <thead>
                   <tr>
                     <th>Causa</th>
@@ -1239,7 +1241,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
             </div>
             <button
               className="secondary mt"
@@ -1298,7 +1300,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
               planificación automáticamente.
             </p>
             <div className="table-responsive">
-              <table>
+              <DataTable id="waste-services">
                 <thead>
                   <tr>
                     <th>Centro / fecha / dieta</th>
@@ -1335,7 +1337,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
             </div>
             <h3 className="mt">
               Referencias para revisar próximas previsiones
@@ -1346,7 +1348,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
               sugerencias de IA ni cambios automáticos.
             </p>
             <div className="table-responsive">
-              <table>
+              <DataTable id="waste-history">
                 <thead>
                   <tr>
                     <th>Centro / servicio / dieta</th>
@@ -1368,7 +1370,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
             </div>
           </section>
           <section className="panel mt">
@@ -1378,7 +1380,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
               plazos no se limitan al período de observaciones.
             </p>
             <div className="table-responsive">
-              <table>
+              <DataTable id="waste-actions">
                 <thead>
                   <tr>
                     <th>Acción</th>
@@ -1410,7 +1412,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
             </div>
           </section>
         </>

@@ -1,3 +1,4 @@
+import { DataTable } from "./DataTable";
 import { ProductMedia } from "./ProductMedia";
 import { DataFreshness } from "./DataFreshness";
 import { useDataRefresh } from "../infrastructure/useDataRefresh";
@@ -13,10 +14,16 @@ import { SupplierDocuments } from "./SupplierDocuments";
 import { Menus } from "./Menus";
 import { Orders } from "./Orders";
 import { AllergenTags, ProductAllergens } from "./ProductAllergens";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import {
   resolveRoute,
   routeURL,
+  preserveTableURL,
   masterPaths,
   companyFromSearch,
 } from "../application/routes";
@@ -181,10 +188,15 @@ export function App() {
     setError("");
   }
   function urlFor(next: string, id?: string) {
-    return routeURL(
-      next,
-      id,
-      companyId && companyId !== user?.companies[0]?.id ? companyId : undefined,
+    return preserveTableURL(
+      routeURL(
+        next,
+        id,
+        companyId && companyId !== user?.companies[0]?.id
+          ? companyId
+          : undefined,
+      ),
+      location.pathname + location.search,
     );
   }
   function navigate(next: string, id?: string) {
@@ -810,10 +822,7 @@ function Master({
     [lookups, setLookups] = useState<Record<string, RecordRow[]>>({}),
     [lookupsLoading, setLookupsLoading] = useState(true),
     [lookupsFailed, setLookupsFailed] = useState(false),
-    [q, setQ] = useState(""),
     [semantic, setSemantic] = useState(false),
-    [family, setFamily] = useState(""),
-    [temperature, setTemperature] = useState(""),
     [editing, setEditing] = useState<RecordRow | null | undefined>(undefined),
     [form, setForm] = useState<Record<string, unknown>>({}),
     [error, setError] = useState(""),
@@ -825,6 +834,26 @@ function Master({
     [detailLoading, setDetailLoading] = useState(!!recordId),
     [detailError, setDetailError] = useState(""),
     [saveNotice, setSaveNotice] = useState("");
+  const [listParams, setListParams] = useSearchParams();
+  const listLocation = useLocation();
+  const q = listParams.get("q") ?? "",
+    family = listParams.get("familyId") ?? "",
+    temperature = listParams.get("temperature") ?? "";
+  function setFilter(key: string, value: string) {
+    setListParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        if (value) next.set(key, value);
+        else next.delete(key);
+        next.set("page", "1");
+        return next;
+      },
+      { replace: true },
+    );
+  }
+  const setQ = (v: string) => setFilter("q", v),
+    setFamily = (v: string) => setFilter("familyId", v),
+    setTemperature = (v: string) => setFilter("temperature", v);
   const refreshTick = useDataRefresh(
     companyId,
     !recordId && !createNew && !showImport && !confirmDelete && !semantic,
@@ -1359,11 +1388,13 @@ function Master({
           <p className="empty-copy">Cargando registros…</p>
         ) : rows.length ? (
           <div className="table-responsive">
-            <table>
+            <DataTable key={resource} id={"masters-" + resource} primary>
               <thead>
                 <tr>
                   {def.columns.map((k) => (
-                    <th key={k}>{def.fields[k].label}</th>
+                    <th key={k} data-column-id={k}>
+                      {def.fields[k].label}
+                    </th>
                   ))}
                   {resource === "products" && semantic && (
                     <th title="Similitud coseno; no es una probabilidad ni una validación sanitaria">
@@ -1380,11 +1411,22 @@ function Master({
                 {rows.map((row) => (
                   <tr key={row.id}>
                     {def.columns.map((k) => (
-                      <td key={k}>
+                      <td
+                        key={k}
+                        data-sort-value={
+                          typeof row.data[k] === "number" ||
+                          typeof row.data[k] === "boolean"
+                            ? row.data[k]
+                            : display(k, row.data[k])
+                        }
+                      >
                         {resource === "products" && k === "name" ? (
                           <Link
                             className="record-link"
-                            to={routeURL("products", row.id, companyId)}
+                            to={preserveTableURL(
+                              routeURL("products", row.id, companyId),
+                              listLocation.pathname + listLocation.search,
+                            )}
                           >
                             {display(k, row.data[k])}
                           </Link>
@@ -1408,7 +1450,18 @@ function Master({
                       </td>
                     )}
                     {resource === "products" && (
-                      <td className="allergen-cell">
+                      <td
+                        className="allergen-cell"
+                        data-sort-value={(lookups.productAllergens ?? [])
+                          .filter((link) => link.data.productId === row.id)
+                          .map(
+                            (link) =>
+                              (lookups.allergens ?? []).find(
+                                (a) => a.id === link.data.allergenId,
+                              )?.data.name ?? "",
+                          )
+                          .join(", ")}
+                      >
                         <AllergenTags
                           productId={row.id}
                           links={lookups.productAllergens ?? []}
@@ -1421,10 +1474,10 @@ function Master({
                         />
                       </td>
                     )}
-                    <td className="record-date">
+                    <td className="record-date" data-sort-value={row.createdAt}>
                       <RecordTime value={row.createdAt} />
                     </td>
-                    <td className="record-date">
+                    <td className="record-date" data-sort-value={row.updatedAt}>
                       <RecordTime value={row.updatedAt} />
                     </td>
                     <td>
@@ -1450,7 +1503,7 @@ function Master({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </DataTable>
           </div>
         ) : (
           <div className="empty-copy">
@@ -1677,7 +1730,7 @@ function Audit({ companyId }: { companyId: string }) {
       />
       {error && <p role="alert">{error}</p>}
       <section className="panel table-responsive">
-        <table>
+        <DataTable id="audit" primary>
           <thead>
             <tr>
               <th>Acción</th>
@@ -1693,7 +1746,9 @@ function Audit({ companyId }: { companyId: string }) {
                 <td>{enumEs(e.action)}</td>
                 <td>{labels[e.resource] ?? e.resource ?? "—"}</td>
                 <td>{e.actor ?? "Carga inicial del catálogo"}</td>
-                <td>{new Date(e.at).toLocaleString("es-ES")}</td>
+                <td data-sort-value={e.at}>
+                  {new Date(e.at).toLocaleString("es-ES")}
+                </td>
                 <td>
                   <details>
                     <summary>Detalles</summary>
@@ -1709,7 +1764,7 @@ function Audit({ companyId }: { companyId: string }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </section>
     </>
   );
@@ -1746,7 +1801,7 @@ function UserManagement({
         </p>
       )}
       <section className="panel table-responsive">
-        <table>
+        <DataTable id="users" primary>
           <thead>
             <tr>
               <th>Nombre</th>
@@ -1785,7 +1840,7 @@ function UserManagement({
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
         <h2 className="mt">Añadir usuario</h2>
         <form
           className="master-form"

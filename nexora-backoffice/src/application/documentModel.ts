@@ -1,3 +1,4 @@
+import { preserveTableURL } from "./routes";
 import type { RecordRow } from "../domain/core";
 export interface DocumentPermissions {
   read: boolean;
@@ -48,10 +49,12 @@ export const documentLabels: Record<string, string> = {
 export const dl = (value: unknown) =>
   documentLabels[String(value)] ?? String(value ?? "—");
 export const documentURL = (id = "", company = "") =>
-  "/supplier-documents" +
-  (id ? "/" + id : "") +
-  "?" +
-  new URLSearchParams({ company });
+  preserveTableURL(
+    "/supplier-documents" +
+      (id ? "/" + id : "") +
+      "?" +
+      new URLSearchParams({ company }),
+  );
 export function downloadDocument(f: {
   base64: string;
   mime: string;

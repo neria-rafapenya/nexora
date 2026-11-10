@@ -1,3 +1,4 @@
+import { DataTable, useResetTablePage } from "./DataTable";
 import { useDataRefresh } from "../infrastructure/useDataRefresh";
 import { refreshCompany } from "../infrastructure/query-cache";
 import { GeminiIntake } from "./GeminiIntake";
@@ -203,6 +204,7 @@ function OrderList({
     [search, setSearch] = useState(""),
     [state, setState] = useState(""),
     [reload, setReload] = useState(0);
+  useResetTablePage(JSON.stringify([search, state, reviewOnly]));
   const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     let live = true;
@@ -299,7 +301,7 @@ function OrderList({
           <Empty text="No hay pedidos en esta vista. Crea uno manual o procesa un mensaje de la bandeja." />
         ) : (
           <div className="table-responsive">
-            <table>
+            <DataTable id="orders" primary>
               <thead>
                 <tr>
                   <th>Pedido</th>
@@ -339,7 +341,7 @@ function OrderList({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </DataTable>
           </div>
         )}
       </section>
@@ -519,6 +521,7 @@ function MessageList({
   const [rows, setRows] = useState<RecordRow[]>([]),
     [error, setError] = useState(""),
     [state, setState] = useState("");
+  useResetTablePage(state);
   const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     request<{ records: RecordRow[] }>("/order-inbox", companyId)
@@ -562,7 +565,7 @@ function MessageList({
           <Empty text="La bandeja está vacía. Puedes introducir texto, un PDF con texto o una imagen con transcripción." />
         ) : (
           <div className="table-responsive">
-            <table>
+            <DataTable id="order-inbox" primary>
               <thead>
                 <tr>
                   <th>Asunto</th>
@@ -603,7 +606,7 @@ function MessageList({
                     </tr>
                   ))}
               </tbody>
-            </table>
+            </DataTable>
           </div>
         )}
       </section>
@@ -1645,6 +1648,7 @@ function Alerts({
     [state, setState] = useState("OPEN"),
     [reload, setReload] = useState(0),
     [busy, setBusy] = useState(false);
+  useResetTablePage(state);
   const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     request<{ records: RecordRow[] }>("/order-alerts", companyId)
@@ -1680,7 +1684,7 @@ function Alerts({
           <Empty text="No hay alertas en esta vista." />
         ) : (
           <div className="table-responsive">
-            <table>
+            <DataTable id="order-alerts" primary>
               <thead>
                 <tr>
                   <th>Tipo</th>
@@ -1748,7 +1752,7 @@ function Alerts({
                     </tr>
                   ))}
               </tbody>
-            </table>
+            </DataTable>
           </div>
         )}
       </section>
@@ -1809,7 +1813,7 @@ function Baskets({
         {!rows.length ? (
           <Empty text="Aún no hay histórico aceptado por el ERP para calcular cestas. Los borradores mock no cuentan como compras realizadas." />
         ) : (
-          <table>
+          <DataTable id="usual-baskets" primary>
             <thead>
               <tr>
                 <th>Cliente / centro</th>
@@ -1845,7 +1849,7 @@ function Baskets({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </DataTable>
         )}
       </section>
     </>

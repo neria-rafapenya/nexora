@@ -1,3 +1,4 @@
+import { DataTable, useResetTablePage } from "./DataTable";
 import { useDataRefresh } from "../infrastructure/useDataRefresh";
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -32,6 +33,7 @@ export function SupplierDocuments({
     [reload, setReload] = useState(0),
     [search, setSearch] = useState(""),
     [status, setStatus] = useState("");
+  useResetTablePage(JSON.stringify([search, status]));
   const refreshTick = useDataRefresh(
     companyId,
     permissions.read && !recordId && !isNew,
@@ -177,7 +179,7 @@ export function SupplierDocuments({
               </select>
             </div>
             <div className="table-responsive">
-              <table>
+              <DataTable id="supplier-documents" primary>
                 <thead>
                   <tr>
                     <th>Documento</th>
@@ -229,7 +231,7 @@ export function SupplierDocuments({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
               {!filtered.length && (
                 <p className="empty-copy">No hay documentos en esta vista.</p>
               )}
@@ -522,7 +524,7 @@ function DocumentDetail({
             <h3 className="mt">Cambios respecto a la versión anterior</h3>
             <p>{(v.data.changes as string[]).map(dl).join(" · ")}</p>
             <div className="table-responsive">
-              <table>
+              <DataTable id={"document-comparison-" + v.id}>
                 <thead>
                   <tr>
                     <th>Dato declarado</th>
@@ -581,7 +583,7 @@ function DocumentDetail({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
             </div>
             <details className="mt">
               <summary>Texto extraído del documento</summary>

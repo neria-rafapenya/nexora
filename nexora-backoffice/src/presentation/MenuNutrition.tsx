@@ -1,3 +1,4 @@
+import { DataTable } from "./DataTable";
 import { useState } from "react";
 import type { MenuCatalog, MenuPermissions } from "../application/menuModel";
 import { nutrientLabels, ml } from "../application/menuModel";
@@ -258,7 +259,7 @@ function NutritionValues({
           </label>
         )}
         <div className="table-responsive">
-          <table>
+          <DataTable id="menu-nutrients">
             <thead>
               <tr>
                 <th>Nutriente</th>
@@ -313,7 +314,7 @@ function NutritionValues({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </DataTable>
         </div>
         {kind === "rule" && (
           <>

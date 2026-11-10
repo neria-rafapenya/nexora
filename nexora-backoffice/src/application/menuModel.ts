@@ -1,3 +1,4 @@
+import { preserveTableURL } from "./routes";
 import type { RecordRow } from "../domain/core";
 export interface MenuPermissions {
   read: boolean;
@@ -191,11 +192,13 @@ export const ml = (v: unknown) => menuLabels[String(v)] ?? String(v ?? "—");
 export const menuName = (c: MenuCatalog, table: string, id: unknown) =>
   String(c[table]?.find((r) => r.id === id)?.data.name ?? "Sin asignar");
 export const menuURL = (section = "", id = "", company = "") =>
-  "/menus" +
-  (section ? "/" + section : "") +
-  (id ? "/" + id : "") +
-  "?" +
-  new URLSearchParams({ company });
+  preserveTableURL(
+    "/menus" +
+      (section ? "/" + section : "") +
+      (id ? "/" + id : "") +
+      "?" +
+      new URLSearchParams({ company }),
+  );
 export function planForm(r?: RecordRow): PlanForm {
   const d = r?.data;
   return {

@@ -1,3 +1,4 @@
+import { DataTable } from "./DataTable";
 import { useDataRefresh } from "../infrastructure/useDataRefresh";
 import { MenuCalendar } from "./MenuCalendar";
 import { MenuImport } from "./MenuImport";
@@ -208,7 +209,7 @@ export function Menus({
               )}
             </div>
             <section className="panel table-responsive">
-              <table>
+              <DataTable id="menus-list" primary>
                 <thead>
                   <tr>
                     <th>Nombre</th>
@@ -249,7 +250,7 @@ export function Menus({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
               {!rows.length && (
                 <p className="empty-copy">
                   Todavía no hay registros. Empieza por ingredientes y recetas.
@@ -1486,7 +1487,7 @@ function ForecastView({
       <details>
         <summary>Raciones por centro, fecha y dieta</summary>
         <div className="table-responsive">
-          <table>
+          <DataTable id="menu-servings">
             <thead>
               <tr>
                 <th>Centro / fecha</th>
@@ -1514,12 +1515,12 @@ function ForecastView({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </DataTable>
         </div>
       </details>
       <h4 className="mt">Ingredientes necesarios</h4>
       <div className="table-responsive">
-        <table>
+        <DataTable id="menu-needs">
           <thead>
             <tr>
               <th>Centro / fecha</th>
@@ -1544,11 +1545,11 @@ function ForecastView({
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </div>
       <h4 className="mt">Propuesta de abastecimiento</h4>
       <div className="table-responsive">
-        <table>
+        <DataTable id="menu-procurement">
           <thead>
             <tr>
               <th>Centro / fecha</th>
@@ -1581,7 +1582,7 @@ function ForecastView({
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </div>
     </section>
   );

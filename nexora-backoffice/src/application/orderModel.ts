@@ -1,3 +1,4 @@
+import { preserveTableURL } from "./routes";
 import type { RecordRow } from "../domain/core";
 export interface OrderContext {
   products: RecordRow[];
@@ -75,7 +76,7 @@ export const amount = (cents: unknown) =>
 export const rowName = (rows: RecordRow[], id: unknown) =>
   String(rows.find((r) => r.id === id)?.data.name ?? "Sin asignar");
 export const orderPath = (path: string, company: string) =>
-  path + "?" + new URLSearchParams({ company });
+  preserveTableURL(path + "?" + new URLSearchParams({ company }));
 export interface LineDraft {
   id?: string;
   version?: number;

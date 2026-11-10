@@ -1,3 +1,4 @@
+import { MemoryRouter } from "react-router-dom";
 // @vitest-environment jsdom
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -68,17 +69,23 @@ it("read-only calendar permits browsing diets while disabling recipe editing", a
   try {
     await act(async () =>
       root.render(
-        <MenuCalendar
-          form={f}
-          c={c}
-          disabled
-          onChange={() => {
-            throw new Error("Read-only");
-          }}
-        />,
+        <MemoryRouter>
+          <MenuCalendar
+            form={f}
+            c={c}
+            disabled
+            onChange={() => {
+              throw new Error("Read-only");
+            }}
+          />
+        </MemoryRouter>,
       ),
     );
-    const controls = [...host.querySelectorAll("select")];
+    const controls = [
+      ...host.querySelectorAll<HTMLSelectElement>(
+        'select:not([aria-label^="Filas por página"])',
+      ),
+    ];
     expect(controls[0].disabled).toBe(false);
     expect(controls.slice(2).every((s) => s.disabled)).toBe(true);
   } finally {

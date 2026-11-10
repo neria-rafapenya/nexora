@@ -1,3 +1,4 @@
+import { preserveTableURL } from "./routes";
 import type { RecordRow } from "../domain/core";
 export interface WastePermissions {
   read: boolean;
@@ -116,11 +117,13 @@ export const wasteToday = () =>
     day: "2-digit",
   }).format(new Date());
 export const wasteURL = (section = "", id = "", company = "") =>
-  "/food-waste" +
-  (section ? "/" + section : "") +
-  (id ? "/" + id : "") +
-  "?" +
-  new URLSearchParams({ company });
+  preserveTableURL(
+    "/food-waste" +
+      (section ? "/" + section : "") +
+      (id ? "/" + id : "") +
+      "?" +
+      new URLSearchParams({ company }),
+  );
 export function wasteForm(row?: RecordRow): WasteForm {
   const d = row?.data ?? {};
   return {

@@ -1,3 +1,4 @@
+import { DataTable } from "./DataTable";
 import { useState } from "react";
 import type { RecordRow } from "../domain/core";
 import { request } from "../infrastructure/api";
@@ -183,7 +184,7 @@ export function MenuImport({
       {preview && (
         <>
           <div className="table-responsive">
-            <table>
+            <DataTable id="menu-import-preview">
               <thead>
                 <tr>
                   <th>Fila</th>
@@ -307,7 +308,7 @@ export function MenuImport({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </DataTable>
           </div>
           {preview.validationError && (
             <p role="alert">{preview.validationError}</p>

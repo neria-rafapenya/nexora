@@ -134,3 +134,24 @@ it("resolves F5 report, measurement, actual count and improvement action deep li
     });
   }
 });
+
+it("keeps table state and master filters when opening a record or returning to its list", async () => {
+  const { preserveTableURL } = await import("./routes");
+  expect(
+    preserveTableURL(
+      "/products/p?company=c",
+      "/products?company=c&page=35&sort=price&dir=desc&pageSize=25&q=rice",
+    ),
+  ).toBe(
+    "/products/p?company=c&page=35&sort=price&dir=desc&pageSize=25&q=rice",
+  );
+  expect(
+    preserveTableURL("/products", "/products/p?page=35&sort=name&dir=asc"),
+  ).toBe("/products?page=35&sort=name&dir=asc");
+  expect(preserveTableURL("/suppliers", "/products?page=35&sort=name")).toBe(
+    "/suppliers",
+  );
+  expect(
+    preserveTableURL("/products?company=b", "/products?company=a&page=35"),
+  ).toBe("/products?company=b");
+});

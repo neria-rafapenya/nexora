@@ -1,3 +1,4 @@
+import { DataTable } from "./DataTable";
 import type {
   MenuCatalog,
   PlanForm,
@@ -338,7 +339,7 @@ export function AdvancedForecast({ f, c }: { f: Forecast; c: MenuCatalog }) {
         sola la idoneidad clínica ni las condiciones de elaboración.
       </p>
       <div className="table-responsive">
-        <table>
+        <DataTable id="menu-nutrition-checks">
           <thead>
             <tr>
               <th>Centro / fecha / dieta</th>
@@ -371,7 +372,7 @@ export function AdvancedForecast({ f, c }: { f: Forecast; c: MenuCatalog }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </div>
       <h3 className="mt">Abastecimiento revisado por entrega</h3>
       <p>
@@ -432,7 +433,7 @@ export function AdvancedForecast({ f, c }: { f: Forecast; c: MenuCatalog }) {
         Descargar previsión CSV
       </button>
       <div className="table-responsive">
-        <table>
+        <DataTable id="menu-purchases">
           <thead>
             <tr>
               <th>Centro / entrega</th>
@@ -467,7 +468,7 @@ export function AdvancedForecast({ f, c }: { f: Forecast; c: MenuCatalog }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </div>
     </section>
   );

@@ -1,3 +1,4 @@
+import { DataTable } from "./DataTable";
 import { useState } from "react";
 import type { MenuCatalog, PlanForm } from "../application/menuModel";
 import { menuName, ml } from "../application/menuModel";
@@ -102,7 +103,7 @@ export function MenuCalendar({
         </label>
       </div>
       <div className="table-responsive">
-        <table className="menu-calendar">
+        <DataTable id="menu-calendar" className="menu-calendar">
           <thead>
             <tr>
               <th>Plato</th>
@@ -181,7 +182,7 @@ export function MenuCalendar({
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
       </div>
       <details className="mt">
         <summary>Copiar platos de un día</summary>
