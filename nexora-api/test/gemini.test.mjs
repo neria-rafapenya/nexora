@@ -11,7 +11,7 @@ const config = {
   enabled: true,
   apiKey: "test-secret",
   freeTierConfirmed: true,
-  model: "gemini-2.5-flash-lite",
+  model: "gemini-3.5-flash-lite",
   maxDailyRequests: 2,
 };
 const text = "2 KG Test Rice";
@@ -34,6 +34,14 @@ test("Gemini adapter sends only extraction data, validates structured output and
       calls++;
       assert(!url.includes(config.apiKey));
       assert.equal(options.headers["x-goog-api-key"], config.apiKey);
+      assert.equal(
+        JSON.parse(options.body).generationConfig.responseFormat.text.mimeType,
+        "APPLICATION_JSON",
+      );
+      assert.equal(
+        JSON.parse(options.body).generationConfig.temperature,
+        undefined,
+      );
       const sent = JSON.parse(
         JSON.parse(options.body).contents[0].parts[0].text,
       );

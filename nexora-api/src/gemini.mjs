@@ -1,4 +1,4 @@
-export const freePocModels = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
+export const freePocModels = ["gemini-3.5-flash-lite", "gemini-2.5-flash"];
 const error = (code, status = 400) => {
   throw Object.assign(new Error(code), { code, status });
 };
@@ -8,7 +8,7 @@ export function geminiConfigFromEnv() {
     enabled: process.env.GEMINI_ENABLED === "true",
     apiKey: process.env.GEMINI_API_KEY ?? "",
     freeTierConfirmed: process.env.GEMINI_FREE_TIER_CONFIRMED === "true",
-    model: process.env.GEMINI_MODEL ?? "gemini-2.5-flash-lite",
+    model: process.env.GEMINI_MODEL ?? "gemini-3.5-flash-lite",
     maxDailyRequests:
       Number.isInteger(daily) && daily >= 1 && daily <= 100 ? daily : 5,
   };
@@ -50,22 +50,18 @@ export function demoCatalog(products) {
 }
 const responseSchema = {
   type: "object",
-  additionalProperties: false,
   properties: {
     deliveryDate: { type: ["string", "null"] },
     lines: {
       type: "array",
-      minItems: 1,
-      maxItems: 100,
       items: {
         type: "object",
-        additionalProperties: false,
         properties: {
           originalText: { type: "string" },
           sku: { type: ["string", "null"] },
           quantity: { type: ["number", "null"] },
           unit: { type: "string", enum: ["KG", "L", "BOX", "UNIT", "UNKNOWN"] },
-          confidence: { type: "number", minimum: 0, maximum: 1 },
+          confidence: { type: "number" },
         },
         required: ["originalText", "sku", "quantity", "unit", "confidence"],
       },
@@ -185,9 +181,9 @@ export class GeminiOrderAdapter {
               },
             ],
             generationConfig: {
-              temperature: 0,
-              responseMimeType: "application/json",
-              responseJsonSchema: responseSchema,
+              responseFormat: {
+                text: { mimeType: "APPLICATION_JSON", schema: responseSchema },
+              },
               maxOutputTokens: 4096,
             },
           }),

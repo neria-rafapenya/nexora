@@ -20,7 +20,7 @@ afterEach(async () => {
 async function render(available: boolean) {
   vi.mocked(request).mockResolvedValue({
     available,
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-3.5-flash-lite",
     usedToday: 0,
     maxDailyRequests: 5,
   });
