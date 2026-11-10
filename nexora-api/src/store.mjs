@@ -1,3 +1,4 @@
+import { migrateAssistant } from "./assistant.mjs";
 import {
   productMediaResources,
   migrateProductMedia,
@@ -159,6 +160,7 @@ export class Store {
       await migrateAi(this);
       await migrateSearch(this);
       await migrateProductMedia(this);
+      await migrateAssistant(this);
     });
   }
   async transaction(fn) {

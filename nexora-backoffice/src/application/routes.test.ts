@@ -6,6 +6,13 @@ import {
   masterPaths,
 } from "./routes";
 describe("Backoffice URL routes", () => {
+  it("resolves assistant management without exposing a chat route", () => {
+    expect(resolveRoute("/assistant").page).toBe("assistant");
+    expect(routeURL("assistant", undefined, "company")).toBe(
+      "/assistant?company=company",
+    );
+    expect(resolveRoute("/assistant/chat").page).toBe("notFound");
+  });
   it("resolves category and product list, creation and detail URLs", () => {
     expect(resolveRoute("/categories").page).toBe("mainCategories");
     expect(resolveRoute("/categories/new")).toMatchObject({

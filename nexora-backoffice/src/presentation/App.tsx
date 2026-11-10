@@ -1,3 +1,4 @@
+import { AssistantManagement } from "./AssistantManagement";
 import { DataTable } from "./DataTable";
 import { ProductMedia } from "./ProductMedia";
 import { DataFreshness } from "./DataFreshness";
@@ -70,6 +71,9 @@ const labels: Record<string, string> = {
   dashboard: "Resumen",
   audit: "Historial de cambios",
   users: "Usuarios y roles",
+  assistant: "Asistente IA",
+  assistantConfig: "Configuración del asistente",
+  assistantKnowledge: "Contenido de ayuda del asistente",
   settings: "Configuración",
   mainCategories: "Categorías principales",
   families: "Familias",
@@ -272,6 +276,14 @@ export function App() {
             <>
               <span className="sidebar-label">SISTEMA</span>
               <Link
+                title="Asistente IA"
+                className={page === "assistant" ? "active" : ""}
+                to={urlFor("assistant")}
+              >
+                <ShieldCheck size={18} />
+                <span>Asistente IA</span>
+              </Link>
+              <Link
                 title="Usuarios y roles"
                 className={page === "users" ? "active" : ""}
                 to={urlFor("users")}
@@ -378,7 +390,7 @@ export function App() {
                   onBack={() => navigate("dashboard")}
                 />
               ) : (masterPaths[page] && !contract.resources[page]) ||
-                (["audit", "users", "settings"].includes(page) &&
+                (["audit", "users", "settings", "assistant"].includes(page) &&
                   company?.role !== "admin") ? (
                 <RouteNotice
                   title="Acceso restringido"
@@ -393,6 +405,8 @@ export function App() {
                   navigate={navigate}
                   refresh={refresh}
                 />
+              ) : page === "assistant" ? (
+                <AssistantManagement key={companyId} companyId={companyId} />
               ) : page === "orders" ? (
                 <Orders
                   key={companyId}

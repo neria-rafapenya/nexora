@@ -21,6 +21,7 @@ export const pagePaths: Record<string, string> = {
   audit: "/audit",
   users: "/users",
   settings: "/settings",
+  assistant: "/assistant",
 };
 export interface AppRoute {
   page: string;

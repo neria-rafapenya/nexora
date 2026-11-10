@@ -1752,3 +1752,46 @@ h1 {
   min-width: 32px;
   padding: 0.35rem 0.6rem;
 }
+
+.assistant-section {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.assistant-section fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.assistant-section label:not(.assistant-source) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.assistant-section .assistant-source {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 0;
+  border-top: 1px solid #e5ebe7;
+}
+.assistant-source input {
+  width: auto;
+  flex: 0 0 auto;
+  margin-top: 0.25rem;
+}
+.assistant-source small {
+  color: #64766f;
+}
+
+.assistant-section .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 760px) {
+  .assistant-section .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
