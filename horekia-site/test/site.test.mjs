@@ -40,7 +40,7 @@ test("public content is server-readable and has one descriptive H1, canonical me
   assert(d.getElementById("piloto"));
   assert(!html.includes("mailto:hola@horekia.com"));
   assert.equal(d.querySelectorAll("form").length, 0);
-  assert(!html.includes("Rafael Peña"));
+  assert(!html.includes("Rafa P. Vargas"));
   assert(!html.includes("43735032A"));
   assert(!html.includes("Ramon Soldevila"));
   const contact = new JSDOM(
@@ -48,7 +48,7 @@ test("public content is server-readable and has one descriptive H1, canonical me
   ).window.document;
   assert(contact.querySelector("#contact-privacy").required);
   assert(contact.querySelector("#contact-email").required);
-  assert(contact.body.textContent.includes("Rafael Peña"));
+  assert(contact.body.textContent.includes("Rafa P. Vargas"));
   assert(!html.includes("GEMINI_API_KEY"));
 });
 test("every internal link/asset exists, IDs are unique, legal pages have canonical URLs, and sitemap contains only real pages", async () => {
