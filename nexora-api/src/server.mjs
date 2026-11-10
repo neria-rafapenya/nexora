@@ -1,3 +1,4 @@
+import { runtimeOptions } from "./runtime.mjs";
 import { handleSearch } from "./search-http.mjs";
 import { handleWaste } from "./waste-http.mjs";
 import { wastePermissions } from "./waste-schema.mjs";
@@ -687,16 +688,14 @@ if (
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   const connection = process.env.DATABASE_URL;
-  if (!connection)
-    throw new Error("DATABASE_URL is required in nexora-api/.env");
+  if (!connection) throw new Error("DATABASE_URL is required in .env");
   const store = new Store(connection);
   await initialize(store);
   const stopOrderJobs = startOrderJobs(store);
-  const server = createServer(store, {
-    secure: process.env.COOKIE_SECURE === "true",
-  });
-  server.listen(Number(process.env.PORT ?? 5181), "127.0.0.1", () =>
-    console.log("Nexora API: http://127.0.0.1:" + (process.env.PORT ?? 5181)),
+  const options = runtimeOptions();
+  const server = createServer(store, options);
+  server.listen(options.port, "127.0.0.1", () =>
+    console.log("Nexora API: http://127.0.0.1:" + options.port),
   );
   for (const signal of ["SIGINT", "SIGTERM"])
     process.on(signal, () =>
