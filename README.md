@@ -296,3 +296,9 @@ NEXORA_WASTE_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/wa
 ```
 
 Outstanding integrations remain the agreed backlog: Gemini free-tier POC integration, F1 embeddings, live channels/OCR, customer/supplier frontends, ERP, live inventory, external notifications and AWS production deployment. Real measurements, operating procedures and professional decisions must replace demo fixtures for real use.
+
+## F5 functional acceptance closure — local POC
+
+Functional technical validation is closed for the agreed local scope. It is not an approval of real food handling or a customer production sign-off. The executable rollback scenario now covers disposal, a simulated Quality-reviewed donation, a supplier return, service-count comparison and an improvement action progressed to completion with evidence. Confirmed destination totals are checked separately, repeated requests do not duplicate observations, voiding removes the corrected record from indicators while retaining evidence, and stock/order counts stay unchanged. UI tests cover explicit confirmation/evidence and immutable completed records. No real Quality approvals, completed sample donations, users or external movements are created by validation.
+
+The original F0–F5 delivery sequence is complete for the documented local POC scopes, with the already deferred F1 semantic search and external integrations still pending. There is no previously defined F6. The recommended next workstream is the queued Gemini POC adapter for F2 order interpretation, followed by customer frontend work as selected by the user. Actual Gemini activation needs a user-provided API key and confirmation of the project's free-tier configuration; no billing is enabled automatically.

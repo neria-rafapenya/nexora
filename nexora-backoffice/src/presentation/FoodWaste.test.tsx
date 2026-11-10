@@ -207,3 +207,117 @@ it("missing waste records do not become create forms", async () => {
   expect(host.textContent).toContain("No se ha encontrado");
   expect(host.querySelector("form")).toBeNull();
 });
+
+it("functional acceptance: disposal execution requires evidence and updates the displayed destination state", async () => {
+  event.data.destinationKind = "DISPOSAL";
+  event.data.destinationState = "READY";
+  const base = vi.mocked(request).getMockImplementation()!;
+  vi.mocked(request).mockImplementation(async (path, company, method, body) => {
+    if (path === "/food-waste/events/event/complete") {
+      event = {
+        ...event,
+        version: 2,
+        data: {
+          ...event.data,
+          destinationState: "COMPLETED",
+          completion: {
+            completedAt: "2026-11-10",
+            evidence: (body as { evidence: string }).evidence,
+          },
+        },
+      };
+      return { record: event } as never;
+    }
+    return (await base(path, company, method, body)) as never;
+  });
+  await render();
+  const execute = [...host.querySelectorAll("button")].find(
+    (b) => b.textContent === "Registrar ejecución del destino",
+  )!;
+  expect(execute.disabled).toBe(true);
+  const evidence = [...host.querySelectorAll("label")]
+    .find((l) => l.textContent?.includes("Referencia, motivo o evidencia"))!
+    .querySelector("textarea")!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )!.set!.call(evidence, "SIMULATED DISPOSAL RECEIPT");
+    evidence.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () =>
+    [...host.querySelectorAll("label")]
+      .find((l) => l.textContent?.includes("Confirmo la medición"))!
+      .querySelector<HTMLInputElement>("input")!
+      .click(),
+  );
+  await act(async () => execute.click());
+  expect(request).toHaveBeenCalledWith(
+    "/food-waste/events/event/complete",
+    "workspace",
+    "POST",
+    { version: 1, confirmed: true, evidence: "SIMULATED DISPOSAL RECEIPT" },
+  );
+  expect(host.textContent).toContain("SIMULATED DISPOSAL RECEIPT");
+  expect(host.textContent).toContain("Completado");
+});
+it("functional acceptance: an improvement action closes with evidence and becomes immutable", async () => {
+  let action = row("action", {
+    centerId: "center",
+    title: "TEST improvement",
+    reason: "OVERPRODUCTION",
+    ownerName: "Test team",
+    dueDate: "2030-01-01",
+    targetReductionPercent: 10,
+    linkedEventIds: [],
+    notes: "Test plan",
+    isMock: true,
+    state: "OPEN",
+    outcome: {},
+  });
+  const base = vi.mocked(request).getMockImplementation()!;
+  vi.mocked(request).mockImplementation(async (path, company, method, body) => {
+    if (path === "/food-waste/actions/action")
+      return { record: structuredClone(action) } as never;
+    if (path === "/food-waste/actions/action/progress") {
+      const input = body as { state: string; evidence: string };
+      action = {
+        ...action,
+        version: 2,
+        data: {
+          ...action.data,
+          state: input.state,
+          outcome: {
+            COMPLETED: { at: "2026-11-10", evidence: input.evidence },
+          },
+        },
+      };
+      return { record: action } as never;
+    }
+    return (await base(path, company, method, body)) as never;
+  });
+  await render(true, false, "actions", "action");
+  const close = [...host.querySelectorAll("button")].find(
+    (b) => b.textContent === "Cerrar acción con evidencia",
+  )!;
+  expect(close.disabled).toBe(true);
+  const evidence = [...host.querySelectorAll("label")]
+    .find((l) => l.textContent?.includes("Evidencia de progreso"))!
+    .querySelector("textarea")!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )!.set!.call(evidence, "SIMULATED MEASURED OUTCOME");
+    evidence.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () => close.click());
+  expect(request).toHaveBeenCalledWith(
+    "/food-waste/actions/action/progress",
+    "workspace",
+    "POST",
+    { version: 1, state: "COMPLETED", evidence: "SIMULATED MEASURED OUTCOME" },
+  );
+  expect(host.querySelector("fieldset")?.disabled).toBe(true);
+  expect(host.textContent).toContain("SIMULATED MEASURED OUTCOME");
+});

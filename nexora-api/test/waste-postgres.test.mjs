@@ -150,6 +150,113 @@ test(
                 .donated,
               2,
             );
+            // Functional acceptance scenarios: disposal, return and an evidenced improvement action.
+            const recordDestination = async (kind, quantity, key) => {
+              let row = await svc.saveMeasurement(
+                t,
+                "events",
+                null,
+                {
+                  ...input,
+                  quantity,
+                  destinationKind: kind,
+                  destinationTarget:
+                    kind === "RETURN"
+                      ? "ROLLBACK supplier desk"
+                      : "ROLLBACK disposal point",
+                  createKey: key + suffix,
+                },
+                actor,
+              );
+              row = await svc.measurementAction(
+                t,
+                "events",
+                row.id,
+                { version: row.version, confirmed: true },
+                "record",
+                "admin",
+                actor,
+              );
+              if (kind === "RETURN")
+                row = await svc.measurementAction(
+                  t,
+                  "events",
+                  row.id,
+                  {
+                    version: row.version,
+                    confirmed: true,
+                    evidence: "ROLLBACK simulated Quality return review",
+                  },
+                  "approve",
+                  "quality",
+                  actor,
+                );
+              return svc.measurementAction(
+                t,
+                "events",
+                row.id,
+                {
+                  version: row.version,
+                  confirmed: true,
+                  evidence: "ROLLBACK simulated destination receipt",
+                },
+                "complete",
+                "admin",
+                actor,
+              );
+            };
+            const disposal = await recordDestination(
+              "DISPOSAL",
+              3,
+              "F5_DISPOSAL_",
+            );
+            await recordDestination("RETURN", 1, "F5_RETURN_");
+            const destinations = await svc.report(t, { centerId: center.id });
+            assert.equal(destinations.totals.records, 3);
+            assert.equal(destinations.quantities[0].discarded, 3);
+            assert.equal(destinations.quantities[0].returned, 1);
+            assert.equal(destinations.quantities[0].donated, 2);
+            assert.equal(destinations.quantities[0].pending, 0);
+            let improvement = await svc.saveAction(
+              t,
+              null,
+              {
+                centerId: center.id,
+                title: "ROLLBACK portion planning action",
+                reason: "OVERPRODUCTION",
+                ownerName: "ROLLBACK test team",
+                dueDate: "2030-01-01",
+                targetReductionPercent: 10,
+                linkedEventIds: [disposal.id],
+                notes: "ROLLBACK functional check only",
+                isMock: true,
+                createKey: "F5_IMPROVEMENT_" + suffix,
+              },
+              actor,
+            );
+            improvement = await svc.actionProgress(
+              t,
+              improvement.id,
+              {
+                version: improvement.version,
+                state: "IN_PROGRESS",
+                evidence: "ROLLBACK simulated start",
+              },
+              actor,
+            );
+            improvement = await svc.actionProgress(
+              t,
+              improvement.id,
+              {
+                version: improvement.version,
+                state: "COMPLETED",
+                evidence:
+                  "ROLLBACK simulated outcome; not a measured reduction claim",
+              },
+              actor,
+            );
+            assert.equal(improvement.data.state, "COMPLETED");
+            assert(improvement.data.outcome.COMPLETED.evidence);
             const actual = {
               centerId: center.id,
               date: "2020-01-01",
@@ -239,7 +346,9 @@ test(
               actor,
             );
             const report = await svc.report(t, { centerId: center.id });
-            assert.equal(report.totals.records, 0);
+            assert.equal(report.totals.records, 2);
+            assert.equal(report.quantities[0].donated, 0);
+            assert.equal(report.actions[0].data.state, "COMPLETED");
             assert.equal(report.totals.unserved, 20);
             throw rollback;
           }),
