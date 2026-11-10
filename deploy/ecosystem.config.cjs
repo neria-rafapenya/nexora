@@ -3,8 +3,9 @@ module.exports = {
     {
       name: "horekia",
       cwd: "/var/www/horekia",
-      script: "nexora-api/src/server.mjs",
-      node_args: "--env-file=/var/www/horekia/.env",
+      script: "npm",
+      args: "start",
+      interpreter: "none",
       instances: 1,
       exec_mode: "fork",
       autorestart: true,
