@@ -64,6 +64,7 @@ export const menuDetailResources = {
       productId: ref("Product", "products"),
       hash: text("Technical hash", true),
       snapshot: json("Technical snapshot"),
+      documentEvidence: json("Supplier document evidence"),
       source: text("Source", true),
       isMock: bool("Mock data"),
       actorId: text("Quality reviewer", true),

@@ -1,7 +1,13 @@
+import { documentResources } from "../../src/document-schema.mjs";
 import { resources, validate } from "../../src/schema.mjs";
 import { orderResources } from "../../src/order-schema.mjs";
 import { menuResources } from "../../src/menu-schema.mjs";
-const defs = { ...resources, ...orderResources, ...menuResources };
+const defs = {
+  ...resources,
+  ...orderResources,
+  ...menuResources,
+  ...documentResources,
+};
 export class MenuStore {
   constructor() {
     this.rows = Object.fromEntries(Object.keys(defs).map((k) => [k, []]));

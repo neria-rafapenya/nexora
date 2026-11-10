@@ -42,6 +42,14 @@ const routes: Array<{
 ]);
 routes.push(
   {
+    path: "/supplier-documents/new",
+    handle: { page: "documents", isNew: true },
+  },
+  {
+    path: "/supplier-documents/:id",
+    handle: { page: "documents", isNew: false },
+  },
+  {
     path: "/menus/nutrition",
     handle: { page: "menus", isNew: false, section: "nutrition" },
   },

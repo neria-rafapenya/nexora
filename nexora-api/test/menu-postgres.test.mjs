@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Store } from "../src/store.mjs";
 import { MenusService } from "../src/menus.mjs";
+import { importMenu } from "../src/menu-import.mjs";
 test(
   "PostgreSQL F3: recipe snapshots, pack mappings, scoped FKs and approvals persist correctly; all fixtures roll back",
   { skip: !process.env.NEXORA_MENU_DB_TEST },
@@ -27,12 +28,14 @@ test(
               actor,
               "Existing operator reference required; no accounts are created",
             );
+            const nutritionProfiles = await store.list(t, "nutritionProfiles");
             const links = await store.list(t, "productAllergens"),
               product = (await store.list(t, "products")).find(
                 (p) =>
                   p.data.active &&
                   typeof p.data.price === "number" &&
-                  !links.some((l) => l.data.productId === p.id),
+                  !links.some((l) => l.data.productId === p.id) &&
+                  !nutritionProfiles.some((n) => n.data.productId === p.id),
               );
             assert(product);
             await store.update(
@@ -68,6 +71,26 @@ test(
                 { name: "F3 rollback diet", code: "ROLLBACK-" + suffix },
                 null,
               );
+            const secondCenter = await store.create(
+              t,
+              "centers",
+              {
+                name: "F3 rollback second center " + suffix,
+                clientId: client.id,
+              },
+              null,
+            );
+            await store.create(
+              t,
+              "centerDiners",
+              {
+                centerId: secondCenter.id,
+                dietId: diet.id,
+                service: "LUNCH",
+                count: 50,
+              },
+              null,
+            );
             await store.create(
               t,
               "centerDiners",
@@ -119,28 +142,55 @@ test(
               {
                 name: "F3 rollback plan",
                 clientId: client.id,
-                centerIds: [center.id],
+                centerIds: [center.id, secondCenter.id],
                 startDate: "2030-01-07",
-                endDate: "2030-01-07",
+                endDate: "2030-01-11",
                 service: "LUNCH",
                 origin: "CLIENT_REFERENCE",
                 sourceReference: "Rollback fixture",
                 marginPercent: 0,
-                schedule: {
-                  entries: [
-                    {
-                      date: "2030-01-07",
-                      dietId: diet.id,
-                      course: "MAIN",
-                      recipeVersionId: rv.id,
-                      centerId: null,
-                    },
-                  ],
+                schedule: { entries: [] },
+                supply: {
+                  overrides: [],
+                  inventory: [],
+                  deliveries: [center.id, secondCenter.id].flatMap((centerId) =>
+                    [8, 9, 10, 11].map((day) => ({
+                      centerId,
+                      consumptionDate:
+                        "2030-01-" + day.toString().padStart(2, "0"),
+                      deliveryDate: "2030-01-07",
+                    })),
+                  ),
                 },
                 counts: { overrides: [] },
               },
               null,
             );
+            const imported = {
+              format: "csv",
+              content:
+                "date,diet,course,recipe_version,recipe\n" +
+                [7, 8, 9, 10, 11]
+                  .map(
+                    (day) =>
+                      `2030-01-${day.toString().padStart(2, "0")},${diet.id},MAIN,1,${recipe.id}`,
+                  )
+                  .join("\n"),
+              mode: "REPLACE",
+              sourceReference: "ROLLBACK WEEKLY CLIENT FILE",
+              version: plan.version,
+              commit: false,
+            };
+            const preview = await importMenu(svc, t, plan.id, imported, actor);
+            assert(preview.canCommit);
+            const committed = await importMenu(
+              svc,
+              t,
+              plan.id,
+              { ...imported, commit: true, previewHash: preview.previewHash },
+              actor,
+            );
+            plan = committed.record;
             await svc.saveNutrition(
               t,
               "profile",
@@ -195,6 +245,21 @@ test(
             );
             const f = await svc.forecast(t, plan.id);
             assert.equal(f.needs[0].baseQuantity, 8);
+            assert.equal(f.servings.length, 10);
+            assert.equal(
+              f.needs
+                .filter((n) => n.centerId === center.id)
+                .reduce((n, r) => n + r.baseQuantity, 0),
+              40,
+            );
+            assert.equal(
+              f.needs
+                .filter((n) => n.centerId === secondCenter.id)
+                .reduce((n, r) => n + r.baseQuantity, 0),
+              20,
+            );
+            assert.equal(f.purchases.length, 2);
+            assert.equal(f.nutrition[0].perServing.energyKcal, 80);
             assert.deepEqual(f.issues, []);
             assert.equal((await svc.forecast(t, plan.id)).hash, f.hash);
             plan = await svc.transition(
@@ -237,7 +302,14 @@ test(
               { version: plan.version },
               actor,
             );
-            assert.equal(proposed.length, 1);
+            assert.equal(proposed.length, 2);
+            assert(
+              proposed.every(
+                (o) =>
+                  o.data.state === "IN_REVIEW" &&
+                  o.data.submittedRevision === null,
+              ),
+            );
             assert.equal(proposed[0].data.erpState, "NOT_SENT");
             const repeated = await svc.createPurchaseDrafts(
               t,

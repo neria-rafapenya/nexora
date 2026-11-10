@@ -39,6 +39,7 @@ export interface RecordRow {
   updatedAt: string;
 }
 export interface Contract {
+  documentPermissions?: { read: boolean; write: boolean; quality: boolean };
   menuPermissions?: {
     read: boolean;
     write: boolean;

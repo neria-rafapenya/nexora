@@ -1429,6 +1429,17 @@ function ForecastView({
         Las compras se redondean por centro y fecha: cajas y unidades completas;
         kg y litros a tres decimales.
       </p>
+      {f.frozen && (f.currentSourcesChanged || !!f.currentIssues?.length) && (
+        <div className="alert">
+          La versión publicada conserva sus datos históricos, pero los datos
+          actuales requieren revisión antes de generar nuevos pedidos.
+          <ul>
+            {f.currentIssues?.map((i) => (
+              <li key={i}>{ml(i)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {f.issues.length > 0 && (
         <div className="alert">
           <strong>Pendiente de resolver antes de publicar</strong>

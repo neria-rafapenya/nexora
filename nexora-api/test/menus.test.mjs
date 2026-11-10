@@ -1033,3 +1033,109 @@ test("menu detail demo seed creates only unreviewed synthetic values and never o
   assert.equal((await f.s.list("t", "nutritionProfiles")).length, profileCount);
   assert.deepEqual(await seedMenuDetails(f.s, "t"), out);
 });
+
+test("new supplier documentation invalidates live technical evidence while a published snapshot stays historical", async () => {
+  const { DocumentsService } = await import("../src/documents.mjs");
+  const f = await fixture(),
+    supplier = await f.s.create(
+      "t",
+      "suppliers",
+      { name: "Test Supplier", active: true },
+      null,
+    ),
+    product = await f.s.get("t", "products", f.product.id);
+  await f.s.update(
+    "t",
+    "products",
+    product.id,
+    { ...product.data, supplierId: supplier.id },
+    product.version,
+    "actor",
+  );
+  const docs = new DocumentsService(f.s),
+    doc = await docs.create(
+      "t",
+      {
+        title: "Test evidence",
+        supplierId: supplier.id,
+        kind: "TECHNICAL_SHEET",
+        productIds: [product.id],
+      },
+      "actor",
+    ),
+    body = {
+      version: doc.version,
+      attachment: {
+        filename: "evidence.txt",
+        mime: "text/plain",
+        base64: Buffer.from("TEST SOURCE").toString("base64"),
+      },
+      effectiveFrom: "2020-01-01",
+      expiresAt: "2035-01-01",
+      sourceReference: "TEST SOURCE",
+      isMock: true,
+      declarations: { ingredients: "Rice" },
+    };
+  const version = await docs.upload("t", doc.id, body, "actor");
+  let d = await f.s.get("t", "supplierDocuments", doc.id);
+  await docs.review(
+    "t",
+    doc.id,
+    version.id,
+    {
+      version: version.version,
+      documentVersion: d.version,
+      decision: "APPROVE",
+      changeHash: version.data.changeHash,
+      confirmed: true,
+      evidence: "TEST",
+    },
+    "quality",
+    "actor",
+  );
+  const p = await f.s.get("t", "products", product.id);
+  await f.svc.reviewTechnical(
+    "t",
+    {
+      productId: p.id,
+      productVersion: p.version,
+      ingredients: "Rice",
+      source: "TEST",
+      isMock: true,
+      documentVersionId: version.id,
+    },
+    "quality",
+    "actor",
+  );
+  let o = await review(f);
+  o = await approve(f, o, "nutrition");
+  o = await approve(f, o, "quality");
+  o = await f.svc.transition(
+    "t",
+    o.id,
+    { version: o.version },
+    "admin",
+    "actor",
+    "publish",
+  );
+  d = await f.s.get("t", "supplierDocuments", doc.id);
+  await docs.upload(
+    "t",
+    doc.id,
+    {
+      ...body,
+      version: d.version,
+      declarations: { ingredients: "New composition" },
+    },
+    "actor",
+  );
+  const frozen = await f.svc.forecast("t", o.id);
+  assert(frozen.frozen);
+  assert(frozen.currentIssues.includes("SUPPLIER_DOCUMENT_NOT_CURRENT"));
+  assert(frozen.currentSourcesChanged);
+  await assert.rejects(
+    () =>
+      f.svc.createPurchaseDrafts("t", o.id, { version: o.version }, "actor"),
+    /source data changed/,
+  );
+});

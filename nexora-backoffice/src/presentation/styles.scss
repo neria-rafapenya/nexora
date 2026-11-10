@@ -1489,3 +1489,10 @@ h1 {
     margin-top: 6px;
   }
 }
+
+.document-extracted {
+  white-space: pre-wrap;
+  max-height: 320px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}

@@ -59,6 +59,8 @@ export class MenusService {
       "dietMenuRules",
       "productTechnicalReviews",
       "menuPurchaseLinks",
+      "supplierDocuments",
+      "documentVersions",
     ];
     // A transaction uses one PostgreSQL connection; do not queue parallel queries on it.
     const result = {};
@@ -405,8 +407,15 @@ export class MenusService {
         !live &&
         ["PUBLISHED", "ARCHIVED"].includes(plan.data.state) &&
         plan.data.publishedSnapshot.hash
-      )
-        return { ...plan.data.publishedSnapshot, frozen: true };
+      ) {
+        const live = this.calculate(plan, await this.catalog(t));
+        return {
+          ...plan.data.publishedSnapshot,
+          frozen: true,
+          currentIssues: live.issues,
+          currentSourcesChanged: live.hash !== plan.data.publishedSnapshot.hash,
+        };
+      }
       return this.calculate(plan, await this.catalog(t));
     });
   }

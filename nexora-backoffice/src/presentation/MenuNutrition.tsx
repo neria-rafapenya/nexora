@@ -451,6 +451,7 @@ function Technical({
   changed: () => void;
 }) {
   const p = c.products.find((p) => p.id === id)!,
+    [documentVersionId, setDocumentVersion] = useState(""),
     [ingredients, setIngredients] = useState(String(p.data.ingredients ?? "")),
     [source, setSource] = useState(""),
     [mock, setMock] = useState(p.data.brand === "Nexora Sample"),
@@ -475,6 +476,51 @@ function Technical({
       )}
       {error && <p role="alert">{error}</p>}
       <fieldset className="menu-fields" disabled={!can || busy}>
+        <label>
+          Documento aprobado vinculado (opcional)
+          <select
+            value={documentVersionId}
+            onChange={(e) => {
+              setDocumentVersion(e.target.value);
+              const version = c.documentVersions?.find(
+                (v) => v.id === e.target.value,
+              );
+              if (version) {
+                const declarations = version.data.declarations as {
+                  ingredients?: string;
+                };
+                if (declarations.ingredients)
+                  setIngredients(declarations.ingredients);
+                setSource(String(version.data.sourceReference ?? ""));
+                if (version.data.isMock) setMock(true);
+              }
+            }}
+          >
+            <option value="">Referencia manual sin archivo vinculado</option>
+            {(c.documentVersions ?? [])
+              .filter(
+                (v) =>
+                  v.data.state === "APPROVED" &&
+                  (c.supplierDocuments ?? []).some(
+                    (d) =>
+                      d.id === v.data.documentId &&
+                      d.data.currentVersionId === v.id &&
+                      (d.data.productIds as string[]).includes(id),
+                  ),
+              )
+              .map((v) => (
+                <option key={v.id} value={v.id}>
+                  {String(
+                    (c.supplierDocuments ?? []).find(
+                      (d) => d.id === v.data.documentId,
+                    )?.data.title,
+                  )}{" "}
+                  · v{String(v.data.number)} · caducidad{" "}
+                  {String(v.data.expiresAt ?? "no declarada")}
+                </option>
+              ))}
+          </select>
+        </label>
         <label>
           Composición documentada
           <textarea
@@ -510,6 +556,7 @@ function Technical({
               await request("/menus/technical-review", company, "POST", {
                 productId: id,
                 productVersion: p.version,
+                ...(documentVersionId ? { documentVersionId } : {}),
                 ingredients,
                 source,
                 isMock: mock,

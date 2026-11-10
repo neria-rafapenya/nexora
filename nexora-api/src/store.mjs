@@ -1,3 +1,5 @@
+import { documentResources } from "./document-schema.mjs";
+import { migrateDocuments } from "./migrate-documents.mjs";
 import { migrateMenuDetails } from "./migrate-menu-details.mjs";
 import pg from "pg";
 import { readFileSync } from "node:fs";
@@ -17,7 +19,12 @@ import { migrateWorkflow } from "./migrate-workflow.mjs";
 import { migrateOrders } from "./migrate-orders.mjs";
 import { menuResources } from "./menu-schema.mjs";
 import { migrateMenus } from "./migrate-menus.mjs";
-const allResources = { ...resources, ...orderResources, ...menuResources };
+const allResources = {
+  ...resources,
+  ...orderResources,
+  ...menuResources,
+  ...documentResources,
+};
 import { migrateMainCategories } from "./migrate-main-categories.mjs";
 export const hashToken = (token) =>
   createHash("sha256").update(token).digest("hex");
@@ -135,6 +142,7 @@ export class Store {
       await migrateWorkflow(this);
       await migrateMenus(this);
       await migrateMenuDetails(this);
+      await migrateDocuments(this);
     });
   }
   async transaction(fn) {
@@ -210,6 +218,16 @@ export class Store {
     before = null,
     after = null,
   ) {
+    if (resource === "documentFiles") {
+      const withoutFile = (value) =>
+        value
+          ? Object.fromEntries(
+              Object.entries(value).filter(([key]) => key !== "base64"),
+            )
+          : null;
+      before = withoutFile(before);
+      after = withoutFile(after);
+    }
     await this.db
       .prepare("INSERT INTO audit VALUES(?,?,?,?,?,?,?,?,?)")
       .run(

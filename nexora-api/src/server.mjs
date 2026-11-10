@@ -1,3 +1,5 @@
+import { handleDocuments } from "./document-http.mjs";
+import { documentPermissions } from "./document-schema.mjs";
 import { handleMenus } from "./menu-http.mjs";
 import { menuPermissions } from "./menu-schema.mjs";
 import { optionsFromEnv } from "./workflow-rules.mjs";
@@ -289,6 +291,19 @@ export function createServer(
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
       if (
+        await handleDocuments({
+          store,
+          path,
+          method,
+          body,
+          tenant,
+          role,
+          user,
+          send,
+        })
+      )
+        return;
+      if (
         await handleMenus({
           store,
           path,
@@ -327,6 +342,7 @@ export function createServer(
             ]),
           ),
           roles: roleLabels,
+          documentPermissions: documentPermissions(role),
           menuPermissions: menuPermissions(role),
           orderPermissions: {
             read: canOrders(role),
@@ -352,9 +368,9 @@ export function createServer(
         return send(200, {
           events: await store.db
             .prepare(
-              "SELECT a.*,u.name AS actor FROM audit a LEFT JOIN users u ON u.id=a.actor_id WHERE a.tenant_id=? ORDER BY a.at DESC,a.id DESC LIMIT 200",
+              "SELECT a.id,a.tenant_id,a.actor_id,a.action,a.resource,a.record_id,CASE WHEN a.resource=? THEN a.before_data-'base64' ELSE a.before_data END AS before_data,CASE WHEN a.resource=? THEN a.after_data-'base64' ELSE a.after_data END AS after_data,a.at,u.name AS actor FROM audit a LEFT JOIN users u ON u.id=a.actor_id WHERE a.tenant_id=? ORDER BY a.at DESC,a.id DESC LIMIT 200",
             )
-            .all(tenant),
+            .all("documentFiles", "documentFiles", tenant),
         });
       }
       if (path === "/api/users") {

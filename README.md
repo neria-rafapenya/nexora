@@ -117,7 +117,7 @@ CI runs offline tests and a production build, without Supabase credentials. TLS 
 
 F1 semantic product search requires an embedding provider and API key; none is connected. An initial candidate is OpenAI `text-embedding-3-small`. Do not confuse approximate word search with embeddings. The requested 200-product fixture replaces the original document's larger demo-catalog target.
 
-F2 orders now works locally with explicitly simulated proposals and revision-specific customer acceptance and internal approval. F3 has a local menu-to-procurement workflow, weekly calendar, CSV/Excel import, configurable nutrition checks and reviewed order proposals. F4 supplier documents and F5 food waste remain planned screens. No external AI calls or automatic order confirmations occur. F1 semantic search remains postponed.
+F2 orders now works locally with explicitly simulated proposals and revision-specific customer acceptance and internal approval. F3 has a local menu-to-procurement workflow, weekly calendar, CSV/Excel import, configurable nutrition checks and reviewed order proposals. F4 supplier documents now has a local version/review/expiry workflow. F5 food waste remains a planned screen. No external AI calls or automatic order confirmations occur. F1 semantic search remains postponed.
 
 The final end-user application is separate from this private backoffice.
 
@@ -233,4 +233,32 @@ NEXORA_MENU_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/men
 - F1 semantic embeddings, live F2 email/WhatsApp/OCR and real ERP handoff/cancellation remain deferred.
 - Customer frontend/authentication and external review requests remain future work. Specialist records here are private backoffice actions, not authenticated customer-frontend decisions.
 - Live center inventory, supplier-specific purchasing/logistics, verified food composition datasets and external document ingestion require their actual sources/integrations.
-- F4 supplier document lifecycle, F5 waste tracking and AWS production infrastructure are subsequent phases.
+- F5 waste tracking and AWS production infrastructure are subsequent phases. Supplier portal ingestion, OCR/AI document analysis, external notifications and production object storage remain outside the local F4 workflow.
+
+## F3 weekly validation
+
+The rollback-only PostgreSQL scenario now imports five days for two centers (100 and 50 diners), pins the recipe version, checks 80 test kcal per serving, verifies 40 kg / 20 kg of test ingredient across the week, groups each center's needs into one delivery and creates two unaccepted F2 proposals. Repeating generation returns the same proposals. The values and specialist actions are test fixtures only, not nutritional advice or real professional approvals. All fixtures, review events and proposals roll back; no accounts or access rights are created. Existing demo plans remain drafts.
+
+## F4 — private supplier document lifecycle
+
+Routes: `/supplier-documents`, `/supplier-documents/new`, `/supplier-documents/:id`. Spanish UI; English model/demo data. The local POC includes:
+
+- Document identity: title, supplier, type (technical sheet, allergen declaration, certificate or other) and linked products. Product links must match that supplier; technical sheets/allergen declarations require products. Scope is immutable after creation so historical documents cannot silently move to a different supplier/product.
+- Original files and version history: PDF/PNG/JPEG/TXT, maximum 1.5 MB. PDF uses the existing local text extraction limits (20 pages/20,000 characters); TXT must be UTF-8 and at most 20,000 characters. Image/scanned files require manual review; no OCR or external AI is invoked. Upload creates a new immutable private file and a numbered pending version. Lists/details return file metadata, not binary content; a scoped authenticated download retrieves the selected original and records an audit event.
+- Declared facts: optional composition, contains/traces, completeness, nutrient values with explicit basis, and product claims. Missing fields are unknown. These are manual transcriptions, not extracted/verified facts. Checksums detect file changes; structured comparisons identify changes to composition, allergens, nutrients, claims and validity. There is no semantic comparison of PDF text and no automatic master-data update.
+- Quality decisions: only Quality can approve/reject the pending latest version or withdraw an approved version. The reviewer supplies evidence, explicitly confirms reviewing the file/changes, and submits the current record versions and change hash. Administrators may create/upload, but cannot approve. Expired versions cannot be approved. Rejection of a new version explicitly keeps a prior approved version usable if it remains valid. Approval of a new version selects it as current while preserving all originals and prior decisions.
+- Validity and alerts: company business date uses Europe/Madrid. Current documents show valid, expiring within 30 days, expired, not yet effective, pending, rejected, withdrawn or archived states. Pending versions still expose their own expiry alerts. Status is calculated at consultation time, not dependent on a background worker. Certificates require an expiry date. Email/push reminders are not implemented.
+- F3 integration: Quality can bind a product technical review to a selected approved/current document. Supplier/product scope, declared composition, complete allergen lists and explicit claims must agree with the product data; discrepancies require explicit product updates, not silent overwrites. New pending versions, expiry, withdrawal, archive or supplier changes invalidate the bound evidence. F3 preserves published historical snapshots, displays current source issues and blocks new order proposals until a new reviewed revision is available. Existing manual source references remain supported for the POC.
+- Provenance and archive: mock documents stay labelled, including when used as F3 evidence. Approved documents can only be archived by Quality; administrators can archive unapproved ones. Originals/history are retained. No destructive document/file deletion endpoint is exposed.
+
+Migration 8 creates `supplierDocuments`, `documentFiles`, `documentVersions`, with RLS, tenant-scoped FKs and unique revision numbers. Files live in the private PostgreSQL schema for the local POC, not a public bucket. Sessions, membership, same-origin mutation checks, record versions and transactional audit apply. Generic master CRUD/import cannot bypass this workflow. API: `/api/supplier-documents`, `/catalog`, `/:id`, `/:id/versions`, `/:id/versions/:versionId/review`, `/:id/versions/:versionId/download`, `/:id/archive`.
+
+`npm --prefix nexora-api run db:seed-documents` adds three clearly fictitious documents and four pending versions: a technical sheet with two different versions, an expired certificate example and an expiring certificate example. No approvals, product/allergen changes, accounts or external notifications are created. Repeating the seed preserves existing examples.
+
+Offline tests cover scope, roles, stale reviews, private metadata/downloads, version changes, validity, withdrawals, archives and document/F3 consistency. The PostgreSQL F4 test checks persistence, constraints and F3 evidence links inside a rollback-only transaction:
+
+```sh
+NEXORA_DOCUMENT_DB_TEST=1 node --env-file=nexora-api/.env --test nexora-api/test/document-postgres.test.mjs
+```
+
+Remaining integrations are still deferred: Gemini for POC AI, real customer/supplier frontends, ERP, external document sources, OCR/AI classification, email notifications and AWS production services. Real documents and professional validation must replace synthetic fixtures before real operations.

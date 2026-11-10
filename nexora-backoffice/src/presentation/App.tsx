@@ -1,3 +1,4 @@
+import { SupplierDocuments } from "./SupplierDocuments";
 import { Menus } from "./Menus";
 import { Orders } from "./Orders";
 import { AllergenTags, ProductAllergens } from "./ProductAllergens";
@@ -46,6 +47,7 @@ import { emptyForm, payload } from "../application/forms";
 const icons = [ShoppingBasket, Utensils, Building2, Sprout];
 const labels: Record<string, string> = {
   menus: "Planificación de menús",
+  documents: "Documentación de proveedores",
   dashboard: "Resumen",
   audit: "Historial de cambios",
   users: "Usuarios y roles",
@@ -343,6 +345,19 @@ export function App() {
                       read: false,
                       write: false,
                       nutrition: false,
+                      quality: false,
+                    }
+                  }
+                />
+              ) : page === "documents" ? (
+                <SupplierDocuments
+                  companyId={companyId}
+                  recordId={route.recordId}
+                  isNew={route.isNew}
+                  permissions={
+                    contract.documentPermissions ?? {
+                      read: false,
+                      write: false,
                       quality: false,
                     }
                   }
@@ -680,7 +695,7 @@ function Overview({
                 </span>
                 <span className="module-phase">
                   {m.phase} ·{" "}
-                  {["orders", "menus"].includes(m.id)
+                  {["orders", "menus", "documents"].includes(m.id)
                     ? "Disponible"
                     : "Previsto"}
                 </span>

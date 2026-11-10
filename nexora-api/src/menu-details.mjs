@@ -1,3 +1,4 @@
+import { usableDocument, documentStatus } from "./document-rules.mjs";
 import { validate } from "./schema.mjs";
 import { menuResources } from "./menu-schema.mjs";
 import { snapshotHash } from "./workflow-rules.mjs";
@@ -105,6 +106,7 @@ export function enrichForecast(f, plan, c) {
     profileRows = new Map(),
     ruleRows = new Map(),
     techRows = new Map(),
+    documentEvidenceRows = new Map(),
     d = plan.data,
     supply = d.supply ?? { overrides: [], deliveries: [], inventory: [] };
   let mock = d.origin === "MOCK";
@@ -118,6 +120,27 @@ export function enrichForecast(f, plan, c) {
     if (!review) issues.push("MISSING_TECHNICAL_REVIEW");
     else {
       techRows.set(review.id, review);
+      if (review.data.documentEvidence?.versionId) {
+        const doc = (c.supplierDocuments ?? []).find(
+            (d) => d.id === review.data.documentEvidence.documentId,
+          ),
+          v = (c.documentVersions ?? []).find(
+            (v) => v.id === review.data.documentEvidence.versionId,
+          );
+        if (
+          !usableDocument(doc, v, c.documentVersions ?? [], p.id) ||
+          p.data.supplierId !== doc?.data.supplierId
+        )
+          issues.push("SUPPLIER_DOCUMENT_NOT_CURRENT");
+        mock ||= !!v?.data.isMock;
+        if (doc)
+          documentEvidenceRows.set(doc.id, {
+            document: doc,
+            version: v,
+            status: documentStatus(doc, c.documentVersions ?? []),
+          });
+      }
+
       mock ||= review.data.isMock;
     }
   }
@@ -299,6 +322,7 @@ export function enrichForecast(f, plan, c) {
     nutritionProfiles: [...profileRows.values()],
     dietRules: [...ruleRows.values()],
     technicalReviews: [...techRows.values()],
+    supplierDocumentEvidence: [...documentEvidenceRows.values()],
     nutrition: [...rows.values()],
     purchases,
   };
@@ -439,6 +463,7 @@ export function attachMenuDetails(Type) {
       clean(input, [
         "productId",
         "productVersion",
+        "documentVersionId",
         "ingredients",
         "source",
         "isMock",
@@ -460,6 +485,63 @@ export function attachMenuDetails(Type) {
         );
         if (links.some((a) => !a.data.validated))
           fail("Validate product allergen associations first");
+        let documentEvidence = {},
+          documentIsMock = false;
+        if (input.documentVersionId) {
+          const v = await this.required(
+              t,
+              "documentVersions",
+              input.documentVersionId,
+            ),
+            d = await this.required(t, "supplierDocuments", v.data.documentId),
+            versions = await this.store.list(t, "documentVersions");
+          if (
+            !usableDocument(d, v, versions, p.id) ||
+            p.data.supplierId !== d.data.supplierId
+          )
+            fail("Select a current approved document linked to this product");
+          const declared = v.data.declarations ?? {};
+          const normalize = (s) => s.trim().replace(/\s+/g, " ");
+          if (
+            declared.ingredients &&
+            normalize(declared.ingredients) !== normalize(input.ingredients)
+          )
+            fail(
+              "Technical composition must match the selected document declaration",
+            );
+          if (declared.allergensComplete) {
+            const expected = {
+                contains: [...declared.contains].sort(),
+                traces: [...declared.traces].sort(),
+              },
+              actual = {
+                contains: links
+                  .filter((a) => a.data.kind === "CONTAINS")
+                  .map((a) => a.data.allergenId)
+                  .sort(),
+                traces: links
+                  .filter((a) => a.data.kind === "TRACES")
+                  .map((a) => a.data.allergenId)
+                  .sort(),
+              };
+            if (snapshotHash(expected) !== snapshotHash(actual))
+              fail(
+                "Product allergen associations differ from the selected document",
+              );
+          }
+          for (const claim of ["glutenFree", "pureedSuitable"])
+            if (
+              declared[claim] !== undefined &&
+              p.data[claim] !== declared[claim]
+            )
+              fail("Product claims differ from the selected document");
+          documentIsMock = v.data.isMock;
+          documentEvidence = {
+            documentId: d.id,
+            versionId: v.id,
+            changeHash: v.data.changeHash,
+          };
+        }
         const updated = await this.store.update(
             t,
             "products",
@@ -475,9 +557,13 @@ export function attachMenuDetails(Type) {
           {
             productId: p.id,
             snapshot,
+            documentEvidence,
             hash: snapshotHash(snapshot),
             source: input.source,
-            isMock: input.isMock || p.data.brand === "Nexora Sample",
+            isMock:
+              input.isMock ||
+              p.data.brand === "Nexora Sample" ||
+              documentIsMock,
             actorId: actor,
             reviewedAt: new Date().toISOString(),
           },
@@ -500,7 +586,7 @@ export function attachMenuDetails(Type) {
         )
           fail("Publish a fully reviewed current menu before creating orders");
         const live = this.calculate(p, await this.catalog(t));
-        if (live.hash !== f.hash)
+        if (live.hash !== f.hash || live.issues.length)
           fail(
             "Published source data changed. Create and approve a new menu revision",
           );

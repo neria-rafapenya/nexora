@@ -47,6 +47,8 @@ export interface PlanForm {
   supply: SupplySettings;
 }
 export interface Forecast {
+  currentIssues?: string[];
+  currentSourcesChanged?: boolean;
   schemaVersion?: number;
   isMock?: boolean;
   nutrition?: Array<{
@@ -122,6 +124,8 @@ export const menuLabels: Record<string, string> = {
     "Falta la clasificación alimentaria documentada para comprobar las exclusiones de la dieta.",
   EXCLUDED_FOOD_GROUP:
     "Algún producto contiene carne o pescado excluidos por las reglas de la dieta.",
+  SUPPLIER_DOCUMENT_NOT_CURRENT:
+    "La documentación de proveedor vinculada está pendiente, caducada, retirada o ya no es vigente. Calidad debe revisarla.",
   MISSING_TECHNICAL_REVIEW:
     "Calidad debe revisar la composición y las declaraciones actuales de los productos.",
   MISSING_NUTRITION_PROFILE: "Faltan valores nutricionales documentados.",

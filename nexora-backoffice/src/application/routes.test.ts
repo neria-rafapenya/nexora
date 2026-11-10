@@ -99,3 +99,19 @@ it("resolves F3 ingredient, recipe and planning deep links", () => {
     recordId: "plan",
   });
 });
+
+it("resolves supplier document list, creation and detail URLs", () => {
+  expect(resolveRoute("/supplier-documents")).toMatchObject({
+    page: "documents",
+    isNew: false,
+  });
+  expect(resolveRoute("/supplier-documents/new")).toMatchObject({
+    page: "documents",
+    isNew: true,
+  });
+  expect(resolveRoute("/supplier-documents/doc-id")).toMatchObject({
+    page: "documents",
+    recordId: "doc-id",
+    isNew: false,
+  });
+});

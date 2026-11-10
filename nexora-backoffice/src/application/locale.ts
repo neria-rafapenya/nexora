@@ -325,6 +325,63 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  "Technical composition must match the selected document declaration":
+    "La composición debe coincidir con la declaración del documento seleccionado.",
+  "Product allergen associations differ from the selected document":
+    "Los alérgenos del producto no coinciden con el documento seleccionado. Revisa su ficha sin sobrescribirla automáticamente.",
+  "Product claims differ from the selected document":
+    "Las declaraciones del producto no coinciden con el documento seleccionado. Revisa su ficha.",
+  "Unknown document field": "El documento contiene un campo no reconocido.",
+  "Select an active supplier": "Selecciona un proveedor activo.",
+  "Technical documents need at least one product":
+    "Vincula al menos un producto a la ficha técnica o declaración de alérgenos.",
+  "Document products must belong to its supplier":
+    "Los productos vinculados deben pertenecer al proveedor del documento.",
+  "Document source and classification are required":
+    "Indica la referencia y si el documento es ficticio.",
+  "Invalid document validity dates":
+    "Revisa las fechas de vigencia y caducidad.",
+  "Archived documents cannot receive versions":
+    "Un documento archivado no admite versiones nuevas.",
+  "Certificates require an expiry date":
+    "Los certificados requieren una fecha de caducidad.",
+  "An allergen cannot be both contains and traces":
+    "Un alérgeno no puede figurar a la vez como contenido y traza.",
+  "Complete allergen declarations require both lists":
+    "Completa las listas de contenidos y trazas, aunque alguna esté vacía.",
+  "Document nutrition needs an explicit basis":
+    "Indica si la información nutricional es por 100 g, 100 ml o unidad.",
+  "This document version is already uploaded":
+    "Ya existe esta versión con el mismo archivo y datos declarados.",
+  "Text documents must be UTF-8":
+    "Los documentos de texto deben utilizar UTF-8.",
+  "Text document exceeds 20000 characters":
+    "El documento de texto supera los 20.000 caracteres o contiene caracteres no válidos.",
+  "A document file is required":
+    "Selecciona un archivo original para la versión.",
+  "Only Quality can review supplier documents":
+    "Solo Calidad puede aprobar, rechazar o retirar documentación.",
+  "Confirm the document changes and provide review evidence":
+    "Confirma la revisión e indica la referencia y el motivo de la decisión.",
+  "Document version does not belong to this document":
+    "La versión no pertenece a este documento.",
+  "Archived documents cannot be reviewed":
+    "No se puede revisar un documento archivado.",
+  "Document changes have changed. Reload before reviewing.":
+    "Los cambios han variado. Recarga antes de revisar.",
+  "Only approved document versions can be withdrawn":
+    "Solo se puede retirar una versión aprobada.",
+  "Only the pending latest version can be reviewed":
+    "Solo se puede decidir sobre la última versión pendiente.",
+  "Expired document versions cannot be approved":
+    "No se puede aprobar una versión caducada.",
+  "An archive reason is required": "Indica el motivo del archivo.",
+  "Document is already archived": "El documento ya está archivado.",
+  "Only Quality can archive approved documentation":
+    "Solo Calidad puede archivar documentación con una versión aprobada.",
+  "Select a current approved document linked to this product":
+    "Selecciona una versión vigente, aprobada y vinculada a este producto y su proveedor actual.",
+
   "Only Nutrition can validate nutrition data":
     "Solo Nutrición puede validar los perfiles y reglas nutricionales.",
   "A nutrition source and data classification are required":
