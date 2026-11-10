@@ -1695,3 +1695,40 @@ h3 {
     width: 42%;
   }
 }
+
+.demo-video-section {
+  background: #eef1e8;
+}
+.demo-video-section h2 {
+  margin-bottom: 20px;
+}
+.demo-video-section > div > p {
+  max-width: 720px;
+}
+.demo-video {
+  margin: 28px 0 0;
+}
+.demo-video video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+  background: #153f34;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px #153f3414;
+}
+.demo-video figcaption {
+  margin-top: 14px;
+  max-width: 850px;
+  line-height: 1.7;
+  color: #50645a;
+}
+@media (max-width: 600px) {
+  .demo-video-section .section-top {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .demo-video video {
+    border-radius: 8px;
+  }
+}
