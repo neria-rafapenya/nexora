@@ -1875,3 +1875,44 @@ textarea::placeholder {
     grid-template-columns: 1fr;
   }
 }
+
+.user-role-select,
+#users select {
+  appearance: none;
+  color-scheme: light;
+  min-height: 40px;
+  border: 1px solid #d8e0d9;
+  border-radius: 7px;
+  padding: 10px 36px 10px 12px;
+  background: #fff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2338503e' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  color: #38503e;
+  font-size: var(--content-font-size);
+  line-height: 1.4;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  &:hover:not(:disabled) {
+    border-color: #83a28b;
+  }
+  &:focus-visible {
+    outline: none;
+    border-color: #426c47;
+    box-shadow: 0 0 0 3px #426c4726;
+  }
+  &:disabled {
+    background-color: #f1f4f1;
+    color: #7c8985;
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+  option {
+    background: #fff;
+    color: #38503e;
+  }
+}
+.user-role-select {
+  width: 100%;
+  max-width: 380px;
+}

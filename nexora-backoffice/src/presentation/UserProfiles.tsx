@@ -480,6 +480,7 @@ export function UserManagement({
             <label>
               Rol
               <select
+                className="user-role-select"
                 value={editor.role}
                 onChange={(e) => setEditor({ ...editor, role: e.target.value })}
               >
