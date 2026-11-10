@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useDataRefresh } from "../infrastructure/useDataRefresh";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { RecordRow } from "../domain/core";
 import { request } from "../infrastructure/api";
@@ -31,13 +32,34 @@ export function SupplierDocuments({
     [reload, setReload] = useState(0),
     [search, setSearch] = useState(""),
     [status, setStatus] = useState("");
+  const refreshTick = useDataRefresh(
+    companyId,
+    permissions.read && !recordId && !isNew,
+  );
+  const loadKey = JSON.stringify([
+    companyId,
+    recordId,
+    isNew,
+    "documents",
+    reload,
+    permissions.read,
+  ]);
+  const previousLoadKey = useRef(loadKey);
+  const previousTick = useRef(refreshTick);
   useEffect(() => {
     if (!permissions.read) return;
     let live = true;
-    setLoading(true);
+    const background =
+      previousTick.current !== refreshTick &&
+      previousLoadKey.current === loadKey;
+    previousTick.current = refreshTick;
+    previousLoadKey.current = loadKey;
+    if (!background) {
+      setLoading(true);
+      setView(null);
+      setC(null);
+    }
     setError("");
-    setView(null);
-    setC(null);
     Promise.all([
       request<DocumentCatalog>("/supplier-documents/catalog", companyId),
       recordId
@@ -62,7 +84,7 @@ export function SupplierDocuments({
     return () => {
       live = false;
     };
-  }, [companyId, recordId, reload, permissions.read]);
+  }, [companyId, recordId, reload, permissions.read, refreshTick]);
   if (!permissions.read)
     return (
       <section className="panel">

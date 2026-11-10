@@ -1,3 +1,5 @@
+import { useDataRefresh } from "../infrastructure/useDataRefresh";
+import { refreshCompany } from "../infrastructure/query-cache";
 import { GeminiIntake } from "./GeminiIntake";
 import { useState, useEffect, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -54,6 +56,10 @@ export function Orders({
   const [context, setContext] = useState<OrderContext | null>(null),
     [error, setError] = useState(""),
     [reload, setReload] = useState(0);
+  const refreshTick = useDataRefresh(
+    companyId,
+    permissions.read && !recordId && !isNew,
+  );
   useEffect(() => {
     if (!permissions.read) return;
     let live = true;
@@ -67,7 +73,7 @@ export function Orders({
     return () => {
       live = false;
     };
-  }, [companyId, permissions.read, reload]);
+  }, [companyId, permissions.read, reload, refreshTick]);
   if (!permissions.read)
     return (
       <section className="panel empty">
@@ -197,6 +203,7 @@ function OrderList({
     [search, setSearch] = useState(""),
     [state, setState] = useState(""),
     [reload, setReload] = useState(0);
+  const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     let live = true;
     request<{ records: RecordRow[] }>("/orders", companyId)
@@ -212,7 +219,7 @@ function OrderList({
     return () => {
       live = false;
     };
-  }, [companyId, reload]);
+  }, [companyId, reload, refreshTick]);
   const filtered = rows
     .filter(
       (r) =>
@@ -278,6 +285,7 @@ function OrderList({
             className="icon-button"
             aria-label="Actualizar pedidos"
             onClick={() => {
+              refreshCompany(companyId);
               setLoading(true);
               setReload((x) => x + 1);
             }}
@@ -511,11 +519,12 @@ function MessageList({
   const [rows, setRows] = useState<RecordRow[]>([]),
     [error, setError] = useState(""),
     [state, setState] = useState("");
+  const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     request<{ records: RecordRow[] }>("/order-inbox", companyId)
       .then((d) => setRows(d.records))
       .catch((e) => setError(e.message));
-  }, [companyId]);
+  }, [companyId, refreshTick]);
   return (
     <>
       <div className="section-heading">
@@ -1636,11 +1645,12 @@ function Alerts({
     [state, setState] = useState("OPEN"),
     [reload, setReload] = useState(0),
     [busy, setBusy] = useState(false);
+  const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     request<{ records: RecordRow[] }>("/order-alerts", companyId)
       .then((d) => setRows(d.records))
       .catch((e) => setError(e.message));
-  }, [companyId, reload]);
+  }, [companyId, reload, refreshTick]);
   return (
     <>
       <div className="section-heading">
@@ -1758,11 +1768,12 @@ function Baskets({
     [error, setError] = useState(""),
     [reload, setReload] = useState(0),
     [busy, setBusy] = useState(false);
+  const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     request<{ records: RecordRow[] }>("/usual-baskets", companyId)
       .then((d) => setRows(d.records))
       .catch((e) => setError(e.message));
-  }, [companyId, reload]);
+  }, [companyId, reload, refreshTick]);
   return (
     <>
       <div className="section-heading">

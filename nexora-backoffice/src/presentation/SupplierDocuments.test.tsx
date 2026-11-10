@@ -196,3 +196,25 @@ it("creation uses English fields while labels remain Spanish", async () => {
     },
   );
 });
+
+it("background updates preserve an unfinished Quality decision without reloading the document", async () => {
+  const { refreshCompany } = await import("../infrastructure/query-cache");
+  await render(true, true);
+  const input = [...host.querySelectorAll("label")]
+    .find((l) => l.textContent?.includes("Referencia y motivo de la decisión"))!
+    .querySelector("input")!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )!.set!.call(input, "Unsaved quality evidence");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  const calls = vi.mocked(request).mock.calls.length;
+  await act(async () => {
+    refreshCompany("workspace");
+    window.dispatchEvent(new Event("focus"));
+  });
+  expect(input.value).toBe("Unsaved quality evidence");
+  expect(vi.mocked(request).mock.calls).toHaveLength(calls);
+});

@@ -1,3 +1,4 @@
+import { useDataRefresh } from "../infrastructure/useDataRefresh";
 import { RecordDates, RecordTime } from "./RecordDates";
 import { useEffect, useState, type FormEvent } from "react";
 import { Plus, Pencil, Trash2, ShieldCheck } from "lucide-react";
@@ -78,9 +79,12 @@ export function ProductAllergens({
     [form, setForm] = useState(blank),
     [deleting, setDeleting] = useState<RecordRow | null>(null),
     [notice, setNotice] = useState("");
+  const refreshTick = useDataRefresh(
+    companyId,
+    editing === undefined && !deleting && !busy,
+  );
   useEffect(() => {
     let live = true;
-    setLoading(true);
     setError("");
     Promise.all([
       request<{ records: RecordRow[] }>(
@@ -104,7 +108,7 @@ export function ProductAllergens({
     return () => {
       live = false;
     };
-  }, [productId, companyId, version]);
+  }, [productId, companyId, version, refreshTick]);
   function edit(row: RecordRow | null) {
     setEditing(row);
     setError("");

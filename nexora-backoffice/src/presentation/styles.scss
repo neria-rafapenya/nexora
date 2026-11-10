@@ -1517,3 +1517,16 @@ h1 {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
+
+.data-freshness {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  color: #63766e;
+}
+@media (max-width: 760px) {
+  .data-freshness span {
+    display: none;
+  }
+}

@@ -175,3 +175,27 @@ it("the nutrition workspace is available without exposing specialist actions to 
   expect(host.textContent).toContain("Revisión técnica");
   expect(host.textContent).not.toContain("Guardar y validar como Nutrición");
 });
+
+it("background data updates do not reload a menu editor or overwrite its unsaved name", async () => {
+  const { refreshCompany } = await import("../infrastructure/query-cache");
+  await render();
+  const input = host.querySelector<HTMLInputElement>(
+    'input[value="Demo plan"]',
+  )!;
+  expect(input).toBeTruthy();
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )!.set!.call(input, "Unsaved menu name");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  const calls = vi.mocked(request).mock.calls.length;
+  await act(async () => {
+    refreshCompany("workspace");
+    window.dispatchEvent(new Event("focus"));
+    window.dispatchEvent(new Event("online"));
+  });
+  expect(input.value).toBe("Unsaved menu name");
+  expect(vi.mocked(request).mock.calls).toHaveLength(calls);
+});

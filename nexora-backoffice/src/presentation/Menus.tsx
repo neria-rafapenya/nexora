@@ -1,8 +1,9 @@
+import { useDataRefresh } from "../infrastructure/useDataRefresh";
 import { MenuCalendar } from "./MenuCalendar";
 import { MenuImport } from "./MenuImport";
 import { MenuNutrition } from "./MenuNutrition";
 import { SupplyEditor, AdvancedForecast } from "./MenuSupply";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { request } from "../infrastructure/api";
 import type { RecordRow } from "../domain/core";
@@ -43,13 +44,34 @@ export function Menus({
       : section === "recipes"
         ? "recipes"
         : "menus";
+  const refreshTick = useDataRefresh(
+    companyId,
+    permissions.read && !recordId && !isNew && section !== "nutrition",
+  );
+  const loadKey = JSON.stringify([
+    companyId,
+    recordId,
+    isNew,
+    endpoint,
+    reload,
+    permissions.read,
+  ]);
+  const previousLoadKey = useRef(loadKey);
+  const previousTick = useRef(refreshTick);
   useEffect(() => {
     if (!permissions.read) return;
     let live = true;
-    setLoading(true);
+    const background =
+      previousTick.current !== refreshTick &&
+      previousLoadKey.current === loadKey;
+    previousTick.current = refreshTick;
+    previousLoadKey.current = loadKey;
+    if (!background) {
+      setLoading(true);
+      setC(null);
+      setRecord(undefined);
+    }
     setError("");
-    setC(null);
-    setRecord(undefined);
     Promise.all([
       request<MenuCatalog>("/menus/catalog", companyId),
       request<{ records: RecordRow[] }>("/" + endpoint, companyId),
@@ -76,7 +98,7 @@ export function Menus({
     return () => {
       live = false;
     };
-  }, [companyId, endpoint, recordId, reload, permissions.read]);
+  }, [companyId, endpoint, recordId, reload, permissions.read, refreshTick]);
   if (!permissions.read)
     return (
       <section className="panel">

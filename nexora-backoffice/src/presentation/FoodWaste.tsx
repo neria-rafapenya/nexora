@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useDataRefresh } from "../infrastructure/useDataRefresh";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { request } from "../infrastructure/api";
 import type { RecordRow } from "../domain/core";
@@ -47,12 +48,33 @@ export function FoodWaste({
   const type = ["events", "actuals", "actions"].includes(section)
     ? section
     : "events";
+  const refreshTick = useDataRefresh(
+    companyId,
+    permissions.read && !recordId && !isNew,
+  );
+  const loadKey = JSON.stringify([
+    companyId,
+    recordId,
+    isNew,
+    type,
+    reload,
+    permissions.read,
+  ]);
+  const previousLoadKey = useRef(loadKey);
+  const previousTick = useRef(refreshTick);
   useEffect(() => {
     if (!permissions.read) return;
     let live = true;
-    setLoading(true);
-    setC(null);
-    setRecord(undefined);
+    const background =
+      previousTick.current !== refreshTick &&
+      previousLoadKey.current === loadKey;
+    previousTick.current = refreshTick;
+    previousLoadKey.current = loadKey;
+    if (!background) {
+      setLoading(true);
+      setC(null);
+      setRecord(undefined);
+    }
     setError("");
     Promise.all([
       request<WasteCatalog>("/food-waste/catalog", companyId),
@@ -82,7 +104,7 @@ export function FoodWaste({
     return () => {
       live = false;
     };
-  }, [companyId, type, recordId, reload, permissions.read]);
+  }, [companyId, type, recordId, reload, permissions.read, refreshTick]);
   if (!permissions.read)
     return (
       <section className="panel">
@@ -1031,9 +1053,9 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
     [reason, setReason] = useState(""),
     [data, setData] = useState<WasteReport | null>(null),
     [error, setError] = useState("");
+  const refreshTick = useDataRefresh(company);
   useEffect(() => {
     let live = true;
-    setData(null);
     setError("");
     const params = new URLSearchParams(
       Object.fromEntries(
@@ -1056,7 +1078,7 @@ function WasteDashboard({ company, c }: { company: string; c: WasteCatalog }) {
     return () => {
       live = false;
     };
-  }, [company, start, end, center, service, reason]);
+  }, [company, start, end, center, service, reason, refreshTick]);
   return (
     <>
       <section className="panel master-form">

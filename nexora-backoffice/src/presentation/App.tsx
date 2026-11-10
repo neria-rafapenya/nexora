@@ -1,3 +1,10 @@
+import { DataFreshness } from "./DataFreshness";
+import { useDataRefresh } from "../infrastructure/useDataRefresh";
+import {
+  refreshCompany,
+  AUTH_EVENT,
+  ACCESS_EVENT,
+} from "../infrastructure/query-cache";
 import { RecordDates, RecordTime } from "./RecordDates";
 import { SemanticProducts } from "./SemanticProducts";
 import { FoodWaste } from "./FoodWaste";
@@ -109,6 +116,48 @@ export function App() {
       live = false;
     };
   }, []);
+  const accessIdentity = JSON.stringify([
+    user?.id,
+    user?.companies.map((c) => [c.id, c.role]).sort(),
+  ]);
+  useEffect(() => {
+    if (!user) return;
+    let live = true;
+    const sync = () => {
+      if (document.visibilityState === "hidden") return;
+      request<{ user: Session }>("/session")
+        .then(({ user: next }) => {
+          if (live)
+            setUser((current) =>
+              JSON.stringify(current) === JSON.stringify(next) ? current : next,
+            );
+        })
+        .catch((e) => {
+          if (live && (e as { status?: number }).status !== 401)
+            setError(e.message);
+        });
+    };
+    const expired = () => {
+      setUser(null);
+      setContract(null);
+      setError("Tu sesión ha finalizado. Vuelve a entrar.");
+    };
+    const timer = window.setInterval(sync, 30_000);
+    window.addEventListener("focus", sync);
+    window.addEventListener("online", sync);
+    window.addEventListener(AUTH_EVENT, expired);
+    window.addEventListener(ACCESS_EVENT, sync);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      live = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", sync);
+      window.removeEventListener("online", sync);
+      window.removeEventListener(AUTH_EVENT, expired);
+      window.removeEventListener(ACCESS_EVENT, sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [!!user]);
   useEffect(() => {
     if (!user || !companyId) return;
     let live = true;
@@ -123,7 +172,7 @@ export function App() {
     return () => {
       live = false;
     };
-  }, [user, companyId]);
+  }, [accessIdentity, companyId]);
   function signedIn(u: Session) {
     setUser(u);
     setCompany(companyFromSearch(location.search, u.companies));
@@ -290,6 +339,10 @@ export function App() {
               ))}
             </select>
           </label>
+          <DataFreshness
+            companyId={companyId}
+            disabled={!!route.recordId || route.isNew || page === "settings"}
+          />
           <span className="local-badge">
             <i />
             Entorno local · Supabase
@@ -638,11 +691,12 @@ function Overview({
 }) {
   const [counts, setCounts] = useState<Record<string, number>>({}),
     [error, setError] = useState("");
+  const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     request<{ counts: Record<string, number> }>("/dashboard", companyId)
       .then((d) => setCounts(d.counts))
       .catch((e) => setError(e.message));
-  }, [companyId, refresh]);
+  }, [companyId, refresh, refreshTick]);
   return (
     <>
       <Heading
@@ -770,6 +824,10 @@ function Master({
     [detailLoading, setDetailLoading] = useState(!!recordId),
     [detailError, setDetailError] = useState(""),
     [saveNotice, setSaveNotice] = useState("");
+  const refreshTick = useDataRefresh(
+    companyId,
+    !recordId && !createNew && !showImport && !confirmDelete && !semantic,
+  );
   useEffect(() => {
     let live = true;
     setDetailError("");
@@ -807,32 +865,46 @@ function Master({
   useEffect(() => {
     let live = true;
     if (semantic && resource === "products") return;
-    setLoading(true);
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams({
-        q,
-        ...(family ? { familyId: family } : {}),
-        ...(temperature ? { temperature } : {}),
-      });
-      request<{ records: RecordRow[] }>(
-        `/masters/${resource}?${params}`,
-        companyId,
-      )
-        .then((d) => {
-          if (live) setRows(d.records);
-        })
-        .catch((e) => {
-          if (live) setError(e.message);
-        })
-        .finally(() => {
-          if (live) setLoading(false);
+    const timer = setTimeout(
+      () => {
+        const params = new URLSearchParams({
+          q,
+          ...(family ? { familyId: family } : {}),
+          ...(temperature ? { temperature } : {}),
         });
-    }, 200);
+        request<{ records: RecordRow[] }>(
+          `/masters/${resource}?${params}`,
+          companyId,
+        )
+          .then((d) => {
+            if (live) {
+              setRows(d.records);
+              setError("");
+            }
+          })
+          .catch((e) => {
+            if (live) setError(e.message);
+          })
+          .finally(() => {
+            if (live) setLoading(false);
+          });
+      },
+      q ? 200 : 0,
+    );
     return () => {
       live = false;
       clearTimeout(timer);
     };
-  }, [resource, companyId, q, family, temperature, version, semantic]);
+  }, [
+    resource,
+    companyId,
+    q,
+    family,
+    temperature,
+    version,
+    semantic,
+    refreshTick,
+  ]);
   useEffect(() => {
     let live = true;
     setLookupsLoading(true);
@@ -874,7 +946,7 @@ function Master({
     return () => {
       live = false;
     };
-  }, [companyId, def, contract, version]);
+  }, [companyId, def, contract, version, refreshTick]);
   function edit(row: RecordRow | null) {
     onNavigate(row?.id ?? "new");
   }
@@ -1266,7 +1338,10 @@ function Master({
           <button
             className="icon-button"
             aria-label="Actualizar registros"
-            onClick={() => setVersion((x) => x + 1)}
+            onClick={() => {
+              refreshCompany(companyId);
+              setVersion((x) => x + 1);
+            }}
           >
             <RefreshCw size={17} />
           </button>
@@ -1578,11 +1653,12 @@ function Audit({ companyId }: { companyId: string }) {
       }>
     >([]),
     [error, setError] = useState("");
+  const refreshTick = useDataRefresh(companyId);
   useEffect(() => {
     request<{ events: typeof data }>("/audit", companyId)
       .then((d) => setData(d.events))
       .catch((e) => setError(e.message));
-  }, [companyId]);
+  }, [companyId, refreshTick]);
   return (
     <>
       <Heading
@@ -1642,11 +1718,12 @@ function UserManagement({
     [error, setError] = useState(""),
     [version, setVersion] = useState(0),
     [busy, setBusy] = useState(false);
+  const refreshTick = useDataRefresh(companyId, !busy);
   useEffect(() => {
     request<{ users: typeof users }>("/users", companyId)
       .then((d) => setUsers(d.users))
       .catch((e) => setError(e.message));
-  }, [companyId, version]);
+  }, [companyId, version, refreshTick]);
   return (
     <>
       <Heading
