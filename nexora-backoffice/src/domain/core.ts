@@ -15,6 +15,12 @@ export interface Session {
   name: string;
   email: string;
   companies: Company[];
+  phone?: string;
+  jobTitle?: string;
+  avatarUrl?: string | null;
+  profileVersion?: number;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 }
 export interface Field {
   label: string;

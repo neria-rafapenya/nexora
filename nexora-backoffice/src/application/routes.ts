@@ -20,6 +20,8 @@ export const pagePaths: Record<string, string> = {
   waste: "/food-waste",
   audit: "/audit",
   users: "/users",
+  profile: "/profile",
+  activate: "/activate",
   settings: "/settings",
   assistant: "/assistant",
 };

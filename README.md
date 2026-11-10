@@ -88,7 +88,7 @@ Bootstrap supplies only the grid. Business data is loaded from the API; localSto
 - `GET /api/schema`, `GET /api/dashboard`.
 - `GET/POST /api/masters/:resource`, `GET/PUT/DELETE /api/masters/:resource/:id`.
 - `POST /api/imports/:resource` with `{format,content,commit}`.
-- `GET/POST /api/users`, `PUT/DELETE /api/users/:id` (role changes / removing company access).
+- `GET/POST /api/users`, `PUT/DELETE /api/users/:id` (profile/role editing and removing company access); user-managed passwords and activation are described below.
 - `GET/PUT /api/settings`, `POST /api/companies`, `GET /api/audit`.
 - `GET /api/mfa`, `POST /api/mfa/enroll`, `POST /api/mfa/enable`.
 
@@ -402,3 +402,19 @@ Management endpoints: `GET /api/assistant`, `PUT /api/assistant/config`, `POST /
 Remaining frontend-assistant work: authenticated customer/center scoping and grants; retrieval tools intersecting those grants with the configured sources; conversation orchestration with enforced budgets; live queries and source links; document extraction/indexing with Supabase pgvector; published-knowledge retrieval; prompt-injection defenses; conversation/usage monitoring with retention controls; and the customer chat UI. Reuse the existing product embeddings where appropriate. Gemini is the POC provider; AWS migration stays deferred. Neither OpenSearch nor a chat UI is introduced by this management slice.
 
 Checks: `npm test` for unit/UI coverage; rollback-only Supabase acceptance with `NEXORA_ASSISTANT_DB_TEST=1 node --env-file=.env --test test/assistant-postgres.test.mjs` from `nexora-api`. The database check also exercises migration 13 inside its rollback transaction.
+
+### User management, personal profiles and avatars
+
+Administrators can create accounts, edit names/email/phone/job title/avatar and company roles, and remove company access through **Users and roles**. Changes use profile and membership versions to reject stale edits. Administrators cannot change their own access or delete themselves, protecting the last administrator. Global profile editing is permitted only when the administrator manages every company the target belongs to; otherwise the form edits only the current company role. The user can always edit their own name, phone, job title and avatar through **Mi perfil**, linked from the sidebar identity. Login email is administered rather than editable in self-service.
+
+Deletion removes the selected membership, not the identity referenced by business records/audit. Other company memberships survive. Removing the final membership revokes all sessions; accounts without memberships cannot log in. Existing names, passwords, MFA settings and memberships are preserved by migration 14. Creation timestamps are recovered from existing creation/setup audit where available; unknown historical dates display “No disponible”. Role changes update the membership timestamp shown in the list.
+
+Administrators never enter an initial or replacement password. Creating an account produces a one-time activation link valid for 24 hours; the page offers manual copying and explicitly does not send email. Only pending accounts can receive a replacement activation link; rotation invalidates the old link. The invitation token is stored only as a hash in private RLS-enabled `bo.account_invitations`. The link uses a URL fragment (removed on opening), not a query parameter sent to the host. Activation sets the invited user's chosen password, consumes the token and requires normal sign-in afterwards. This is not a forgotten-password reset flow for active accounts. Tokens and credentials are never written to audit or browser storage.
+
+`GET/PUT /api/profile` operates only on the authenticated identity; `PUT /api/profile/password` requires the current password plus a fresh authenticator code when MFA is enabled. Password changes revoke other sessions and return an updated public profile; all administrative profile endpoints reject password fields. Sensitive attempts are throttled. Existing cookie/origin checks still apply. Self-service reads bypass the query cache; successful updates refresh the relevant company caches and sidebar identity. Unsaved administrative forms pause polling, and conflicts preserve drafts.
+
+Avatars accept JPG/PNG/WEBP up to 1 MB. Sharp validates and normalizes them to 256×256 WebP. Private bytes live under `UPLOADS_DIR` in the `userAvatars` namespace, scoped to user identity; only metadata is stored in `bo.users.avatar`. Authenticated self/avatar or administrator/company avatar routes serve binary images with `no-store`; no external avatar URL or public folder is used. Default initials appear without an image. Replaced/removed content-addressed bytes follow the existing private file retention/backup policy.
+
+New API routes: `GET /api/users/:id/avatar?company=:company`, `POST /api/users/:id/invitation`, `GET/PUT /api/profile`, `GET /api/profile/avatar`, `PUT /api/profile/password`, `POST /api/account/activate`. Public pages: `/activate` for token holders; `/profile` requires login. Profile/password writes accept no target user ID. Activation links are returned only in create/reissue responses, never the users list or audit. No existing production account is created, removed, activated, or given a new password during deployment.
+
+Checks cover account forms and confirmation, shared profile restrictions, password separation, avatar size handling, private avatar HTTP responses, token scrubbing, and authentication/tenant gates. Rollback-only database acceptance: `NEXORA_ACCOUNTS_DB_TEST=1 node --env-file=.env --test test/accounts-postgres.test.mjs` from `nexora-api`, using temporary private avatar storage and reverting all fictional accounts, memberships, sessions and audit fixtures.

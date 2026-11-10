@@ -19,7 +19,11 @@ export class LocalFiles {
     this.root = resolve(root);
   }
   scope(t, r) {
-    if (!fileResources.includes(r) || typeof t !== "string" || !t)
+    if (
+      ![...fileResources, "userAvatars"].includes(r) ||
+      typeof t !== "string" ||
+      !t
+    )
       fail("FILE_STORAGE_INVALID_REFERENCE");
     return hash(t) + "/" + r + "/";
   }

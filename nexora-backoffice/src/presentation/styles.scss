@@ -1809,3 +1809,69 @@ input::placeholder,
 textarea::placeholder {
   font-size: var(--content-font-size);
 }
+
+.profile-panel {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.profile-panel fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.profile-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.profile-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.profile-panel input,
+.profile-panel select {
+  max-width: 100%;
+}
+.profile-panel input[readonly] {
+  background: #f5f7f3;
+}
+.user-avatar {
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar-editor,
+.user-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.avatar-editor .user-avatar {
+  width: 72px;
+  height: 72px;
+}
+.user-name {
+  margin-bottom: 0;
+}
+.profile-link {
+  color: inherit;
+  text-decoration: none;
+}
+.activation-page {
+  max-width: 600px;
+  padding-top: 4rem;
+}
+@media (max-width: 760px) {
+  .profile-fields {
+    grid-template-columns: 1fr;
+  }
+}

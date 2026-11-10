@@ -33,7 +33,15 @@ export async function request<T>(
         ).user,
       );
     else if (path === "/logout") clearSessionCache();
-    else if (
+    else if (path === "/profile" || path === "/profile/password") {
+      const updated = (
+        result as { user: Parameters<typeof bindSessionCache>[0] }
+      ).user;
+      if (updated) {
+        bindSessionCache(updated);
+        for (const c of updated.companies ?? []) invalidateCompany(c.id);
+      }
+    } else if (
       companyId &&
       path !== "/product-search" &&
       !(

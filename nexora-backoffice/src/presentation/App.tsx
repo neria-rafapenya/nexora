@@ -1,3 +1,9 @@
+import {
+  UserManagement,
+  SelfProfile,
+  ActivateAccount,
+  UserAvatar,
+} from "./UserProfiles";
 import { AssistantManagement } from "./AssistantManagement";
 import { DataTable } from "./DataTable";
 import { ProductMedia } from "./ProductMedia";
@@ -71,6 +77,7 @@ const labels: Record<string, string> = {
   dashboard: "Resumen",
   audit: "Historial de cambios",
   users: "Usuarios y roles",
+  profile: "Mi perfil",
   assistant: "Asistente IA",
   assistantConfig: "Configuración del asistente",
   assistantKnowledge: "Contenido de ayuda del asistente",
@@ -210,6 +217,7 @@ export function App() {
   useEffect(() => {
     if (user) setCompany(companyFromSearch(location.search, user.companies));
   }, [location.search, user]);
+  if (page === "activate") return <ActivateAccount />;
   if (loading) return <div className="loading">Conectando con Horekia…</div>;
   if (!user)
     return (
@@ -311,9 +319,13 @@ export function App() {
           )}
         </nav>
         <div className="sidebar-footer">
-          <div className="avatar">{user.name.slice(0, 2).toUpperCase()}</div>
+          <Link to={urlFor("profile")} aria-label="Abrir Mi perfil">
+            <UserAvatar name={user.name} src={user.avatarUrl} />
+          </Link>
           <div>
-            <strong>{user.name}</strong>
+            <Link to={urlFor("profile")} className="profile-link">
+              <strong>{user.name}</strong>
+            </Link>
             <small>
               {contract?.roles[company?.role ?? ""] ?? company?.role}
             </small>
@@ -475,7 +487,14 @@ export function App() {
               ) : page === "audit" ? (
                 <Audit companyId={companyId} />
               ) : page === "users" ? (
-                <UserManagement companyId={companyId} roles={contract.roles} />
+                <UserManagement
+                  key={companyId}
+                  companyId={companyId}
+                  roles={contract.roles}
+                  selfId={user.id}
+                />
+              ) : page === "profile" ? (
+                <SelfProfile onUser={setUser} security={<Mfa />} />
               ) : page === "settings" ? (
                 <WorkspaceSettings
                   companyId={companyId}
@@ -1779,134 +1798,6 @@ function Audit({ companyId }: { companyId: string }) {
             ))}
           </tbody>
         </DataTable>
-      </section>
-    </>
-  );
-}
-function UserManagement({
-  companyId,
-  roles,
-}: {
-  companyId: string;
-  roles: Record<string, string>;
-}) {
-  const [users, setUsers] = useState<
-      Array<{ id: string; name: string; email: string; role: string }>
-    >([]),
-    [error, setError] = useState(""),
-    [version, setVersion] = useState(0),
-    [busy, setBusy] = useState(false);
-  const refreshTick = useDataRefresh(companyId, !busy);
-  useEffect(() => {
-    request<{ users: typeof users }>("/users", companyId)
-      .then((d) => setUsers(d.users))
-      .catch((e) => setError(e.message));
-  }, [companyId, version, refreshTick]);
-  return (
-    <>
-      <Heading
-        eyebrow="SISTEMA"
-        title="Usuarios y roles"
-        description="Crea cuentas con acceso a esta empresa."
-      />
-      {error && (
-        <p role="alert" className="alert">
-          {error}
-        </p>
-      )}
-      <section className="panel table-responsive">
-        <DataTable id="users" primary>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Correo electrónico</th>
-              <th>Rol</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.name}</td>
-                <td>{u.email}</td>
-                <td>
-                  <select
-                    aria-label={"Rol de " + u.name}
-                    value={u.role}
-                    onChange={async (e) => {
-                      try {
-                        await request("/users/" + u.id, companyId, "PUT", {
-                          role: e.target.value,
-                        });
-                        setVersion((x) => x + 1);
-                        setError("");
-                      } catch (e) {
-                        setError((e as Error).message);
-                      }
-                    }}
-                  >
-                    {Object.entries(roles).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </DataTable>
-        <h2 className="mt">Añadir usuario</h2>
-        <form
-          className="master-form"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            setBusy(true);
-            try {
-              await request(
-                "/users",
-                companyId,
-                "POST",
-                Object.fromEntries(new FormData(form)),
-              );
-              form.reset();
-              setVersion((x) => x + 1);
-              setError("");
-            } catch (e) {
-              setError((e as Error).message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          <label htmlFor="user-name">Nombre</label>
-          <input id="user-name" name="name" required />
-          <label htmlFor="user-email">Correo electrónico</label>
-          <input id="user-email" name="email" type="email" required />
-          <label htmlFor="user-password">Contraseña inicial</label>
-          <input
-            id="user-password"
-            name="password"
-            type="password"
-            minLength={12}
-            maxLength={128}
-            autoComplete="new-password"
-            required
-          />
-          <label htmlFor="user-role">Rol</label>
-          <select id="user-role" name="role">
-            {Object.entries(roles).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <div className="form-actions">
-            <button className="primary" disabled={busy}>
-              Crear usuario
-            </button>
-          </div>
-        </form>
       </section>
     </>
   );

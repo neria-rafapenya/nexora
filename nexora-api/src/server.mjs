@@ -1,3 +1,4 @@
+import { Accounts, handleAccounts } from "./accounts.mjs";
 import { handleAssistant } from "./assistant.mjs";
 import { handleProductMedia } from "./product-media-http.mjs";
 import { runtimeOptions } from "./runtime.mjs";
@@ -62,6 +63,7 @@ export function createServer(
   } = {},
 ) {
   const attempts = new Map();
+  const accounts = new Accounts(store);
   const server = http.createServer(async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -184,37 +186,66 @@ export function createServer(
           typeof body.email !== "string"
         )
           fail(400, "Invalid credentials");
-        const u = await store.db
-          .prepare("SELECT * FROM users WHERE email=?")
-          .get(body.email.trim().toLowerCase());
-        const matches = passwordMatches(
-          body.password,
-          u?.password_hash ??
-            "00000000000000000000000000000000:" + "00".repeat(64),
-        );
-        if (!u || !matches) {
-          recent.count++;
-          attempts.set(key, recent);
-          fail(401, "Invalid email or password");
-        }
-        if (u.mfa_secret) {
-          const step = matchingStep(store.decrypt(u.mfa_secret), body.code);
-          if (step === null || Number(u.mfa_last_step ?? 0) >= step) {
+        const signedInUser = await store.transaction(async () => {
+          await store.lock("user-administration");
+          const u = await store.db
+            .prepare("SELECT * FROM users WHERE email=?")
+            .get(body.email.trim().toLowerCase());
+          const matches = passwordMatches(
+            body.password,
+            u?.password_hash ??
+              "00000000000000000000000000000000:" + "00".repeat(64),
+          );
+          if (
+            !u ||
+            !matches ||
+            u.password_ready === false ||
+            !(await store.user(u.id)).companies.length
+          ) {
             recent.count++;
             attempts.set(key, recent);
-            fail(401, "A valid authenticator code is required");
+            fail(401, "Invalid email or password");
           }
-          const updated = await store.query(
-            "UPDATE bo.users SET mfa_last_step=$1 WHERE id=$2 AND (mfa_last_step IS NULL OR mfa_last_step<$1)",
-            [step, u.id],
-          );
-          if (!updated.rowCount)
-            fail(401, "Authenticator code was already used");
-        }
-        attempts.delete(key);
-        for (const c of (await store.user(u.id)).companies)
-          await store.log(c.id, u.id, "LOGIN");
-        return send(200, { user: await startSession(u.id) });
+          if (u.mfa_secret) {
+            const step = matchingStep(store.decrypt(u.mfa_secret), body.code);
+            if (step === null || Number(u.mfa_last_step ?? 0) >= step) {
+              recent.count++;
+              attempts.set(key, recent);
+              fail(401, "A valid authenticator code is required");
+            }
+            const updated = await store.query(
+              "UPDATE bo.users SET mfa_last_step=$1 WHERE id=$2 AND (mfa_last_step IS NULL OR mfa_last_step<$1)",
+              [step, u.id],
+            );
+            if (!updated.rowCount)
+              fail(401, "Authenticator code was already used");
+          }
+          attempts.delete(key);
+          for (const c of (await store.user(u.id)).companies)
+            await store.log(c.id, u.id, "LOGIN");
+          return startSession(u.id);
+        });
+        return send(200, { user: signedInUser });
+      }
+      const accountRequest = {
+        service: accounts,
+        path,
+        method,
+        body,
+        user,
+        tokenHash: token ? hashToken(token) : null,
+        rateKey: req.socket.remoteAddress,
+        send,
+        sendBytes: (bytes) => {
+          res.writeHead(200, {
+            "Content-Type": "image/webp",
+            "Content-Length": bytes.length,
+          });
+          res.end(bytes);
+        },
+      };
+      if (path === "/api/account/activate" || path.startsWith("/api/profile")) {
+        if (await handleAccounts(accountRequest)) return;
       }
       if (!user) fail(401, "Sign in required");
       if (path === "/api/mfa" && method === "GET") {
@@ -292,10 +323,17 @@ export function createServer(
         });
         return send(201, { user: await store.user(user.id) });
       }
-      const tenant = String(req.headers["x-company-id"] ?? "");
+      const avatarRead =
+        method === "GET" && /^\/api\/users\/[a-zA-Z0-9-]+\/avatar$/.test(path);
+      const tenant = String(
+        req.headers["x-company-id"] ??
+          (avatarRead ? url.searchParams.get("company") : "") ??
+          "",
+      );
       const membership = user.companies.find((c) => c.id === tenant);
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
+      if (await handleAccounts({ ...accountRequest, tenant, role })) return;
       if (
         await handleAssistant({
           store,
@@ -432,95 +470,6 @@ export function createServer(
             )
             .all("documentFiles", "documentFiles", tenant),
         });
-      }
-      if (path === "/api/users") {
-        if (role !== "admin") fail(403, "Administrator access required");
-        if (method === "GET")
-          return send(200, {
-            users: await store.db
-              .prepare(
-                "SELECT u.id,u.name,u.email,m.role FROM users u JOIN memberships m ON m.user_id=u.id WHERE m.tenant_id=?",
-              )
-              .all(tenant),
-          });
-        if (method === "POST") {
-          credentials(body);
-          if (!roleLabels[body.role]) fail(400, "Invalid role");
-          const id = randomUUID();
-          await store.transaction(async () => {
-            let existing = await store.db
-              .prepare("SELECT id FROM users WHERE email=?")
-              .get(body.email.trim().toLowerCase());
-            if (existing)
-              fail(409, "Email already exists; use a different account");
-            await store.db
-              .prepare(
-                "INSERT INTO users(id,email,name,password_hash) VALUES(?,?,?,?)",
-              )
-              .run(
-                id,
-                body.email.trim().toLowerCase(),
-                body.name.trim(),
-                passwordHash(body.password),
-              );
-            await store.db
-              .prepare("INSERT INTO memberships VALUES(?,?,?)")
-              .run(id, tenant, body.role);
-            await store.log(tenant, user.id, "CREATE_USER", "users", id, null, {
-              email: body.email,
-              role: body.role,
-            });
-          });
-          return send(201, { ok: true });
-        }
-      }
-      const userMatch = path.match(/^\/api\/users\/([a-zA-Z0-9-]+)$/);
-      if (userMatch && ["PUT", "DELETE"].includes(method)) {
-        if (role !== "admin") fail(403, "Administrator access required");
-        const target = userMatch[1];
-        await store.transaction(async () => {
-          await store.lock(tenant);
-          const m = await store.db
-            .prepare(
-              "SELECT role FROM memberships WHERE user_id=? AND tenant_id=?",
-            )
-            .get(target, tenant);
-          if (!m) fail(404, "User not found");
-          if (target === user.id)
-            fail(409, "You cannot change your own access");
-          if (method === "DELETE") {
-            await store.db
-              .prepare(
-                "DELETE FROM memberships WHERE user_id=? AND tenant_id=?",
-              )
-              .run(target, tenant);
-            await store.log(
-              tenant,
-              user.id,
-              "REMOVE_USER_ACCESS",
-              "users",
-              target,
-              { role: m.role },
-            );
-          } else {
-            if (!roleLabels[body.role]) fail(400, "Invalid role");
-            await store.db
-              .prepare(
-                "UPDATE memberships SET role=? WHERE user_id=? AND tenant_id=?",
-              )
-              .run(body.role, target, tenant);
-            await store.log(
-              tenant,
-              user.id,
-              "CHANGE_ROLE",
-              "users",
-              target,
-              { role: m.role },
-              { role: body.role },
-            );
-          }
-        });
-        return send(200, { ok: true });
       }
       if (path === "/api/settings") {
         if (role !== "admin") fail(403, "Administrator access required");

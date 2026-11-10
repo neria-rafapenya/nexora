@@ -1,3 +1,4 @@
+import { migrateAccounts } from "./account-schema.mjs";
 import { migrateAssistant } from "./assistant.mjs";
 import {
   productMediaResources,
@@ -161,6 +162,7 @@ export class Store {
       await migrateSearch(this);
       await migrateProductMedia(this);
       await migrateAssistant(this);
+      await migrateAccounts(this);
     });
   }
   async transaction(fn) {
@@ -215,11 +217,16 @@ export class Store {
   }
   async user(id) {
     const u = await this.db
-      .prepare("SELECT id,email,name FROM users WHERE id=?")
+      .prepare(
+        `SELECT id,email,name,phone,job_title AS "jobTitle",profile_version AS "profileVersion",created_at AS "createdAt",updated_at AS "updatedAt",(avatar IS NOT NULL) AS "hasAvatar" FROM users WHERE id=?`,
+      )
       .get(id);
     if (!u) return null;
     return {
       ...u,
+      avatarUrl: u.hasAvatar
+        ? `/api/profile/avatar?v=${u.profileVersion}`
+        : null,
       companies: await this.db
         .prepare(
           "SELECT t.id,t.name,m.role FROM tenants t JOIN memberships m ON m.tenant_id=t.id WHERE m.user_id=? ORDER BY t.name",
