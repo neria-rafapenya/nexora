@@ -13,8 +13,8 @@ import { useWorkspace } from "../../components/workspace";
 import { products, total, money } from "../../domain/demo";
 export default function Detail() {
   const { id } = useLocalSearchParams();
-  const { orders } = useWorkspace();
-  const o = orders.find((o) => o.id === id);
+  const { orders, center } = useWorkspace();
+  const o = orders.find((o) => o.id === id && o.centerId === center?.id);
   return (
     <Shell>
       <Label>DETALLE DEL PEDIDO</Label>
@@ -22,7 +22,9 @@ export default function Detail() {
       {o ? (
         <Card>
           <Text style={s.pill}>Registrado en esta sesión · Sin envío real</Text>
-          <Copy>Entrega solicitada: {o.delivery}</Copy>
+          <Copy>
+            Centro: {o.centerName} · Entrega solicitada: {o.delivery}
+          </Copy>
           {o.lines.map((l) => (
             <Text key={l.productId} style={s.copy}>
               {products.find((p) => p.id === l.productId)?.name} · {l.quantity}{" "}

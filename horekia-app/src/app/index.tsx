@@ -13,12 +13,12 @@ import {
 } from "../components/ui";
 import { useWorkspace } from "../components/workspace";
 export default function Home() {
-  const { orders, cart } = useWorkspace();
+  const { orders, cart, center } = useWorkspace();
   const { width } = useWindowDimensions();
   return (
     <Shell>
       <View style={{ gap: 10 }}>
-        <Label>RESIDENCIA SANT JORDI</Label>
+        <Label>{center?.name.toUpperCase() ?? "SELECCIONA UN CENTRO"}</Label>
         <Title>Tu centro, bien abastecido.</Title>
         <Copy>
           Menos tiempo preparando pedidos. Más tiempo para cuidar el servicio.
@@ -63,7 +63,9 @@ export default function Home() {
           <Card>
             <Feather name="truck" size={22} color={colors.green} />
             <Label>PEDIDOS ENVIADOS</Label>
-            <Text style={s.title}>{orders.length}</Text>
+            <Text style={s.title}>
+              {orders.filter((o) => o.centerId === center?.id).length}
+            </Text>
             <Copy>En esta sesión de demostración.</Copy>
             <Button
               label="Ver mis pedidos"

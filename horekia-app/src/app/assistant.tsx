@@ -5,7 +5,7 @@ import { Shell, Label, Title, Copy, Card, Button, s } from "../components/ui";
 import { useWorkspace } from "../components/workspace";
 export default function Assistant() {
   const [show, setShow] = useState(false);
-  const { add, notify } = useWorkspace();
+  const { add, notify, center } = useWorkspace();
   return (
     <Shell>
       <Label>ASISTENTE HOREKIA</Label>
@@ -17,9 +17,9 @@ export default function Assistant() {
       <Card>
         <Text style={s.sectionTitle}>Explora un ejemplo</Text>
         <Copy>
-          «Para Sant Jordi: 20 kg de muslo de pollo, 4 kg de fideos de arroz y
-          arroz para 60 comensales a 80 g por persona. Hay 6 sin lácteos. Para
-          el viernes que viene.»
+          «Para {center?.name ?? "el centro seleccionado"}: 20 kg de muslo de
+          pollo, 4 kg de fideos de arroz y arroz para 60 comensales a 80 g por
+          persona. Hay 6 sin lácteos. Para el viernes que viene.»
         </Copy>
         <Button
           label="Ver propuesta de ejemplo"
@@ -47,6 +47,7 @@ export default function Assistant() {
           </Text>
           <Button
             label="Añadir propuesta a mi cesta"
+            disabled={!center}
             onPress={() => {
               add("chicken", 20);
               add("noodles", 4);

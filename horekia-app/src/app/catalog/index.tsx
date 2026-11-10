@@ -16,7 +16,7 @@ import { useWorkspace } from "../../components/workspace";
 export default function Catalog() {
   const [q, setQ] = useState("");
   const [family, setFamily] = useState("Todos");
-  const { add, notify } = useWorkspace();
+  const { add, notify, center } = useWorkspace();
   const rows = products.filter(
     (p) =>
       (family === "Todos" || p.family === family) &&
@@ -84,6 +84,7 @@ export default function Catalog() {
             </Text>
             <Button
               label="Añadir a la cesta"
+              disabled={!center}
               secondary
               onPress={() => {
                 add(p.id);

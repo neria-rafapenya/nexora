@@ -17,7 +17,7 @@
     "build:site": "npm --prefix horekia-site run build",
     "test:site": "npm --prefix horekia-site test",
     "dev:site": "npm --prefix horekia-site run dev",
-    "dev:app": "npm --prefix horekia-app run web",
+    "dev:app": "node scripts/dev-app.mjs",
     "build:app": "npm --prefix horekia-app run build"
   },
   "devDependencies": {

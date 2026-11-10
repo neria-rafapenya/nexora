@@ -14,7 +14,7 @@ import { useWorkspace } from "../../components/workspace";
 export default function Product() {
   const { id } = useLocalSearchParams();
   const p = products.find((x) => x.id === id);
-  const { add, notify } = useWorkspace();
+  const { add, notify, center } = useWorkspace();
   return (
     <Shell>
       {p ? (
@@ -48,6 +48,7 @@ export default function Product() {
               <Copy>Precio ficticio para probar el recorrido de compra.</Copy>
               <Button
                 label="Añadir a la cesta"
+                disabled={!center}
                 onPress={() => {
                   add(p.id);
                   notify("Producto añadido.");

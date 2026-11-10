@@ -12,7 +12,8 @@ import {
 import { useWorkspace } from "../../components/workspace";
 import { total, money } from "../../domain/demo";
 export default function Orders() {
-  const { orders } = useWorkspace();
+  const { orders: allOrders, center } = useWorkspace();
+  const orders = allOrders.filter((o) => o.centerId === center?.id);
   return (
     <Shell>
       <Label>MIS PEDIDOS</Label>

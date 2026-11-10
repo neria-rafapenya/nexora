@@ -123,7 +123,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { width } = useWindowDimensions();
   const wide = width > 900;
   const path = usePathname();
-  const { cart, notice, notify } = useWorkspace();
+  const { cart, notice, notify, centers, center, centerError, selectCenter } =
+    useWorkspace();
   const menu = (
     <>
       {nav.map(([href, label, icon]) => (
@@ -159,7 +160,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <Text style={{ color: colors.green, fontWeight: "700" }}>SJ</Text>
             </View>
             <View>
-              <Text style={s.fieldLabel}>Sant Jordi</Text>
+              <Text style={s.fieldLabel}>{center?.name ?? "Sin centro"}</Text>
               <Text style={s.copy}>Centro de demostración</Text>
             </View>
           </View>
@@ -200,6 +201,39 @@ export function Shell({ children }: { children: React.ReactNode }) {
               gap: 26,
             }}
           >
+            <View style={{ gap: 8 }}>
+              <Text style={s.fieldLabel}>Centro activo</Text>
+              <View style={s.row}>
+                {centers.map((c) => (
+                  <Pressable
+                    key={c.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: center?.id === c.id }}
+                    onPress={() => selectCenter(c.id)}
+                  >
+                    <Text
+                      style={[
+                        s.pill,
+                        center?.id === c.id && {
+                          backgroundColor: colors.green,
+                          color: "white",
+                        },
+                      ]}
+                    >
+                      {c.name.replace(/^Demo /, "")}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              {centerError !== "" && (
+                <Text role="alert" style={s.copy}>
+                  {centerError}
+                </Text>
+              )}
+              {centers.length === 0 && !centerError && (
+                <Text style={s.copy}>Cargando centros…</Text>
+              )}
+            </View>
             {notice !== "" && (
               <Pressable
                 onPress={() => notify("")}

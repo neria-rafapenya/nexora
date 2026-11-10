@@ -19,3 +19,11 @@ Destino: app.horekia.com. No se ha publicado ni habilitado acceso de clientes to
 Antes de conectar datos reales: autenticación de comprador, asociación administrada a cliente y centros, comprobaciones de alcance en servidor para cada lectura/escritura, API específica de comprador, catálogo autorizado, persistencia de pedidos y encaje con aprobación interna/ERP. No reutilizar el permiso amplio del backoffice ni sus rutas de maestros desde la app.
 
 El campo `profileType` del usuario (`INTERNAL_TEAM`, `CENTER_BUYER`) es metadato de experiencia, administrado por un administrador. No concede permisos ni sustituye las asociaciones de acceso. Los usuarios existentes conservan `INTERNAL_TEAM`.
+
+## Selector real de centros de la demo
+
+`npm run dev:app` desde la raíz arranca Expo (5183) y un puente de lectura local (5184), enlazado exclusivamente a 127.0.0.1. Este último lee los centros ficticios de `workspace` en Supabase utilizando el `.env` privado de `nexora-api`, acepta únicamente los orígenes de Expo locales y no expone credenciales ni escrituras. No desplegar este puente en Internet: el acceso remoto de compradores sigue requiriendo autenticación y autorizaciones por centro.
+
+El selector carga los mismos registros que el backoffice al abrir/recargar la app. Las cestas se mantienen separadas por ID de centro; cada pedido de prueba conserva su centro y los listados/detalles respetan la selección activa. Los pedidos siguen siendo de demostración en memoria.
+
+La demo conserva tres centros existentes (Northfield School, Silverwood Care y Riverside Hospital, Site 1). La reducción se aplica explícitamente con `reduce-demo-centers.mjs`, nunca durante el arranque, y exige copia privada de recuperación antes de borrar. No ejecutar el seed amplio de maestros para esta demo, porque volvería a crear centros adicionales.

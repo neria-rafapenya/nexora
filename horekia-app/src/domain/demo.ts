@@ -72,6 +72,8 @@ export const products: Product[] = [
 ];
 export type Line = { productId: string; quantity: number };
 export type Order = {
+  centerId: string;
+  centerName: string;
   id: string;
   date: string;
   delivery: string;

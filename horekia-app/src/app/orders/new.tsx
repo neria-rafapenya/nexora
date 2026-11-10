@@ -14,7 +14,7 @@ import {
 } from "../../components/ui";
 import { useWorkspace } from "../../components/workspace";
 export default function New() {
-  const { cart, setQuantity, submit } = useWorkspace();
+  const { cart, setQuantity, submit, center } = useWorkspace();
   const [delivery, setDelivery] = useState("");
   const [error, setError] = useState("");
   return (
@@ -22,7 +22,8 @@ export default function New() {
       <Label>NUEVO PEDIDO</Label>
       <Title>Revisa tu cesta.</Title>
       <Copy>
-        Centro: Residencia Sant Jordi · Este recorrido no envía pedidos reales.
+        Centro: {center?.name ?? "Sin seleccionar"} · Este recorrido no envía
+        pedidos reales.
       </Copy>
       {cart.length === 0 ? (
         <Card>
