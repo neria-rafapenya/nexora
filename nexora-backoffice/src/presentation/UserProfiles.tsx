@@ -18,6 +18,7 @@ interface ProfileData {
   email: string;
   phone: string;
   jobTitle: string;
+  profileType?: "INTERNAL_TEAM" | "CENTER_BUYER";
   avatar?: AvatarUpload | null;
 }
 export interface ManagedUser extends Omit<ProfileData, "avatar"> {
@@ -170,6 +171,27 @@ function ProfileFields({
 }) {
   return (
     <div className="profile-fields">
+      {!emailReadOnly && (
+        <label>
+          Tipo de perfil
+          <select
+            value={data.profileType ?? "INTERNAL_TEAM"}
+            disabled={disabled}
+            onChange={(e) =>
+              onChange({
+                ...data,
+                profileType: e.target.value as "INTERNAL_TEAM" | "CENTER_BUYER",
+              })
+            }
+          >
+            <option value="INTERNAL_TEAM">Equipo interno</option>
+            <option value="CENTER_BUYER">Comprador de un centro</option>
+          </select>
+          <small>
+            Orienta la experiencia. No concede permisos ni acceso a centros.
+          </small>
+        </label>
+      )}
       <label>
         Nombre
         <input
@@ -608,6 +630,7 @@ export function UserManagement({
                               email: u.email,
                               phone: u.phone,
                               jobTitle: u.jobTitle,
+                              profileType: u.profileType,
                             },
                             role: u.role,
                           })

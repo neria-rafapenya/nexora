@@ -27,13 +27,24 @@ const version = (v) => {
   return v;
 };
 export function profileData(v, email = false) {
-  keys(v, ["name", "phone", "jobTitle", "avatar", ...(email ? ["email"] : [])]);
+  keys(v, [
+    "name",
+    "phone",
+    "jobTitle",
+    "avatar",
+    ...(email ? ["email", "profileType"] : []),
+  ]);
   const result = {
     name: text(v.name, 120, true),
     phone: text(v.phone, 40),
     jobTitle: text(v.jobTitle, 120),
   };
   if (email) {
+    if (v.profileType !== undefined) {
+      if (!["INTERNAL_TEAM", "CENTER_BUYER"].includes(v.profileType))
+        fail(400, "Tipo de perfil no válido");
+      result.profileType = v.profileType;
+    }
     result.email = text(v.email, 254, true).toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.email))
       fail(400, "Introduce un correo electrónico válido");
@@ -118,6 +129,7 @@ export class Accounts {
       email: r.email,
       phone: r.phone,
       jobTitle: r.job_title,
+      profileType: r.profile_type ?? "INTERNAL_TEAM",
       role: r.role,
       profileVersion: r.profile_version,
       accessVersion: r.access_version,
@@ -183,7 +195,7 @@ export class Accounts {
         fail(409, "Email already exists; use a different account");
       const avatar = await this.avatarMeta(id, data.avatar, null);
       await this.s.query(
-        "INSERT INTO bo.users(id,email,name,password_hash,phone,job_title,avatar,password_ready) VALUES($1,$2,$3,$4,$5,$6,$7,false)",
+        "INSERT INTO bo.users(id,email,name,password_hash,phone,job_title,avatar,profile_type,password_ready) VALUES($1,$2,$3,$4,$5,$6,$7,$8,false)",
         [
           id,
           data.email,
@@ -192,6 +204,7 @@ export class Accounts {
           data.phone,
           data.jobTitle,
           avatar,
+          data.profileType ?? "INTERNAL_TEAM",
         ],
       );
       await this.s.query(
@@ -203,6 +216,7 @@ export class Accounts {
         name: data.name,
         email: data.email,
         role,
+        profileType: data.profileType ?? "INTERNAL_TEAM",
         pendingActivation: true,
       });
       return {
@@ -253,8 +267,16 @@ export class Accounts {
           fail(409, "Ese correo electrónico ya pertenece a otra cuenta.");
         const avatar = await this.avatarMeta(id, data.avatar, before.avatar);
         await this.s.query(
-          "UPDATE bo.users SET name=$1,email=$2,phone=$3,job_title=$4,avatar=$5,profile_version=profile_version+1,updated_at=now() WHERE id=$6",
-          [data.name, data.email, data.phone, data.jobTitle, avatar, id],
+          "UPDATE bo.users SET name=$1,email=$2,phone=$3,job_title=$4,avatar=$5,profile_type=COALESCE($7,profile_type),profile_version=profile_version+1,updated_at=now() WHERE id=$6",
+          [
+            data.name,
+            data.email,
+            data.phone,
+            data.jobTitle,
+            avatar,
+            id,
+            data.profileType ?? null,
+          ],
         );
         after = await this.member(t, id);
       }
@@ -267,6 +289,7 @@ export class Accounts {
         email: r.email,
         phone: r.phone,
         jobTitle: r.job_title,
+        profileType: r.profile_type ?? "INTERNAL_TEAM",
         hasAvatar: !!r.avatar,
         role: r.role,
       });

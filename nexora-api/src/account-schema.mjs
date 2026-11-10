@@ -13,3 +13,11 @@ export async function migrateAccounts(s) {
   REVOKE ALL ON bo.account_invitations FROM PUBLIC,anon,authenticated;
   INSERT INTO bo.migrations(version) VALUES(14)`);
 }
+
+export async function migrateProfileTypes(s) {
+  if ((await s.query("SELECT 1 FROM bo.migrations WHERE version=16")).rowCount)
+    return;
+  await s.query(
+    `ALTER TABLE bo.users ADD COLUMN profile_type TEXT NOT NULL DEFAULT 'INTERNAL_TEAM' CHECK(profile_type IN ('INTERNAL_TEAM','CENTER_BUYER')); INSERT INTO bo.migrations(version) VALUES(16)`,
+  );
+}

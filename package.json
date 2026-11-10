@@ -16,7 +16,9 @@
     "start": "node --env-file=.env nexora-api/src/server.mjs",
     "build:site": "npm --prefix horekia-site run build",
     "test:site": "npm --prefix horekia-site test",
-    "dev:site": "npm --prefix horekia-site run dev"
+    "dev:site": "npm --prefix horekia-site run dev",
+    "dev:app": "npm --prefix horekia-app run web",
+    "build:app": "npm --prefix horekia-app run build"
   },
   "devDependencies": {
     "prettier": "^3.6.0"

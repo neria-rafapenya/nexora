@@ -132,3 +132,19 @@ test("sensitive request throttling blocks after five invalid attempts and public
   assert(dto.avatarUrl.includes("company=company"));
   assert.equal(dto.profileVersion, 3);
 });
+
+test("profile type is administrator metadata, never self-service permissions", () => {
+  const p = {
+    name: "Buyer",
+    email: "buyer@example.invalid",
+    phone: "",
+    jobTitle: "",
+  };
+  assert.equal(
+    profileData({ ...p, profileType: "CENTER_BUYER" }, true).profileType,
+    "CENTER_BUYER",
+  );
+  assert.throws(() => profileData({ ...p, profileType: "admin" }, true));
+  const { email, ...self } = p;
+  assert.throws(() => profileData({ ...self, profileType: "INTERNAL_TEAM" }));
+});

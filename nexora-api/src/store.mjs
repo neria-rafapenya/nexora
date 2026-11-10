@@ -1,5 +1,5 @@
 import { migrateContacts } from "./contact-schema.mjs";
-import { migrateAccounts } from "./account-schema.mjs";
+import { migrateAccounts, migrateProfileTypes } from "./account-schema.mjs";
 import { migrateAssistant } from "./assistant.mjs";
 import {
   productMediaResources,
@@ -165,6 +165,7 @@ export class Store {
       await migrateAssistant(this);
       await migrateAccounts(this);
       await migrateContacts(this);
+      await migrateProfileTypes(this);
     });
   }
   async transaction(fn) {
@@ -220,7 +221,7 @@ export class Store {
   async user(id) {
     const u = await this.db
       .prepare(
-        `SELECT id,email,name,phone,job_title AS "jobTitle",profile_version AS "profileVersion",created_at AS "createdAt",updated_at AS "updatedAt",(avatar IS NOT NULL) AS "hasAvatar" FROM users WHERE id=?`,
+        `SELECT id,email,name,phone,job_title AS "jobTitle",profile_type AS "profileType",profile_version AS "profileVersion",created_at AS "createdAt",updated_at AS "updatedAt",(avatar IS NOT NULL) AS "hasAvatar" FROM users WHERE id=?`,
       )
       .get(id);
     if (!u) return null;

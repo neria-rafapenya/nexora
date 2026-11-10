@@ -49,6 +49,7 @@ test(
                   email: randomUUID() + "@example.invalid",
                   phone: "12345",
                   jobTitle: "Operator",
+                  profileType: "CENTER_BUYER",
                 },
                 role: "read_only",
               };
@@ -61,6 +62,7 @@ test(
               token = created.activationPath.split("token=")[1];
             assert(token);
             assert.equal(created.user.pendingActivation, true);
+            assert.equal(created.user.profileType, "CENTER_BUYER");
             const initial = (
               await s.query("SELECT * FROM bo.users WHERE id=$1", [id])
             ).rows[0];
@@ -110,6 +112,7 @@ test(
             assert(u.createdAt);
             assert(u.updatedAt);
             assert.equal(u.profileVersion, 2);
+            assert.equal(u.profileType, "CENTER_BUYER");
             await assert.rejects(
               () =>
                 service.update(

@@ -17,6 +17,7 @@ export interface Session {
   companies: Company[];
   phone?: string;
   jobTitle?: string;
+  profileType?: "INTERNAL_TEAM" | "CENTER_BUYER";
   avatarUrl?: string | null;
   profileVersion?: number;
   createdAt?: string | null;
