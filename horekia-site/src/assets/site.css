@@ -1828,3 +1828,26 @@ h3 {
     max-width: 96%;
   }
 }
+
+.demo-video-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+}
+.demo-video-copy .section-top {
+  margin-bottom: 24px;
+}
+.demo-video-copy > p {
+  margin-bottom: 24px;
+}
+.demo-video-layout .demo-video {
+  margin: 0;
+  min-width: 0;
+}
+@media (max-width: 800px) {
+  .demo-video-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
