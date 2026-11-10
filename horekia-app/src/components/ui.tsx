@@ -1,4 +1,5 @@
 import React from "react";
+import { Picker } from "@react-native-picker/picker";
 import {
   View,
   Text,
@@ -203,28 +204,33 @@ export function Shell({ children }: { children: React.ReactNode }) {
           >
             <View style={{ gap: 8 }}>
               <Text style={s.fieldLabel}>Centro activo</Text>
-              <View style={s.row}>
+              <Picker
+                accessibilityLabel="Centro activo"
+                selectedValue={center?.id ?? ""}
+                onValueChange={(id) => selectCenter(String(id))}
+                enabled={centers.length > 0}
+                style={{
+                  backgroundColor: "white",
+                  color: colors.green,
+                  borderRadius: 10,
+                  minHeight: 46,
+                  fontSize: 13,
+                  width: "100%",
+                  maxWidth: 460,
+                  padding: 10,
+                }}
+              >
+                {centers.length === 0 && (
+                  <Picker.Item label="Cargando centros…" value="" />
+                )}
                 {centers.map((c) => (
-                  <Pressable
+                  <Picker.Item
                     key={c.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: center?.id === c.id }}
-                    onPress={() => selectCenter(c.id)}
-                  >
-                    <Text
-                      style={[
-                        s.pill,
-                        center?.id === c.id && {
-                          backgroundColor: colors.green,
-                          color: "white",
-                        },
-                      ]}
-                    >
-                      {c.name.replace(/^Demo /, "")}
-                    </Text>
-                  </Pressable>
+                    label={c.name.replace(/^Demo /, "")}
+                    value={c.id}
+                  />
                 ))}
-              </View>
+              </Picker>
               {centerError !== "" && (
                 <Text role="alert" style={s.copy}>
                   {centerError}
