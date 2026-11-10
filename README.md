@@ -421,6 +421,8 @@ Checks cover account forms and confirmation, shared profile restrictions, passwo
 
 ### Public commercial website and enquiries
 
+Commercial positioning leads with applied AI: order interpretation and semantic product search are available in the POC, with concrete examples and review steps. The future customer assistant is explicitly labeled as the next stage. Hero copy, navigation, SEO metadata, social image and demo calls to action follow this positioning; the operational modules provide the data and workflows behind it.
+
 `horekia-site` builds a small, dependency-light static website for `https://www.horekia.com/`: complete Spanish HTML content, accessible FAQ disclosures, responsive layout, a contact form, legal/privacy/cookie pages using the owner-provided professional details, branded icons and a 1200×630 social image. Product claims distinguish the current POC/backoffice from the planned customer app/chatbot and simulated ERP integration. There are no invented testimonials, savings figures, customer logos, prices, analytics or third-party embeds/fonts. Content text uses the shared 13px sizing preference.
 
 Build with `npm run build:site`; preview with `npm run dev:site` (127.0.0.1:5182). The preview's `/_preview/mobile` route is local QA only and is not part of the published output. Build the API and backoffice dependencies first (`npm run install:all`), as the social-image generator reuses the API's Sharp dependency and the site tests reuse the backoffice's jsdom. The site itself needs no additional dependency installation. `npm run test:site` checks indexable HTML, metadata/canonical/JSON-LD, real internal links/assets, sitemap, unique IDs, FAQ content, privacy acknowledgment, form success/error behavior and duplicate-click handling.

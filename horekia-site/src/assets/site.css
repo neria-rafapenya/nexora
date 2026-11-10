@@ -987,7 +987,7 @@ h3 {
   .site-header nav {
     gap: 14px;
   }
-  .site-header nav a:first-child {
+  .site-header nav a:nth-child(2) {
     display: none;
   }
   .wordmark {
@@ -1134,7 +1134,7 @@ h3 {
     border-top: 1px solid #dde2d8;
     padding-top: 12px;
   }
-  .site-header nav a:first-child {
+  .site-header nav a:nth-child(2) {
     display: block;
   }
   .header-cta {
@@ -1340,4 +1340,50 @@ h3 {
     transition: none !important;
     animation: none !important;
   }
+}
+
+.ai-usecases {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+.ai-usecase .pill {
+  margin-bottom: 23px;
+}
+.ai-usecase .ai-example {
+  padding: 16px;
+  background: #f3f5ee;
+  border-left: 3px solid #799567;
+  color: var(--ink);
+  font-style: italic;
+  margin-bottom: 20px;
+}
+.ai-usecase p {
+  margin-bottom: 18px;
+}
+.ai-usecase strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.ai-next {
+  background: #f7f4ed;
+}
+.ai-next .pill {
+  background: #ece4d8;
+  color: #765337;
+}
+.ai-demo-link {
+  margin-top: 28px;
+}
+.plan-card .recipe-line {
+  margin-top: 20px;
+}
+
+.hero-visual {
+  min-height: 520px;
+}
+.hero-visual .plan-card > strong {
+  font-size: 22px;
+}
+.hero-visual .order-card {
+  top: 260px;
 }

@@ -10,7 +10,10 @@ test("public content is server-readable and has one descriptive H1, canonical me
   assert.equal(d.documentElement.lang, "es");
   assert.equal(d.querySelectorAll("h1").length, 1);
   assert(
-    d.querySelector("title").textContent.includes("Gestión alimentaria B2B"),
+    d
+      .querySelector("title")
+      .textContent.toLowerCase()
+      .includes("gestión alimentaria b2b"),
   );
   assert(d.querySelector("meta[name=description]").content.length > 100);
   assert.equal(
