@@ -13,7 +13,7 @@ test("public content is server-readable and has one descriptive H1, canonical me
     d
       .querySelector("title")
       .textContent.toLowerCase()
-      .includes("gestión alimentaria b2b"),
+      .includes("pedidos y compras con ia"),
   );
   assert(d.querySelector("meta[name=description]").content.length > 100);
   assert.equal(
@@ -30,7 +30,15 @@ test("public content is server-readable and has one descriptive H1, canonical me
   );
   assert(!html.includes("AggregateRating"));
   assert(d.querySelectorAll("details").length >= 8);
-  assert(d.body.textContent.includes("integraciones parcialmente simuladas"));
+  assert(d.body.textContent.includes("PROGRAMA PILOTO"));
+  assert(
+    !/Disponible en la POC|Utilizamos Gemini|todavía no está activa|siguen simuladas/.test(
+      d.body.textContent,
+    ),
+  );
+  assert(d.getElementById("operacion"));
+  assert(d.getElementById("piloto"));
+  assert(!html.includes("mailto:hola@horekia.com"));
   assert.equal(d.querySelectorAll("form").length, 0);
   assert(!html.includes("Rafael Peña"));
   assert(!html.includes("43735032A"));

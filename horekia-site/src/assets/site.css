@@ -1409,3 +1409,243 @@ h3 {
   margin-bottom: 0;
   margin-top: 18px;
 }
+
+.hero-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 26px;
+}
+.hero-context span {
+  border: 1px solid #cbd6c2;
+  border-radius: 5px;
+  padding: 5px 9px;
+  background: #edf1e6;
+}
+.hero-visual.real-order-demo {
+  border-radius: 24px;
+  padding: 22px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.real-order-demo .workflow-card {
+  position: static;
+  width: 100%;
+  transform: none;
+  padding: 17px;
+  margin: 0;
+}
+.real-order-demo .visual-top .eyebrow {
+  max-width: none;
+  font-size: var(--content);
+  letter-spacing: 0.7px;
+}
+.real-order-demo .visual-top {
+  align-items: flex-start;
+  gap: 15px;
+}
+.real-order-demo .illustration-label {
+  flex: 0 0 80px;
+}
+.source-order .card-kicker {
+  margin-bottom: 12px;
+  letter-spacing: 0.7px;
+}
+.source-message {
+  margin: 0;
+}
+.source-message p {
+  margin: 0 0 9px;
+  color: #40543b;
+  line-height: 1.65;
+}
+.source-message p:last-child {
+  margin-bottom: 0;
+  padding-top: 9px;
+  border-top: 1px dashed #ccd6c2;
+}
+.source-message ul {
+  padding-left: 18px;
+  margin: 0 0 9px;
+  color: #40543b;
+}
+.demo-connection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  color: #49643d;
+}
+.demo-lines {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--content);
+}
+.demo-lines th,
+.demo-lines td {
+  padding: 9px 5px;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+  vertical-align: top;
+  line-height: 1.55;
+}
+.demo-lines th {
+  color: #596b56;
+  font-weight: 500;
+}
+.demo-lines th:first-child {
+  width: 35%;
+}
+.demo-lines th:nth-child(2) {
+  width: 25%;
+}
+.demo-delivery {
+  margin-bottom: 12px;
+  color: #40543b;
+}
+.clarification-note {
+  margin-top: 12px;
+  background: #f5ecdf;
+  padding: 11px;
+  border-radius: 5px;
+  color: #70502e;
+  line-height: 1.65;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.connected-operation {
+  background: #e9eedf;
+}
+.context-flow {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+.context-flow li {
+  border-top: 2px solid #8ca87b;
+  padding-top: 17px;
+}
+.context-flow strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 550;
+  margin-bottom: 6px;
+}
+.context-flow span {
+  color: #596b56;
+}
+.ai-usecases .capability-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.pilot-section {
+  background: #fff;
+}
+.pilot-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 25px;
+  margin-top: 30px;
+}
+.pilot-metrics article {
+  padding: 23px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.pilot-metrics article > span {
+  color: #596b56;
+  display: block;
+  margin-bottom: 20px;
+}
+.pilot-metrics p {
+  margin-bottom: 0;
+}
+.wad-proof {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 40px;
+  align-items: start;
+  padding: 35px;
+  background: #eff3e9;
+  border-radius: 10px;
+  margin-top: 45px;
+}
+.wad-name {
+  font-weight: 800;
+  font-size: 49px;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+.wad-name span {
+  display: block;
+  font-size: var(--content);
+  letter-spacing: 1px;
+  font-weight: 500;
+  line-height: 1.6;
+  margin-top: 14px;
+}
+@media (min-width: 781px) {
+  .hero-grid {
+    align-items: start;
+  }
+  .hero-copy h1 {
+    font-size: clamp(56px, 5.6vw, 74px);
+    letter-spacing: -3.3px;
+  }
+}
+@media (max-width: 780px) {
+  .hero-visual.real-order-demo {
+    width: 100%;
+    max-width: 560px;
+  }
+  .context-flow {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pilot-metrics {
+    grid-template-columns: 1fr;
+  }
+  .wad-proof {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+}
+@media (max-width: 520px) {
+  .real-order-demo .workflow-card {
+    padding: 13px;
+  }
+  .hero-visual.real-order-demo {
+    padding: 16px;
+  }
+  .ai-usecases .capability-grid {
+    grid-template-columns: 1fr;
+  }
+  .context-flow {
+    gap: 25px;
+  }
+  .wad-proof {
+    padding: 24px;
+  }
+}
+
+.hero-maker {
+  display: inline-block;
+  color: #596b56;
+  text-decoration: none;
+  border-bottom: 1px solid #b3c1a8;
+  margin-top: 14px;
+}
+.hero-maker:hover {
+  color: var(--ink);
+}
