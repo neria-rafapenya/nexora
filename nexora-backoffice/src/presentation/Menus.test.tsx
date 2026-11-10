@@ -153,3 +153,25 @@ it("ingredient forms use Spanish labels and send English database field keys", a
     { name: "Rice", unit: "KG", active: true },
   );
 });
+
+it("menu import is explicit and stays disabled until a file and document reference exist", async () => {
+  await render();
+  expect(host.textContent).toContain("Importar menú del cliente");
+  const b = [...host.querySelectorAll("button")].find(
+    (b) => b.textContent === "Validar y ver asociaciones",
+  );
+  expect(b?.disabled).toBe(true);
+  expect(request).not.toHaveBeenCalledWith(
+    expect.stringContaining("/import"),
+    expect.anything(),
+    expect.anything(),
+    expect.anything(),
+  );
+});
+it("the nutrition workspace is available without exposing specialist actions to administrators", async () => {
+  await render("nutrition", undefined);
+  expect(host.textContent).toContain("Perfiles nutricionales");
+  expect(host.textContent).toContain("Reglas de dieta");
+  expect(host.textContent).toContain("Revisión técnica");
+  expect(host.textContent).not.toContain("Guardar y validar como Nutrición");
+});

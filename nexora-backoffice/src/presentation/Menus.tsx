@@ -1,3 +1,7 @@
+import { MenuCalendar } from "./MenuCalendar";
+import { MenuImport } from "./MenuImport";
+import { MenuNutrition } from "./MenuNutrition";
+import { SupplyEditor, AdvancedForecast } from "./MenuSupply";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { request } from "../infrastructure/api";
@@ -97,6 +101,7 @@ export function Menus({
           ["", "Planificaciones"],
           ["recipes", "Recetas"],
           ["ingredients", "Ingredientes y compras"],
+          ["nutrition", "Nutrición y Calidad"],
         ].map(([s, name]) => (
           <Link
             className={section === s ? "active" : ""}
@@ -114,6 +119,14 @@ export function Menus({
       )}
       {loading ? (
         <p role="status">Cargando planificación…</p>
+      ) : c && section === "nutrition" ? (
+        <MenuNutrition
+          key={reload}
+          c={c}
+          company={companyId}
+          permissions={permissions}
+          changed={() => setReload((x) => x + 1)}
+        />
       ) : c && (isNew || recordId) ? (
         isNew && !permissions.write ? (
           <p>Acceso restringido</p>
@@ -649,7 +662,8 @@ function PlanEditor({
     [error, setError] = useState(""),
     [forecast, setForecast] = useState<Forecast | null>(null),
     [evidence, setEvidence] = useState(""),
-    [mockDiet, setMockDiet] = useState(c.diets[0]?.id ?? "");
+    [mockDiet, setMockDiet] = useState(c.diets[0]?.id ?? ""),
+    [orderLinks, setOrderLinks] = useState<RecordRow[]>([]);
   const state = String(record?.data.state ?? "DRAFT"),
     immutable = ["PUBLISHED", "ARCHIVED"].includes(state),
     editable = permissions.write && !immutable,
@@ -706,6 +720,12 @@ function PlanEditor({
             {error}
           </div>
         )}
+        <MenuCalendar
+          form={form}
+          c={c}
+          disabled={!editable || busy}
+          onChange={patch}
+        />
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -847,6 +867,12 @@ function PlanEditor({
                 />
               </label>
             </div>
+            <SupplyEditor
+              form={form}
+              c={c}
+              disabled={!editable || busy}
+              onChange={(supply) => patch({ supply })}
+            />
             <h3 className="mt">Recetas del menú</h3>
             <p className="fine">
               Puedes trasladar aquí un menú existente. Cada posición utiliza una
@@ -1171,6 +1197,15 @@ function PlanEditor({
         </form>
         {record && (
           <>
+            {editable && (
+              <MenuImport
+                record={record}
+                c={c}
+                company={company}
+                disabled={busy || dirty}
+                onChanged={changed}
+              />
+            )}
             <div className="actions mt">
               {permissions.write && (
                 <button
@@ -1309,7 +1344,65 @@ function PlanEditor({
                 </div>
               </>
             )}
-            {forecast && <ForecastView forecast={forecast} c={c} />}
+            {forecast && (
+              <>
+                <ForecastView forecast={forecast} c={c} />
+                <AdvancedForecast f={forecast} c={c} />
+              </>
+            )}
+            {state === "PUBLISHED" && permissions.supply && (
+              <button
+                className="primary mt"
+                disabled={busy || dirty}
+                onClick={async () => {
+                  setBusy(true);
+                  setError("");
+                  try {
+                    const result = await request<{ orders: RecordRow[] }>(
+                      "/menus/" + record.id + "/purchase-drafts",
+                      company,
+                      "POST",
+                      { version: record.version },
+                    );
+                    setOrderLinks(result.orders);
+                  } catch (e) {
+                    setError((e as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Crear / consultar propuestas de pedido en F2
+              </button>
+            )}
+            {c.menuPurchaseLinks
+              ?.filter((l) => l.data.planId === record.id)
+              .map((l) => (
+                <p key={l.id}>
+                  <Link
+                    to={
+                      "/orders/" +
+                      l.data.orderId +
+                      "?" +
+                      new URLSearchParams({ company })
+                    }
+                  >
+                    Consultar propuesta de pedido vinculada
+                  </Link>
+                </p>
+              ))}
+            {orderLinks.map((o) => (
+              <p key={o.id}>
+                <Link
+                  to={
+                    "/orders/" + o.id + "?" + new URLSearchParams({ company })
+                  }
+                >
+                  Revisar propuesta {String(o.data.number)}
+                </Link>{" "}
+                · Requiere revisión y aceptación del cliente
+              </p>
+            ))}
           </>
         )}
       </section>
@@ -1330,11 +1423,11 @@ function ForecastView({
         {f.frozen ? "· versión publicada conservada" : ""}
       </h3>
       <p>
-        Calculada con los datos guardados. No evalúa el equilibrio nutricional
-        ni otras reglas dietéticas automáticamente. No descuenta existencias del
-        centro, no reserva stock y no genera pedidos automáticamente. Las
-        compras se redondean por centro y fecha: cajas y unidades completas; kg
-        y litros a tres decimales.
+        Calculada con los datos guardados. Las tablas siguientes muestran
+        necesidades brutas; el abastecimiento revisado incorpora las existencias
+        declaradas. No se reserva stock ni se envían pedidos automáticamente.
+        Las compras se redondean por centro y fecha: cajas y unidades completas;
+        kg y litros a tres decimales.
       </p>
       {f.issues.length > 0 && (
         <div className="alert">

@@ -1,3 +1,4 @@
+import { menuDetailResources } from "./menu-detail-schema.mjs";
 const text = (label, required = false) => ({ label, type: "text", required });
 const num = (label, required = false, extra = {}) => ({
   label,
@@ -21,6 +22,7 @@ const choice = (label, options) => ({
   required: true,
 });
 export const menuResources = {
+  ...menuDetailResources,
   menuIngredients: {
     label: "Kitchen ingredients",
     fields: {
@@ -82,6 +84,7 @@ export const menuResources = {
       marginPercent: num("Planning margin", true, { max: 100 }),
       schedule: json("Menu schedule"),
       counts: json("Date diner overrides"),
+      supply: json("Procurement settings"),
       revision: num("Revision", true, { integer: true }),
       state: choice("State", [
         "DRAFT",
@@ -111,5 +114,6 @@ export function menuPermissions(role) {
     write: ["admin", "nutrition_menus"].includes(role),
     nutrition: role === "nutrition_menus",
     quality: role === "quality",
+    supply: ["admin", "operations_orders"].includes(role),
   };
 }

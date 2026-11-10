@@ -325,6 +325,41 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  "Only Nutrition can validate nutrition data":
+    "Solo Nutrición puede validar los perfiles y reglas nutricionales.",
+  "A nutrition source and data classification are required":
+    "Indica la fuente y si los datos son ficticios.",
+  "Provide all nutrient values, including explicit zeros":
+    "Completa todos los valores nutricionales. Usa cero únicamente cuando esté documentado.",
+  "Inconsistent nutrient values":
+    "Los azúcares no pueden superar los hidratos ni las saturadas superar las grasas.",
+  "Only Quality can validate technical information":
+    "Solo Calidad puede registrar esta revisión técnica.",
+  "Technical composition, source and classification are required":
+    "Indica composición, referencia documental y si los datos son ficticios.",
+  "Validate product allergen associations first":
+    "Primero valida las asociaciones de alérgenos desde la ficha del producto.",
+  "Resolve all menu import rows before saving":
+    "Resuelve todas las filas antes de confirmar la importación.",
+  "Menu import preview changed. Validate again.":
+    "La vista previa ha cambiado. Vuelve a validar el archivo antes de guardar.",
+  "Publish a fully reviewed current menu before creating orders":
+    "Publica primero un menú con la revisión nutricional y técnica actual completa.",
+  "Published source data changed. Create and approve a new menu revision":
+    "Han cambiado los datos utilizados por el menú publicado. Crea y aprueba una nueva revisión antes de generar pedidos.",
+  "Invalid procurement settings":
+    "Revisa las elecciones de productos, entregas y existencias.",
+  "Invalid procurement conversion":
+    "Revisa producto, cantidad, referencia y duplicados de las equivalencias de compra.",
+  "Invalid delivery allocation":
+    "Revisa las fechas de consumo y entrega. La entrega debe ser anterior o igual al consumo.",
+  "Duplicate delivery allocation":
+    "Hay dos entregas configuradas para el mismo centro y fecha de consumo.",
+  "Invalid declared inventory":
+    "Revisa cantidades, centros, ingredientes, referencias y duplicados de las existencias declaradas.",
+  "Invalid nutrient limits":
+    "Revisa los mínimos y máximos por ración: deben ser positivos o cero y no contradecirse.",
+
   "Referenced ingredient units cannot be changed":
     "No puedes cambiar la unidad de un ingrediente que ya tiene recetas o equivalencias. Crea otro ingrediente.",
   "A positive pack conversion is required":

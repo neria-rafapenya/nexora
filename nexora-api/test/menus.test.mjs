@@ -91,11 +91,62 @@ async function fixture() {
     counts: { overrides: [] },
   };
   const plan = await svc.savePlan(t, null, input, "actor");
+  await svc.saveNutrition(
+    t,
+    "profile",
+    {
+      productId: product.id,
+      basis: "PER_100_G",
+      values: {
+        energyKcal: 100,
+        proteinG: 5,
+        carbohydrateG: 20,
+        sugarsG: 2,
+        fatG: 1,
+        saturatedFatG: 0.2,
+        fiberG: 1,
+        saltG: 0.1,
+      },
+      source: "TEST VALUES",
+      isMock: true,
+      approve: true,
+    },
+    "nutrition_menus",
+    "actor",
+  );
+  await svc.saveNutrition(
+    t,
+    "rule",
+    {
+      dietId: diet.id,
+      service: "LUNCH",
+      limits: { energyKcal: { min: 50, max: 100 } },
+      excludedIngredientIds: [],
+      requiredClaims: [],
+      source: "TEST LIMITS ONLY",
+      isMock: true,
+      approve: true,
+    },
+    "nutrition_menus",
+    "actor",
+  );
+  await svc.reviewTechnical(
+    t,
+    {
+      productId: product.id,
+      productVersion: product.version,
+      ingredients: "Rice",
+      source: "TEST COMPOSITION",
+      isMock: true,
+    },
+    "quality",
+    "actor",
+  );
   return {
     s,
     svc,
     t,
-    product,
+    product: await s.get(t, "products", product.id),
     client,
     center,
     center2,
@@ -594,4 +645,391 @@ test("F3 demo seed is idempotent, never approves and preserves product technical
   );
   assert.equal(demo.data.state, "DRAFT");
   assert.deepEqual(demo.data.qualityApproval, {});
+});
+
+test("nutrition sums per serving across courses and checks configured limits, ingredients and claims", async () => {
+  const f = await fixture();
+  let v = await f.svc.forecast("t", f.plan.id);
+  assert.equal(v.nutrition[0].perServing.energyKcal, 80);
+  assert(v.nutrition[0].checks[0].passed);
+  const input = structuredClone(f.input);
+  input.schedule.entries.push({
+    ...input.schedule.entries[0],
+    course: "FIRST",
+  });
+  const p = await f.svc.savePlan("t", null, input, "actor");
+  v = await f.svc.forecast("t", p.id);
+  assert.equal(v.nutrition[0].perServing.energyKcal, 160);
+  assert(v.issues.includes("NUTRIENT_LIMIT_VIOLATION"));
+  const rule = (await f.s.list("t", "dietMenuRules"))[0];
+  const { review, ...ruleData } = rule.data;
+  await f.svc.saveNutrition(
+    "t",
+    "rule",
+    {
+      ...ruleData,
+      version: rule.version,
+      limits: {},
+      excludedIngredientIds: [f.ingredient.id],
+      requiredClaims: ["glutenFree"],
+      approve: true,
+    },
+    "nutrition_menus",
+    "actor",
+  );
+  v = await f.svc.forecast("t", p.id);
+  assert(v.issues.includes("EXCLUDED_DIET_INGREDIENT"));
+  assert(v.issues.includes("MISSING_REQUIRED_DIET_CLAIM"));
+});
+test("nutrition draft edits invalidate specialist review and mismatched bases never assume a density", async () => {
+  const f = await fixture(),
+    profile = (await f.s.list("t", "nutritionProfiles"))[0];
+  const { review, ...data } = profile.data;
+  await assert.rejects(
+    () =>
+      f.svc.saveNutrition(
+        "t",
+        "profile",
+        { ...data, version: profile.version, approve: true },
+        "admin",
+        "actor",
+      ),
+    (e) => e.status === 403,
+  );
+  let p = await f.svc.saveNutrition(
+    "t",
+    "profile",
+    { ...data, version: profile.version, approve: false },
+    "admin",
+    "actor",
+  );
+  let v = await f.svc.forecast("t", f.plan.id);
+  assert(v.issues.includes("UNREVIEWED_NUTRITION_PROFILE"));
+  assert.equal(v.nutrition[0].complete, false);
+  await f.svc.saveNutrition(
+    "t",
+    "profile",
+    { ...data, version: p.version, basis: "PER_100_ML", approve: true },
+    "nutrition_menus",
+    "actor",
+  );
+  v = await f.svc.forecast("t", f.plan.id);
+  assert(v.issues.includes("NUTRITION_BASIS_MISMATCH"));
+});
+test("menu imports preview without writes, require exact confirmation and reject duplicates atomically", async () => {
+  const { importMenu } = await import("../src/menu-import.mjs");
+  const f = await fixture(),
+    file = {
+      format: "csv",
+      content:
+        "date,diet,course,recipe,recipe_version,center,servings\n2030-01-07,STANDARD,FIRST,Rice dish,,Center A,50\n",
+      mode: "APPEND",
+      sourceReference: "Customer CSV",
+      version: f.plan.version,
+      commit: false,
+    };
+  const preview = await importMenu(f.svc, "t", f.plan.id, file, "actor");
+  assert(preview.canCommit);
+  assert.equal(
+    (await f.s.get("t", "menuPlans", f.plan.id)).version,
+    f.plan.version,
+  );
+  await assert.rejects(
+    () =>
+      importMenu(
+        f.svc,
+        "t",
+        f.plan.id,
+        { ...file, commit: true, previewHash: "wrong" },
+        "actor",
+      ),
+    /preview changed/,
+  );
+  const result = await importMenu(
+    f.svc,
+    "t",
+    f.plan.id,
+    { ...file, commit: true, previewHash: preview.previewHash },
+    "actor",
+  );
+  assert.equal(result.record.data.schedule.entries.length, 2);
+  assert.equal(result.record.data.counts.overrides[0].count, 50);
+  const dup = await importMenu(
+    f.svc,
+    "t",
+    f.plan.id,
+    { ...file, version: result.record.version },
+    "actor",
+  );
+  assert(!dup.canCommit);
+  await assert.rejects(
+    () =>
+      importMenu(
+        f.svc,
+        "t",
+        f.plan.id,
+        {
+          ...file,
+          version: result.record.version,
+          commit: true,
+          previewHash: dup.previewHash,
+        },
+        "actor",
+      ),
+    /Resolve all/,
+  );
+  assert.equal(
+    (await f.s.get("t", "menuPlans", f.plan.id)).version,
+    result.record.version,
+  );
+});
+test("unresolved imported recipes and diets require explicit valid associations", async () => {
+  const { importMenu } = await import("../src/menu-import.mjs");
+  const f = await fixture(),
+    file = {
+      format: "csv",
+      content: "date,diet,course,recipe\n2030-01-07,unknown,MAIN,unknown\n",
+      mode: "REPLACE",
+      sourceReference: "Client file",
+      version: f.plan.version,
+      commit: false,
+    };
+  let p = await importMenu(f.svc, "t", f.plan.id, file, "actor");
+  assert(p.rows[0].errors.includes("UNRESOLVED_RECIPE"));
+  const resolutions = [{ row: 2, recipeVersionId: f.rv.id, dietId: f.diet.id }];
+  p = await importMenu(
+    f.svc,
+    "t",
+    f.plan.id,
+    { ...file, resolutions },
+    "actor",
+  );
+  assert(p.canCommit);
+  const other = await f.s.create(
+      "t",
+      "clients",
+      { name: "Private", segment: "OTHER", active: true },
+      null,
+    ),
+    recipe = await f.svc.saveRecipe(
+      "t",
+      null,
+      { ...f.recipeInput, name: "Private recipe", clientId: other.id },
+      "actor",
+    ),
+    rv = (await f.s.list("t", "recipeVersions")).find(
+      (r) => r.data.recipeId === recipe.id,
+    );
+  p = await importMenu(
+    f.svc,
+    "t",
+    f.plan.id,
+    {
+      ...file,
+      resolutions: [{ row: 2, recipeVersionId: rv.id, dietId: f.diet.id }],
+    },
+    "actor",
+  );
+  assert(!p.canCommit);
+});
+test("XLSX menu imports support plain date text and reject formulas without saving", async () => {
+  const { default: ExcelJS } = await import("exceljs"),
+    { importMenu } = await import("../src/menu-import.mjs");
+  const f = await fixture(),
+    book = new ExcelJS.Workbook(),
+    sheet = book.addWorksheet("Menus");
+  sheet.addRow(["date", "diet", "course", "recipe"]);
+  sheet.addRow(["2030-01-07", "STANDARD", "MAIN", "Rice dish"]);
+  const body = {
+    format: "xlsx",
+    content: Buffer.from(await book.xlsx.writeBuffer()).toString("base64"),
+    mode: "REPLACE",
+    sourceReference: "Client Excel",
+    version: f.plan.version,
+    commit: false,
+  };
+  assert((await importMenu(f.svc, "t", f.plan.id, body, "actor")).canCommit);
+  sheet.getCell("D2").value = { formula: "1+1", result: 2 };
+  body.content = Buffer.from(await book.xlsx.writeBuffer()).toString("base64");
+  await assert.rejects(
+    () => importMenu(f.svc, "t", f.plan.id, body, "actor"),
+    /formulas/,
+  );
+  assert.equal(
+    (await f.s.get("t", "menuPlans", f.plan.id)).version,
+    f.plan.version,
+  );
+});
+test("purchase needs group deliveries before pack rounding and consume declared stock once", async () => {
+  const f = await fixture(),
+    input = structuredClone(f.input);
+  input.endDate = "2030-01-08";
+  input.schedule.entries.push({
+    ...input.schedule.entries[0],
+    date: "2030-01-08",
+  });
+  input.supply = {
+    overrides: [],
+    deliveries: [
+      {
+        centerId: f.center.id,
+        consumptionDate: "2030-01-08",
+        deliveryDate: "2030-01-07",
+      },
+    ],
+    inventory: [
+      {
+        centerId: f.center.id,
+        ingredientId: f.ingredient.id,
+        quantity: 5,
+        source: "Declared test count",
+      },
+    ],
+  };
+  const p = await f.svc.savePlan("t", null, input, "actor"),
+    v = await f.svc.forecast("t", p.id);
+  assert.equal(v.purchases.length, 1);
+  assert.equal(v.purchases[0].grossQuantity, 16);
+  assert.equal(v.purchases[0].declaredStockUsed, 5);
+  assert.equal(v.purchases[0].netQuantity, 11);
+  assert.equal(v.purchases[0].salesQuantity, 3);
+  assert.equal(v.estimatedPurchaseCostCents, 3000);
+  assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 100);
+});
+test("published procurement creates F2 proposals exactly once and never accepts, approves or reserves", async () => {
+  const f = await fixture();
+  await assert.rejects(
+    () =>
+      f.svc.createPurchaseDrafts(
+        "t",
+        f.plan.id,
+        { version: f.plan.version },
+        "actor",
+      ),
+    /Publish/,
+  );
+  let o = await review(f);
+  o = await approve(f, o, "nutrition");
+  o = await approve(f, o, "quality");
+  o = await f.svc.transition(
+    "t",
+    o.id,
+    { version: o.version },
+    "admin",
+    "actor",
+    "publish",
+  );
+  const a = await f.svc.createPurchaseDrafts(
+      "t",
+      o.id,
+      { version: o.version },
+      "actor",
+    ),
+    b = await f.svc.createPurchaseDrafts(
+      "t",
+      o.id,
+      { version: o.version },
+      "actor",
+    );
+  assert.equal(a.length, 1);
+  assert.equal(a[0].id, b[0].id);
+  assert.equal(a[0].data.state, "IN_REVIEW");
+  assert.equal(a[0].data.submittedRevision, null);
+  assert.equal(a[0].data.erpState, "NOT_SENT");
+  assert(
+    (await f.s.list("t", "orderLines")).every((l) => !l.data.reviewAccepted),
+  );
+  assert.equal((await f.s.get("t", "products", f.product.id)).data.stock, 100);
+  const product = await f.s.get("t", "products", f.product.id);
+  await f.s.update(
+    "t",
+    "products",
+    product.id,
+    { ...product.data, price: 12 },
+    product.version,
+    "actor",
+  );
+  await assert.rejects(
+    () =>
+      f.svc.createPurchaseDrafts("t", o.id, { version: o.version }, "actor"),
+    /source data changed/,
+  );
+});
+test("closed delivery dates and ambiguous procurement settings block safely", async () => {
+  const f = await fixture(),
+    c = await f.s.get("t", "centers", f.center.id);
+  await f.s.update(
+    "t",
+    "centers",
+    c.id,
+    { ...c.data, closedDates: ["2030-01-07"] },
+    c.version,
+    null,
+  );
+  const v = await f.svc.forecast("t", f.plan.id);
+  assert(v.issues.includes("INVALID_PURCHASE_DELIVERY"));
+  await assert.rejects(
+    () =>
+      f.svc.savePlan(
+        "t",
+        null,
+        {
+          ...f.input,
+          supply: {
+            overrides: [],
+            inventory: [],
+            deliveries: [
+              {
+                centerId: c.id,
+                consumptionDate: "2030-01-07",
+                deliveryDate: "2030-01-08",
+              },
+            ],
+          },
+        },
+        "actor",
+      ),
+    /Invalid delivery/,
+  );
+});
+
+test("legacy vegetarian exclusions require documented food classification and block excluded groups", async () => {
+  const f = await fixture(),
+    d = await f.s.get("t", "diets", f.diet.id);
+  await f.s.update(
+    "t",
+    "diets",
+    d.id,
+    { ...d.data, rules: { excludeMeat: true, excludeFish: true } },
+    d.version,
+    null,
+  );
+  let v = await f.svc.forecast("t", f.plan.id);
+  assert(v.issues.includes("MISSING_FOOD_CLASSIFICATION"));
+  const p = (await f.s.list("t", "nutritionProfiles"))[0],
+    { review, ...data } = p.data;
+  await f.svc.saveNutrition(
+    "t",
+    "profile",
+    {
+      ...data,
+      version: p.version,
+      foodGroups: ["MEAT"],
+      classificationComplete: true,
+      approve: true,
+    },
+    "nutrition_menus",
+    "actor",
+  );
+  v = await f.svc.forecast("t", f.plan.id);
+  assert(v.issues.includes("EXCLUDED_FOOD_GROUP"));
+});
+test("menu detail demo seed creates only unreviewed synthetic values and never overwrites edits", async () => {
+  const { seedMenuDetails } = await import("../src/seed-menu-details.mjs");
+  const f = await fixture();
+  const profileCount = (await f.s.list("t", "nutritionProfiles")).length;
+  const out = await seedMenuDetails(f.s, "t");
+  assert.equal(out.approved, 0);
+  assert.equal((await f.s.list("t", "nutritionProfiles")).length, profileCount);
+  assert.deepEqual(await seedMenuDetails(f.s, "t"), out);
 });

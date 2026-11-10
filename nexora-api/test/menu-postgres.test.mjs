@@ -141,6 +141,58 @@ test(
               },
               null,
             );
+            await svc.saveNutrition(
+              t,
+              "profile",
+              {
+                productId: product.id,
+                basis: "PER_100_G",
+                values: {
+                  energyKcal: 100,
+                  proteinG: 5,
+                  carbohydrateG: 20,
+                  sugarsG: 2,
+                  fatG: 1,
+                  saturatedFatG: 0.2,
+                  fiberG: 1,
+                  saltG: 0.1,
+                },
+                source: "ROLLBACK TEST",
+                isMock: true,
+                approve: true,
+              },
+              "nutrition_menus",
+              actor,
+            );
+            await svc.saveNutrition(
+              t,
+              "rule",
+              {
+                dietId: diet.id,
+                service: "LUNCH",
+                limits: {},
+                excludedIngredientIds: [],
+                requiredClaims: [],
+                source: "ROLLBACK TEST",
+                isMock: true,
+                approve: true,
+              },
+              "nutrition_menus",
+              actor,
+            );
+            const currentProduct = await store.get(t, "products", product.id);
+            await svc.reviewTechnical(
+              t,
+              {
+                productId: product.id,
+                productVersion: currentProduct.version,
+                ingredients: "ROLLBACK TEST composition",
+                source: "ROLLBACK TEST",
+                isMock: true,
+              },
+              "quality",
+              actor,
+            );
             const f = await svc.forecast(t, plan.id);
             assert.equal(f.needs[0].baseQuantity, 8);
             assert.deepEqual(f.issues, []);
@@ -179,6 +231,21 @@ test(
               "publish",
             );
             assert.equal((await svc.forecast(t, plan.id)).frozen, true);
+            const proposed = await svc.createPurchaseDrafts(
+              t,
+              plan.id,
+              { version: plan.version },
+              actor,
+            );
+            assert.equal(proposed.length, 1);
+            assert.equal(proposed[0].data.erpState, "NOT_SENT");
+            const repeated = await svc.createPurchaseDrafts(
+              t,
+              plan.id,
+              { version: plan.version },
+              actor,
+            );
+            assert.equal(repeated[0].id, proposed[0].id);
             assert.equal(await store.get("other", "menuPlans", plan.id), null);
             await store.query("SAVEPOINT f3_fk");
             await assert.rejects(

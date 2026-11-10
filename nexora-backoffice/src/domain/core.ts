@@ -44,6 +44,7 @@ export interface Contract {
     write: boolean;
     nutrition: boolean;
     quality: boolean;
+    supply?: boolean;
   };
   orderPermissions?: {
     read: boolean;

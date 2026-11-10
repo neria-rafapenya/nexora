@@ -4,6 +4,7 @@ export interface MenuPermissions {
   write: boolean;
   nutrition: boolean;
   quality: boolean;
+  supply?: boolean;
 }
 export type MenuCatalog = Record<string, RecordRow[]>;
 export interface IngredientLine {
@@ -43,8 +44,42 @@ export interface PlanForm {
   marginPercent: number;
   schedule: { entries: MenuEntry[] };
   counts: { overrides: DinerOverride[] };
+  supply: SupplySettings;
 }
 export interface Forecast {
+  schemaVersion?: number;
+  isMock?: boolean;
+  nutrition?: Array<{
+    centerId: string;
+    date: string;
+    dietId: string;
+    count: number;
+    complete: boolean;
+    perServing: Record<string, number>;
+    checks: Array<{
+      nutrient: string;
+      value: number;
+      min?: number;
+      max?: number;
+      passed: boolean;
+    }>;
+  }>;
+  purchases?: Array<{
+    centerId: string;
+    deliveryDate: string;
+    productId: string;
+    productName: string;
+    sku: string;
+    salesQuantity: number;
+    salesUnit: string;
+    grossQuantity: number;
+    declaredStockUsed: number;
+    netQuantity: number;
+    unit: string;
+    surplus: number;
+    estimatedCostCents: number | null;
+  }>;
+  estimatedPurchaseCostCents?: number | null;
   frozen: boolean;
   hash: string;
   issues: string[];
@@ -83,6 +118,29 @@ export interface Forecast {
   }>;
 }
 export const menuLabels: Record<string, string> = {
+  MISSING_FOOD_CLASSIFICATION:
+    "Falta la clasificación alimentaria documentada para comprobar las exclusiones de la dieta.",
+  EXCLUDED_FOOD_GROUP:
+    "Algún producto contiene carne o pescado excluidos por las reglas de la dieta.",
+  MISSING_TECHNICAL_REVIEW:
+    "Calidad debe revisar la composición y las declaraciones actuales de los productos.",
+  MISSING_NUTRITION_PROFILE: "Faltan valores nutricionales documentados.",
+  NUTRITION_BASIS_MISMATCH:
+    "La base nutricional no coincide con la unidad de cocina. Revisa kg, litros o unidades.",
+  UNREVIEWED_NUTRITION_PROFILE:
+    "Nutrición debe validar los perfiles nutricionales actuales.",
+  MISSING_DIET_RULES: "Faltan reglas revisadas para alguna dieta y servicio.",
+  UNREVIEWED_DIET_RULES: "Nutrición debe validar las reglas de dieta actuales.",
+  NUTRIENT_LIMIT_VIOLATION:
+    "El menú queda fuera de los límites por ración configurados para esa dieta y servicio.",
+  EXCLUDED_DIET_INGREDIENT:
+    "El menú incluye un ingrediente excluido por la dieta.",
+  MISSING_REQUIRED_DIET_CLAIM:
+    "Falta una declaración de producto requerida por la dieta.",
+  INVALID_PURCHASE_DELIVERY:
+    "Alguna entrega no coincide con el calendario del centro o cae en un día cerrado.",
+  PURCHASE_AMOUNT_LIMIT:
+    "Alguna cantidad o importe supera los límites de cálculo.",
   DRAFT: "Borrador",
   IN_REVIEW: "En revisión",
   APPROVED: "Aprobado",
@@ -148,6 +206,11 @@ export function planForm(r?: RecordRow): PlanForm {
     marginPercent: Number(d?.marginPercent ?? 0),
     schedule: (d?.schedule ?? { entries: [] }) as PlanForm["schedule"],
     counts: (d?.counts ?? { overrides: [] }) as PlanForm["counts"],
+    supply: (d?.supply ?? {
+      overrides: [],
+      deliveries: [],
+      inventory: [],
+    }) as SupplySettings,
   };
 }
 export function recipeForm(r?: RecordRow): RecipeForm {
@@ -161,3 +224,33 @@ export function recipeForm(r?: RecordRow): RecipeForm {
     active: d?.active !== false,
   };
 }
+
+export interface SupplySettings {
+  overrides: Array<{
+    ingredientId: string;
+    productId: string;
+    quantityPerSalesUnit: number;
+    source: string;
+  }>;
+  deliveries: Array<{
+    centerId: string;
+    consumptionDate: string;
+    deliveryDate: string;
+  }>;
+  inventory: Array<{
+    centerId: string;
+    ingredientId: string;
+    quantity: number;
+    source: string;
+  }>;
+}
+export const nutrientLabels: Record<string, string> = {
+  energyKcal: "Energía (kcal)",
+  proteinG: "Proteínas (g)",
+  carbohydrateG: "Hidratos (g)",
+  sugarsG: "Azúcares (g)",
+  fatG: "Grasas (g)",
+  saturatedFatG: "Saturadas (g)",
+  fiberG: "Fibra (g)",
+  saltG: "Sal (g)",
+};

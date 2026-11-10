@@ -1,3 +1,4 @@
+import { migrateMenuDetails } from "./migrate-menu-details.mjs";
 import pg from "pg";
 import { readFileSync } from "node:fs";
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -133,6 +134,7 @@ export class Store {
       await migrateOrders(this);
       await migrateWorkflow(this);
       await migrateMenus(this);
+      await migrateMenuDetails(this);
     });
   }
   async transaction(fn) {

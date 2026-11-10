@@ -1,3 +1,4 @@
+import { importMenu } from "./menu-import.mjs";
 import { MenusService, menuFail } from "./menus.mjs";
 import { menuPermissions } from "./menu-schema.mjs";
 export async function handleMenus({
@@ -20,9 +21,26 @@ export async function handleMenus({
   const p = menuPermissions(role),
     s = new MenusService(store);
   if (!p.read) menuFail("Access denied", 403);
+  if (path === "/api/menus/nutrition" && method === "POST") {
+    if (!p.write) menuFail("Access denied", 403);
+    send(200, {
+      record: await s.saveNutrition(
+        tenant,
+        body.kind,
+        body.input,
+        role,
+        user.id,
+      ),
+    });
+    return true;
+  }
+  if (path === "/api/menus/technical-review" && method === "POST") {
+    send(200, { record: await s.reviewTechnical(tenant, body, role, user.id) });
+    return true;
+  }
   const mutation = method !== "GET";
   const m = path.match(
-    /^\/api\/(menus|recipes|menu-ingredients)(?:\/([a-zA-Z0-9-]+))?(?:\/(forecast|copy|mock|review|nutrition|quality|publish|archive))?$/,
+    /^\/api\/(menus|recipes|menu-ingredients)(?:\/([a-zA-Z0-9-]+))?(?:\/(forecast|copy|mock|review|nutrition|quality|publish|archive|import|purchase-drafts))?$/,
   );
   if (path === "/api/menus/catalog" && method === "GET") {
     send(200, await s.catalog(tenant));
@@ -37,11 +55,13 @@ export async function handleMenus({
   const [, type, id, action] = m;
   if (mutation) {
     const allowed =
-      action === "nutrition"
-        ? p.nutrition
-        : action === "quality"
-          ? p.quality
-          : p.write;
+      action === "purchase-drafts"
+        ? p.supply
+        : action === "nutrition"
+          ? p.nutrition
+          : action === "quality"
+            ? p.quality
+            : p.write;
     if (!allowed) menuFail("Access denied", 403);
   }
   const table = {
@@ -71,6 +91,17 @@ export async function handleMenus({
     return true;
   }
   if (type === "menus" && id && method === "POST") {
+    if (action === "import") {
+      send(200, await importMenu(s, tenant, id, body, user.id));
+      return true;
+    }
+    if (action === "purchase-drafts") {
+      send(200, {
+        orders: await s.createPurchaseDrafts(tenant, id, body, user.id),
+      });
+      return true;
+    }
+
     let record;
     if (action === "copy")
       record = await s.copyPlan(tenant, id, body.version, user.id);

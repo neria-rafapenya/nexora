@@ -1,3 +1,4 @@
+import { attachMenuDetails, validateSupply } from "./menu-details.mjs";
 import { menuResources } from "./menu-schema.mjs";
 import { validate } from "./schema.mjs";
 import { snapshotHash } from "./workflow-rules.mjs";
@@ -54,6 +55,10 @@ export class MenusService {
       "centerDiners",
       "productAllergens",
       "allergens",
+      "nutritionProfiles",
+      "dietMenuRules",
+      "productTechnicalReviews",
+      "menuPurchaseLinks",
     ];
     // A transaction uses one PostgreSQL connection; do not queue parallel queries on it.
     const result = {};
@@ -212,6 +217,7 @@ export class MenusService {
       "marginPercent",
       "schedule",
       "counts",
+      "supply",
       "version",
     ]);
     planDates(input.startDate, input.endDate);
@@ -283,6 +289,7 @@ export class MenusService {
     )
       fail("Client menus require a source reference");
     const { version, ...data } = input;
+    data.supply = await validateSupply(this, t, input.supply, input);
     return validate(
       "menuPlans",
       {
@@ -752,3 +759,5 @@ export class MenusService {
     });
   }
 }
+
+attachMenuDetails(MenusService);

@@ -1468,3 +1468,24 @@ h1 {
 .menu-fields > label {
   margin-bottom: 1rem;
 }
+
+.menu-calendar {
+  min-width: 1050px;
+  table-layout: fixed;
+  th:first-child {
+    width: 110px;
+  }
+  td {
+    min-width: 150px;
+    vertical-align: top;
+  }
+  select {
+    width: 100%;
+    min-height: 42px;
+    font-size: 12px;
+  }
+  small {
+    display: block;
+    margin-top: 6px;
+  }
+}
