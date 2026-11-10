@@ -143,7 +143,7 @@ export function App() {
   useEffect(() => {
     if (user) setCompany(companyFromSearch(location.search, user.companies));
   }, [location.search, user]);
-  if (loading) return <div className="loading">Conectando con Nexora…</div>;
+  if (loading) return <div className="loading">Conectando con Horekia…</div>;
   if (!user)
     return (
       <Access
@@ -157,7 +157,7 @@ export function App() {
     <div className="shell">
       <aside className="sidebar">
         <Link className="brand" to={urlFor("dashboard")}>
-          nexora<span>✳</span>
+          Horekia<span>✳</span>
         </Link>
         <nav>
           <Link
@@ -434,7 +434,7 @@ export function App() {
             </div>
           )}
           <footer>
-            Nexora Backoffice{" "}
+            Horekia Backoffice{" "}
             <span>
               Espacio privado · PostgreSQL en Supabase · Flujos de IA pendientes
             </span>
@@ -501,7 +501,7 @@ function Access({
     <div className="login">
       <section className="login-story">
         <a className="brand" href="#">
-          nexora<span>✳</span>
+          Horekia<span>✳</span>
         </a>
         <div>
           <span className="eyebrow">TUS OPERACIONES, CONECTADAS</span>
@@ -525,7 +525,7 @@ function Access({
         <div>
           <span className="pill">ENTORNO LOCAL · SUPABASE</span>
           <h2>
-            {setup ? "Configura tu espacio de trabajo" : "Bienvenido a Nexora"}
+            {setup ? "Configura tu espacio de trabajo" : "Bienvenido a Horekia"}
           </h2>
           <p>
             {setup
