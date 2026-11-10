@@ -1,3 +1,4 @@
+import { downloadFile } from "./file-storage.mjs";
 import { attachOrderAi } from "./order-ai.mjs";
 import { attachOrderWorkflow } from "./order-workflow.mjs";
 import { newWorkflowFields } from "./workflow-schema.mjs";
@@ -46,7 +47,13 @@ export class OrdersService {
     const order = (await this.store.list(t, "orders")).find(
       (o) => o.data.messageId === id,
     );
-    return { message, attachments, order: order ?? null };
+    const downloads = [];
+    for (const file of attachments)
+      downloads.push({
+        ...file,
+        data: await downloadFile(this.store, t, "orderAttachments", file.data),
+      });
+    return { message, attachments: downloads, order: order ?? null };
   }
   async createMessage(t, input, actor = null) {
     return this.store.transaction(async () => {

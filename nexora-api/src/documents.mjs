@@ -1,3 +1,4 @@
+import { downloadFile } from "./file-storage.mjs";
 import { createHash } from "node:crypto";
 import { snapshotHash } from "./workflow-rules.mjs";
 import { prepareAttachment } from "./order-attachments.mjs";
@@ -66,7 +67,7 @@ export class DocumentsService {
     const files = (await this.store.list(t, "documentFiles"))
       .filter((f) => f.data.documentId === id)
       .map((f) => {
-        const { base64, ...data } = f.data;
+        const { base64, storageKey, ...data } = f.data;
         return { ...f, data };
       });
     return {
@@ -484,6 +485,12 @@ export class DocumentsService {
     if (v.data.documentId !== d.id)
       fail("Document version does not belong to this document");
     const file = await this.required(t, "documentFiles", v.data.fileId);
+    const content = await downloadFile(
+      this.store,
+      t,
+      "documentFiles",
+      file.data,
+    );
     await this.store.log(
       t,
       actor,
@@ -493,6 +500,6 @@ export class DocumentsService {
       null,
       { versionId, checksum: file.data.checksum },
     );
-    return file.data;
+    return content;
   }
 }

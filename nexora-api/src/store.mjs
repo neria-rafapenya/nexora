@@ -1,3 +1,4 @@
+import { LocalFiles, fileResources } from "./file-storage.mjs";
 import { migrateSearch } from "./migrate-search.mjs";
 import { migrateAi } from "./migrate-ai.mjs";
 import { wasteResources } from "./waste-schema.mjs";
@@ -59,7 +60,8 @@ const tables = [
   ...Object.keys(allResources),
 ];
 export class Store {
-  constructor(connectionString) {
+  constructor(connectionString, { files = new LocalFiles() } = {}) {
+    this.files = files;
     this.pool = new pg.Pool({
       connectionString,
       ssl: {
@@ -226,7 +228,7 @@ export class Store {
     before = null,
     after = null,
   ) {
-    if (resource === "documentFiles") {
+    if (fileResources.includes(resource)) {
       const withoutFile = (value) =>
         value
           ? Object.fromEntries(
@@ -286,6 +288,12 @@ export class Store {
   }
   async check(tenant, resource, input, id = null) {
     const data = validate(resource, input, allResources);
+    if (fileResources.includes(resource)) {
+      if (!data.storageKey || data.base64)
+        throw new Error("FILE_STORAGE_REFERENCE_REQUIRED");
+      this.files.path(tenant, resource, data.storageKey);
+      delete data.base64;
+    }
     for (const [key, f] of Object.entries(allResources[resource].fields)) {
       const values =
         f.type === "relation"
@@ -322,6 +330,8 @@ export class Store {
   async create(tenant, resource, input, actor) {
     return this.transaction(async () => {
       await this.lock(tenant);
+      if (fileResources.includes(resource) && input.base64)
+        input = await this.files.put(tenant, resource, input);
       const data = await this.check(tenant, resource, input);
       const id = randomUUID(),
         now = new Date().toISOString();
@@ -348,6 +358,8 @@ export class Store {
           new Error("Record changed. Reload before saving."),
           { status: 409 },
         );
+      if (fileResources.includes(resource) && input.base64)
+        input = await this.files.put(tenant, resource, input);
       const data = await this.check(tenant, resource, input, id);
       if (resource === "productAllergens" && data.validated) {
         data.validatedBy = actor;

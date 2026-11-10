@@ -54,7 +54,8 @@ export const documentResources = {
         "image/jpeg",
         "text/plain",
       ]),
-      base64: text("Private file content", true, 2000000),
+      base64: text("Legacy file content", false, 2000000),
+      storageKey: text("Private storage reference", false, 200),
       checksum: text("SHA-256", true),
       size: {
         label: "Bytes",

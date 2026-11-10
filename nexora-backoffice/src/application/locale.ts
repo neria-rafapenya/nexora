@@ -325,6 +325,13 @@ export function enumEs(value: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  FILE_STORAGE_WRITE_FAILED:
+    "No se ha podido guardar el archivo. Inténtalo de nuevo.",
+  FILE_STORAGE_READ_FAILED:
+    "No se puede recuperar el archivo. Contacta con administración.",
+  FILE_STORAGE_CHECKSUM_MISMATCH:
+    "No se ha podido verificar la integridad del archivo.",
+  FILE_STORAGE_INVALID_CONTENT: "El contenido del archivo no es válido.",
   EMBEDDINGS_NOT_CONFIGURED: "La búsqueda semántica no está configurada.",
   EMBEDDINGS_DEMO_CONFIRMATION_REQUIRED:
     "Confirma que solo se usarán datos ficticios de la POC.",
