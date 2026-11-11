@@ -1,3 +1,5 @@
+import { interpretBuyerOrder, buyerAiError } from "./buyer-order-ai.mjs";
+import { OrdersService } from "./orders.mjs";
 import { randomBytes, createHash } from "node:crypto";
 import { passwordMatches, hashToken } from "./store.mjs";
 import { matchingStep } from "./totp.mjs";
@@ -291,6 +293,25 @@ export async function handleBuyer({
         allergenStatus: r.data.allergenStatus ?? "UNVERIFIED",
       }));
     send(200, { products });
+    return true;
+  }
+  if (path === "/api/client/assistant/status" && method === "GET") {
+    const url = new URL(req.url, "http://localhost");
+    const center = (await service.centers(user)).find(
+      (c) =>
+        c.id === url.searchParams.get("center") &&
+        c.companyId === url.searchParams.get("company"),
+    );
+    if (!center) fail(403, "No tienes acceso a este centro.");
+    send(200, await new OrdersService(service.s).aiStatus(center.companyId));
+    return true;
+  }
+  if (path === "/api/client/assistant/interpret" && method === "POST") {
+    try {
+      send(200, await interpretBuyerOrder(service, user, body));
+    } catch (e) {
+      throw buyerAiError(e);
+    }
     return true;
   }
   fail(404, "Ruta de cliente no encontrada.");

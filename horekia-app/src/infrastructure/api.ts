@@ -16,7 +16,9 @@ export async function clientRequest<T>(
     credentials: "include",
     cache: "no-store",
     headers: { "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(20000),
+    signal: AbortSignal.timeout(
+      path.startsWith("/assistant/interpret") ? 60000 : 20000,
+    ),
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const data = await r.json();

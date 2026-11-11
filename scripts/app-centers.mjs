@@ -29,14 +29,16 @@ http
     try {
       const url = new URL(req.url, "http://localhost");
       if (
-        /^\/api\/client\/(login|session|logout|catalog)$/.test(url.pathname) &&
+        /^\/api\/client\/(login|session|logout|catalog|assistant\/(status|interpret))$/.test(
+          url.pathname,
+        ) &&
         ["GET", "POST"].includes(req.method)
       ) {
         const chunks = [];
         let size = 0;
         for await (const chunk of req) {
           size += chunk.length;
-          if (size > 32000) {
+          if (size > (url.pathname.endsWith("/interpret") ? 64000 : 32000)) {
             res.writeHead(413);
             res.end();
             return;
@@ -53,7 +55,9 @@ http
           {
             method: req.method,
             redirect: "error",
-            signal: AbortSignal.timeout(20000),
+            signal: AbortSignal.timeout(
+              url.pathname.endsWith("/interpret") ? 60000 : 20000,
+            ),
             headers: {
               Origin: "https://backoffice.cuinora.com",
               "Content-Type": "application/json",

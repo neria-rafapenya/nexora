@@ -5,7 +5,7 @@ import {
 } from "../../domain/delivery-date";
 import { useState } from "react";
 import { View, Text } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { total, money } from "../../domain/demo";
 import {
   Shell,
@@ -25,7 +25,20 @@ export default function New() {
     center,
     catalog: products,
   } = useWorkspace();
-  const [delivery, setDelivery] = useState("");
+  const params = useLocalSearchParams<{ delivery?: string; center?: string }>();
+  const [deliveryDates, setDeliveryDates] = useState<Record<string, string>>(
+    () =>
+      center &&
+      params.center === center.id &&
+      typeof params.delivery === "string" &&
+      validDeliveryDate(params.delivery)
+        ? { [center.id]: params.delivery }
+        : {},
+  );
+  const delivery = deliveryDates[center?.id ?? ""] ?? "";
+  const setDelivery = (value: string) => {
+    if (center) setDeliveryDates((old) => ({ ...old, [center.id]: value }));
+  };
   const [error, setError] = useState("");
   return (
     <Shell>
