@@ -122,7 +122,7 @@ const nav = [
 ] as const;
 export function Shell({ children }: { children: React.ReactNode }) {
   const { width } = useWindowDimensions();
-  const wide = width > 900;
+  const wide = width > 600;
   const path = usePathname();
   const {
     allowDemo,
@@ -184,14 +184,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <Text style={[s.label, { marginTop: 36, marginBottom: 14 }]}>
             TU ESPACIO DE COMPRA
           </Text>
-          {menu}
-          <View style={{ flex: 1 }} />
+          <ScrollView
+            style={{ flex: 1, minHeight: 0 }}
+            contentContainerStyle={{ paddingBottom: 10 }}
+          >
+            {menu}
+          </ScrollView>
           <View style={s.centerInfo}>
             <View style={s.avatar}>
               <Text style={{ color: colors.green, fontWeight: "700" }}>SJ</Text>
             </View>
-            <View>
-              <Text style={s.fieldLabel}>{center?.name ?? "Sin centro"}</Text>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text
+                style={[s.fieldLabel, { flexShrink: 1 }]}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+                accessibilityLabel={center?.name ?? "Sin centro"}
+              >
+                {center?.name ?? "Sin centro"}
+              </Text>
               <Text style={s.copy}>Centro de demostración</Text>
             </View>
           </View>
@@ -204,7 +215,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
               cuinora✳
             </Link>
           ) : (
-            <Text style={s.copy}>
+            <Text
+              style={[s.copy, { flex: 1, minWidth: 0, marginRight: 12 }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               Espacio del centro /{" "}
               {nav.find(([h]) =>
                 h === "/" ? path === "/" : path.startsWith(h),
@@ -212,7 +227,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Text>
           )}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
-            {wide && (
+            {width > 1200 && (
               <Text style={s.demoBadge}>
                 {mode === "DEMO"
                   ? "DEMOSTRACIÓN"
@@ -240,7 +255,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </View>
         </View>
         <ScrollView
-          contentContainerStyle={{ padding: wide ? 40 : 20, paddingBottom: 50 }}
+          contentContainerStyle={{
+            padding: width > 1000 ? 40 : 20,
+            paddingBottom: 50,
+          }}
         >
           <View
             style={{
@@ -319,7 +337,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
 export const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: colors.cream, flexDirection: "row" },
   sidebar: {
-    width: 228,
+    width: 268,
+    minWidth: 268,
+    flexShrink: 0,
+    overflow: "hidden",
     backgroundColor: "white",
     padding: 22,
     borderRightWidth: 1,
@@ -350,7 +371,13 @@ export const s = StyleSheet.create({
     marginBottom: 5,
   },
   navActive: { backgroundColor: "#eaf0e5" },
-  navText: { fontSize: 13, color: colors.green, fontWeight: "500" },
+  navText: {
+    fontSize: 13,
+    color: colors.green,
+    fontWeight: "500",
+    flexShrink: 1,
+    minWidth: 0,
+  },
   mobileNav: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -369,6 +396,7 @@ export const s = StyleSheet.create({
     borderColor: colors.line,
   },
   avatar: {
+    flexShrink: 0,
     width: 38,
     height: 38,
     borderRadius: 19,
