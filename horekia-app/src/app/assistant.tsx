@@ -5,7 +5,7 @@ import { Shell, Label, Title, Copy, Card, Button, s } from "../components/ui";
 import { useWorkspace } from "../components/workspace";
 export default function Assistant() {
   const [show, setShow] = useState(false);
-  const { add, notify, center } = useWorkspace();
+  const { add, notify, center, catalog } = useWorkspace();
   return (
     <Shell>
       <Label>ASISTENTE HOREKIA</Label>
@@ -49,9 +49,21 @@ export default function Assistant() {
             label="Añadir propuesta a mi cesta"
             disabled={!center}
             onPress={() => {
-              add("chicken", 20);
-              add("noodles", 4);
-              add("rice", 4.8);
+              const selections = [
+                ["NX-06-002", 20],
+                ["NX-02-015", 4],
+                ["NX-01-001", 4.8],
+              ] as const;
+              if (
+                selections.some(([sku]) => !catalog.some((p) => p.sku === sku))
+              ) {
+                notify(
+                  "El catálogo actual no contiene todas las referencias de este ejemplo.",
+                );
+                return;
+              }
+              for (const [sku, n] of selections)
+                add(catalog.find((p) => p.sku === sku)!.id, n);
               notify(
                 "Propuesta de ejemplo añadida. Revisa cantidades y fecha.",
               );

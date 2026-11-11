@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { products, money } from "../../domain/demo";
+import { money } from "../../domain/demo";
 import {
   Shell,
   Label,
@@ -13,8 +13,8 @@ import {
 import { useWorkspace } from "../../components/workspace";
 export default function Product() {
   const { id } = useLocalSearchParams();
+  const { add, notify, center, mode, catalog: products } = useWorkspace();
   const p = products.find((x) => x.id === id);
-  const { add, notify, center } = useWorkspace();
   return (
     <Shell>
       {p ? (
@@ -45,7 +45,11 @@ export default function Product() {
               <Text style={s.sectionTitle}>
                 {money(p.price)} / {p.unit}
               </Text>
-              <Copy>Precio ficticio para probar el recorrido de compra.</Copy>
+              <Copy>
+                {mode === "AUTHENTICATED"
+                  ? "Precio del catálogo de tu empresa. El pedido sigue siendo de demostración."
+                  : "Precio ficticio para probar el recorrido de compra."}
+              </Copy>
               <Button
                 label="Añadir a la cesta"
                 disabled={!center}

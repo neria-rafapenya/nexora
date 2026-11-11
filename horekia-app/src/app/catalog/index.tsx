@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Link } from "expo-router";
-import { products, money } from "../../domain/demo";
+import { money } from "../../domain/demo";
 import {
   Shell,
   Label,
@@ -16,7 +16,7 @@ import { useWorkspace } from "../../components/workspace";
 export default function Catalog() {
   const [q, setQ] = useState("");
   const [family, setFamily] = useState("Todos");
-  const { add, notify, center } = useWorkspace();
+  const { add, notify, center, mode, catalog: products } = useWorkspace();
   const rows = products.filter(
     (p) =>
       (family === "Todos" || p.family === family) &&
@@ -80,7 +80,10 @@ export default function Catalog() {
               {p.name}
             </Link>
             <Text style={s.copy}>
-              {money(p.price)} / {p.unit} · Precio de ejemplo
+              {money(p.price)} / {p.unit} ·{" "}
+              {mode === "AUTHENTICATED"
+                ? "Precio de catálogo"
+                : "Precio de ejemplo"}
             </Text>
             <Button
               label="Añadir a la cesta"

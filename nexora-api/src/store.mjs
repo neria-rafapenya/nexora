@@ -1,3 +1,4 @@
+import { migrateBuyerAccess } from "./buyer-schema.mjs";
 import { migrateContacts } from "./contact-schema.mjs";
 import { migrateAccounts, migrateProfileTypes } from "./account-schema.mjs";
 import { migrateAssistant } from "./assistant.mjs";
@@ -166,6 +167,7 @@ export class Store {
       await migrateAccounts(this);
       await migrateContacts(this);
       await migrateProfileTypes(this);
+      await migrateBuyerAccess(this);
     });
   }
   async transaction(fn) {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Text } from "react-native";
 import { router } from "expo-router";
-import { products, total, money } from "../../domain/demo";
+import { total, money } from "../../domain/demo";
 import {
   Shell,
   Label,
@@ -14,7 +14,13 @@ import {
 } from "../../components/ui";
 import { useWorkspace } from "../../components/workspace";
 export default function New() {
-  const { cart, setQuantity, submit, center } = useWorkspace();
+  const {
+    cart,
+    setQuantity,
+    submit,
+    center,
+    catalog: products,
+  } = useWorkspace();
   const [delivery, setDelivery] = useState("");
   const [error, setError] = useState("");
   return (
@@ -82,7 +88,7 @@ export default function New() {
               );
             })}
             <Text style={s.sectionTitle}>
-              Total de ejemplo: {money(total(cart))}
+              Total de ejemplo: {money(total(cart, products))}
             </Text>
           </Card>
           <Card>

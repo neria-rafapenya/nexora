@@ -27,3 +27,9 @@ El campo `profileType` del usuario (`INTERNAL_TEAM`, `CENTER_BUYER`) es metadato
 El selector carga los mismos registros que el backoffice al abrir/recargar la app. Las cestas se mantienen separadas por ID de centro; cada pedido de prueba conserva su centro y los listados/detalles respetan la selección activa. Los pedidos siguen siendo de demostración en memoria.
 
 La demo conserva tres centros existentes (Northfield School, Silverwood Care y Riverside Hospital, Site 1). La reducción se aplica explícitamente con `reduce-demo-centers.mjs`, nunca durante el arranque, y exige copia privada de recuperación antes de borrar. No ejecutar el seed amplio de maestros para esta demo, porque volvería a crear centros adicionales.
+
+## Acceso real (segundo bloque)
+
+En la cabecera, **Iniciar sesión** usa la cuenta existente y el autenticador cuando corresponde. Una cuenta con rol de administrador ve todos los centros de su empresa; el resto solo los asignados desde el backoffice. El catálogo autenticado se consulta en el servicio remoto; la app no usa credenciales de Supabase ni claves de Gemini. La sesión usa una cookie HttpOnly, no localStorage.
+
+La demo y el modo autenticado están distinguidos. En ambos, la creación de pedidos sigue siendo una prueba en memoria; el asistente sigue siendo un ejemplo preparado. El dominio `app.horekia.com` todavía no se publica; se mantiene la revisión en localhost.

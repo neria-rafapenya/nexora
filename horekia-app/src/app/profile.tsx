@@ -2,7 +2,7 @@ import { useWorkspace } from "../components/workspace";
 import { Text } from "react-native";
 import { Shell, Label, Title, Copy, Card, s } from "../components/ui";
 export default function Profile() {
-  const { center } = useWorkspace();
+  const { center, user } = useWorkspace();
   return (
     <Shell>
       <Label>MI CENTRO</Label>
@@ -16,18 +16,22 @@ export default function Profile() {
           backoffice.
         </Copy>
         <Text style={s.fieldLabel}>Tipo de perfil</Text>
-        <Text style={s.pill}>Comprador de un centro</Text>
+        <Text style={s.pill}>
+          {user?.profileType === "INTERNAL_TEAM"
+            ? "Equipo interno"
+            : "Responsable de centro"}
+        </Text>
         <Copy>
-          Este distintivo orientará la experiencia tras iniciar sesión. Los
-          permisos reales también requerirán la vinculación al cliente y a los
-          centros autorizados.
+          El tipo de perfil orienta la experiencia. La asignación de centros y
+          el rol de la cuenta determinan el acceso real.
         </Copy>
       </Card>
       <Card>
         <Text style={s.sectionTitle}>Acceso a la aplicación</Text>
         <Copy>
-          El acceso de clientes y centros está pendiente de conexión. No
-          introduzcas tus credenciales del backoffice en esta demostración.
+          {user
+            ? `Sesión iniciada como ${user.name}. El servidor comprueba los centros autorizados para tu cuenta.`
+            : "Puedes iniciar sesión desde la cabecera con una cuenta que tenga centros autorizados."}
         </Copy>
       </Card>
     </Shell>

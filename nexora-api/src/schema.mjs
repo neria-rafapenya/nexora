@@ -185,6 +185,7 @@ export const roleLabels = {
   quality: "Quality",
   commercial: "Sales",
   read_only: "Read only",
+  center_buyer: "Responsable de centro (app)",
 };
 export function can(role, resource, write = false) {
   if (role === "admin") return true;

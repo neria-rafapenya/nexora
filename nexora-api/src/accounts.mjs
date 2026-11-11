@@ -512,6 +512,9 @@ export class Accounts {
         "DELETE FROM bo.sessions WHERE user_id=$1 AND token_hash<>$2",
         [id, currentHash],
       );
+      await this.s.query("DELETE FROM bo.buyer_sessions WHERE user_id=$1", [
+        id,
+      ]);
       for (const m of (
         await this.s.query(
           "SELECT tenant_id FROM bo.memberships WHERE user_id=$1",

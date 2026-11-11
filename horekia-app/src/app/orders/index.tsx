@@ -12,7 +12,7 @@ import {
 import { useWorkspace } from "../../components/workspace";
 import { total, money } from "../../domain/demo";
 export default function Orders() {
-  const { orders: allOrders, center } = useWorkspace();
+  const { orders: allOrders, center, catalog } = useWorkspace();
   const orders = allOrders.filter((o) => o.centerId === center?.id);
   return (
     <Shell>
@@ -35,7 +35,7 @@ export default function Orders() {
             </Text>
             <Copy>
               Entrega solicitada: {o.delivery} · {o.lines.length} productos ·{" "}
-              {money(total(o.lines))}
+              {money(total(o.lines, catalog))}
             </Copy>
             <Text style={s.pill}>Registrado en la demostración</Text>
             <Button

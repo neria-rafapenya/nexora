@@ -80,10 +80,10 @@ export type Order = {
   state: "DRAFT" | "SUBMITTED";
   lines: Line[];
 };
-export const total = (lines: Line[]) =>
+export const total = (lines: Line[], catalog: Product[] = products) =>
   lines.reduce(
     (a, l) =>
-      a + (products.find((p) => p.id === l.productId)?.price ?? 0) * l.quantity,
+      a + (catalog.find((p) => p.id === l.productId)?.price ?? 0) * l.quantity,
     0,
   );
 export const money = (n: number) =>

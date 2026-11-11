@@ -4,7 +4,8 @@ export type Role =
   | "nutrition_menus"
   | "quality"
   | "commercial"
-  | "read_only";
+  | "read_only"
+  | "center_buyer";
 export interface Company {
   id: string;
   name: string;

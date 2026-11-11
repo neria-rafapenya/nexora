@@ -1,3 +1,4 @@
+import { CenterAccess } from "./CenterAccess";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Pencil, Trash2, Mail } from "lucide-react";
@@ -463,6 +464,7 @@ export function UserManagement({
           </div>
         </section>
       )}
+      <CenterAccess key={companyId} users={users} companyId={companyId} />
       {editor && (
         <form
           className="panel profile-panel"

@@ -124,8 +124,19 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { width } = useWindowDimensions();
   const wide = width > 900;
   const path = usePathname();
-  const { cart, notice, notify, centers, center, centerError, selectCenter } =
-    useWorkspace();
+  const {
+    cart,
+    notice,
+    notify,
+    centers,
+    center,
+    centerError,
+    selectCenter,
+    user,
+    mode,
+    logout,
+    catalogError,
+  } = useWorkspace();
   const menu = (
     <>
       {nav.map(([href, label, icon]) => (
@@ -182,7 +193,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Text>
           )}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
-            <Text style={s.demoBadge}>DEMOSTRACIÓN</Text>
+            {wide && (
+              <Text style={s.demoBadge}>
+                {mode === "DEMO"
+                  ? "DEMOSTRACIÓN"
+                  : "CATÁLOGO REAL · PEDIDOS DE PRUEBA"}
+              </Text>
+            )}
+            {user ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => logout().catch((e) => notify(e.message))}
+              >
+                <Text style={s.link}>Cerrar sesión</Text>
+              </Pressable>
+            ) : (
+              <Link href="/login" style={s.link}>
+                Iniciar sesión
+              </Link>
+            )}
             <Link href="/orders/new" asChild>
               <Pressable accessibilityLabel="Abrir cesta" style={s.basket}>
                 <Feather name="shopping-bag" size={18} color={colors.green} />
@@ -231,6 +260,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   />
                 ))}
               </Picker>
+              {catalogError !== "" && (
+                <Text role="alert" style={s.copy}>
+                  {catalogError}
+                </Text>
+              )}
               {centerError !== "" && (
                 <Text role="alert" style={s.copy}>
                   {centerError}
@@ -252,8 +286,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
             )}
             {children}
             <Text style={[s.copy, { marginTop: 20 }]}>
-              Entorno de diseño · Datos ficticios · Los pedidos y las respuestas
-              no se envían a servicios reales.
+              {user
+                ? "Catálogo de tu empresa · Los pedidos siguen siendo de demostración, sin envío real."
+                : "Demostración sin sesión · Datos ficticios · Pedidos y respuestas de ejemplo."}
             </Text>
           </View>
         </ScrollView>

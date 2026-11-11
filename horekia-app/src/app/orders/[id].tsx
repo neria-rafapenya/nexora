@@ -10,10 +10,10 @@ import {
   s,
 } from "../../components/ui";
 import { useWorkspace } from "../../components/workspace";
-import { products, total, money } from "../../domain/demo";
+import { total, money } from "../../domain/demo";
 export default function Detail() {
   const { id } = useLocalSearchParams();
-  const { orders, center } = useWorkspace();
+  const { orders, center, catalog: products } = useWorkspace();
   const o = orders.find((o) => o.id === id && o.centerId === center?.id);
   return (
     <Shell>
@@ -31,7 +31,7 @@ export default function Detail() {
               {products.find((p) => p.id === l.productId)?.unit}
             </Text>
           ))}
-          <Text style={s.sectionTitle}>{money(total(o.lines))}</Text>
+          <Text style={s.sectionTitle}>{money(total(o.lines, products))}</Text>
           <Copy>
             La revisión interna y la entrega al ERP se conectarán al flujo
             remoto. Este registro no las ejecuta.

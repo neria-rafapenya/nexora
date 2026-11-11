@@ -1,3 +1,4 @@
+import { BuyerAccess, handleBuyer } from "./buyer.mjs";
 import {
   Contacts,
   handleContacts,
@@ -70,6 +71,7 @@ export function createServer(
 ) {
   const attempts = new Map();
   const accounts = new Accounts(store);
+  const buyerAccess = new BuyerAccess(store);
   const contacts = new Contacts(store);
   const server = http.createServer(async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
@@ -135,6 +137,20 @@ export function createServer(
         )
           return;
       }
+      if (
+        await handleBuyer({
+          service: buyerAccess,
+          path,
+          method,
+          body,
+          req,
+          res,
+          send,
+          secure,
+          clientKey: contactClientKey(req),
+        })
+      )
+        return;
       const token = (req.headers.cookie ?? "")
         .split(";")
         .map((x) => x.trim())
@@ -231,6 +247,15 @@ export function createServer(
             attempts.set(key, recent);
             fail(401, "Invalid email or password");
           }
+          if (
+            (await store.user(u.id)).companies.every(
+              (c) => c.role === "center_buyer",
+            )
+          )
+            fail(
+              403,
+              "Utiliza la app de centros para acceder con esta cuenta.",
+            );
           if (u.mfa_secret) {
             const step = matchingStep(store.decrypt(u.mfa_secret), body.code);
             if (step === null || Number(u.mfa_last_step ?? 0) >= step) {
@@ -313,6 +338,9 @@ export function createServer(
           await store.db
             .prepare("DELETE FROM sessions WHERE user_id=? AND token_hash<>?")
             .run(user.id, hashToken(token));
+          await store.query("DELETE FROM bo.buyer_sessions WHERE user_id=$1", [
+            user.id,
+          ]);
           for (const c of user.companies)
             await store.log(c.id, user.id, "ENABLE_MFA");
         });
@@ -358,6 +386,22 @@ export function createServer(
       const membership = user.companies.find((c) => c.id === tenant);
       if (!membership) fail(403, "Company access denied");
       const role = membership.role;
+      if (role === "center_buyer")
+        fail(403, "Este acceso corresponde a la app de centros.");
+      const accessRoute = path.match(/^\/api\/center-access\/([a-zA-Z0-9-]+)$/);
+      if (accessRoute) {
+        if (method === "GET")
+          return send(
+            200,
+            await buyerAccess.grants(tenant, accessRoute[1], user.id),
+          );
+        if (method === "PUT")
+          return send(
+            200,
+            await buyerAccess.saveGrants(tenant, accessRoute[1], body, user.id),
+          );
+        fail(405, "Método no permitido");
+      }
       if (
         await handleContacts({
           service: contacts,
