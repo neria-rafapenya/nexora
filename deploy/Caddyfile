@@ -93,7 +93,12 @@ app.cuinora.com {
 	}
 }
 
-horekia.com, www.horekia.com, backoffice.horekia.com {
-	header X-Robots-Tag "noindex, nofollow"
-	respond "Dominio reservado." 410
+horekia.com, www.horekia.com {
+	header Cache-Control "no-store"
+	redir https://www.cuinora.com{uri} 302
+}
+
+backoffice.horekia.com {
+	header Cache-Control "no-store"
+	redir https://backoffice.cuinora.com{uri} 302
 }
