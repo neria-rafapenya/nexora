@@ -20,10 +20,11 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "output": "static",
-      "name": "Cuinora \u00b7 Mi centro"
+      "name": "Cuinora · Mi centro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "cuinora"
   }

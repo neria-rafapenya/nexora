@@ -1,3 +1,8 @@
+import { DateField } from "../../components/DateField";
+import {
+  minimumDeliveryDate,
+  validDeliveryDate,
+} from "../../domain/delivery-date";
 import { useState } from "react";
 import { View, Text } from "react-native";
 import { router } from "expo-router";
@@ -9,7 +14,6 @@ import {
   Copy,
   Card,
   Button,
-  Field,
   s,
 } from "../../components/ui";
 import { useWorkspace } from "../../components/workspace";
@@ -92,11 +96,14 @@ export default function New() {
             </Text>
           </Card>
           <Card>
-            <Field
-              label="Fecha de entrega (AAAA-MM-DD)"
+            <DateField
+              label="Fecha de entrega"
               value={delivery}
-              onChangeText={setDelivery}
-              placeholder="2026-11-20"
+              min={minimumDeliveryDate()}
+              onChange={(value) => {
+                setDelivery(value);
+                setError("");
+              }}
             />
             <Copy>
               La disponibilidad de entrega se confirmará al conectar la
@@ -110,15 +117,9 @@ export default function New() {
             <Button
               label="Registrar pedido de demostración"
               onPress={() => {
-                const d = new Date(delivery + "T12:00:00");
-                if (
-                  !/^\d{4}-\d{2}-\d{2}$/.test(delivery) ||
-                  Number.isNaN(d.valueOf()) ||
-                  d.toISOString().slice(0, 10) !== delivery ||
-                  d < new Date()
-                ) {
+                if (!validDeliveryDate(delivery)) {
                   setError(
-                    "Introduce una fecha futura válida en formato AAAA-MM-DD.",
+                    "Selecciona una fecha de entrega a partir de mañana.",
                   );
                   return;
                 }
