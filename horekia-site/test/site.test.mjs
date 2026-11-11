@@ -18,14 +18,14 @@ test("public content is server-readable and has one descriptive H1, canonical me
   assert(d.querySelector("meta[name=description]").content.length > 100);
   assert.equal(
     d.querySelector("link[rel=canonical]").href,
-    "https://www.horekia.com/",
+    "https://www.cuinora.com/",
   );
   const schema = JSON.parse(
     d.querySelector('script[type="application/ld+json"]').textContent,
   );
   assert(
     schema["@graph"].every((n) =>
-      n["@id"].startsWith("https://www.horekia.com/"),
+      n["@id"].startsWith("https://www.cuinora.com/"),
     ),
   );
   assert(!html.includes("AggregateRating"));
@@ -38,7 +38,7 @@ test("public content is server-readable and has one descriptive H1, canonical me
   );
   assert(d.getElementById("operacion"));
   assert(d.getElementById("piloto"));
-  assert(!html.includes("mailto:hola@horekia.com"));
+  assert(!html.includes("mailto:hola@cuinora.com"));
   assert.equal(d.querySelectorAll("form").length, 0);
   assert(!html.includes("Rafa P. Vargas"));
   assert(!html.includes("43735032A"));
@@ -71,7 +71,7 @@ test("every internal link/asset exists, IDs are unique, legal pages have canonic
         assert(d.getElementById(value.slice(1)), value);
         continue;
       }
-      const path = new URL(value, "https://www.horekia.com").pathname;
+      const path = new URL(value, "https://www.cuinora.com").pathname;
       if (!path || path.startsWith("/api/")) continue;
       const target =
         path === "/"
@@ -83,7 +83,7 @@ test("every internal link/asset exists, IDs are unique, legal pages have canonic
     }
   }
   const sitemap = await readFile(root + "sitemap.xml", "utf8");
-  assert(sitemap.includes("https://www.horekia.com/"));
+  assert(sitemap.includes("https://www.cuinora.com/"));
   assert(!sitemap.includes("localhost"));
   assert.equal((sitemap.match(/<loc>/g) ?? []).length, 1);
   for (const slug of ["contacto", "privacidad", "aviso-legal", "cookies"]) {
@@ -96,7 +96,7 @@ test("every internal link/asset exists, IDs are unique, legal pages have canonic
   }
   const robots = await readFile(root + "robots.txt", "utf8");
   assert(robots.includes("Allow: /"));
-  assert(robots.includes("Sitemap: https://www.horekia.com/sitemap.xml"));
+  assert(robots.includes("Sitemap: https://www.cuinora.com/sitemap.xml"));
   assert((await readFile(root + "404.html", "utf8")).includes("noindex"));
 });
 test("contact form handles success, failures and duplicate clicks without clearing a failed message or using browser storage", async () => {
@@ -110,7 +110,7 @@ test("contact form handles success, failures and duplicate clicks without cleari
       "utf8",
     );
   const dom = new JSDOM(html, {
-      url: "https://www.horekia.com/",
+      url: "https://www.cuinora.com/",
       runScripts: "outside-only",
     }),
     w = dom.window;

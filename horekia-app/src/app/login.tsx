@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { Card, Title, Copy, Button, s } from "../components/ui";
 import { useWorkspace } from "../components/workspace";
 export default function Login() {
-  const { login } = useWorkspace();
+  const { login, allowDemo } = useWorkspace();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -20,7 +20,7 @@ export default function Login() {
       }}
     >
       <Card style={{ width: "100%", maxWidth: 480, alignSelf: "center" }}>
-        <Text style={s.logo}>horekia✳</Text>
+        <Text style={s.logo}>cuinora✳</Text>
         <Title>Entra en tu centro.</Title>
         <Copy>
           Usa la cuenta que te ha facilitado tu empresa de catering. Solo verás
@@ -82,12 +82,14 @@ export default function Login() {
             }
           }}
         />
-        <Button
-          secondary
-          label="Volver a la demostración"
-          disabled={busy}
-          onPress={() => router.replace("/")}
-        />
+        {allowDemo && (
+          <Button
+            secondary
+            label="Volver a la demostración"
+            disabled={busy}
+            onPress={() => router.replace("/")}
+          />
+        )}
       </Card>
     </View>
   );

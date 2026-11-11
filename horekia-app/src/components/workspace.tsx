@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 import { clientRequest } from "../infrastructure/api";
 import {
   products as demoProducts,
@@ -15,6 +21,8 @@ export type Center = {
 type User = { id: string; name: string; profileType: string };
 type Access = { user: User; centers: Center[] };
 type State = {
+  allowDemo: boolean;
+  authLoading: boolean;
   user: User | null;
   mode: "DEMO" | "AUTHENTICATED";
   login: (email: string, password: string, code: string) => Promise<void>;
@@ -34,7 +42,18 @@ type State = {
   notify: (text: string) => void;
 };
 const C = createContext<State | null>(null);
+const subscribe = () => () => {};
+const localSnapshot = () =>
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const serverSnapshot = () => false;
 export function Workspace({ children }: { children: React.ReactNode }) {
+  const allowDemo = useSyncExternalStore(
+    subscribe,
+    localSnapshot,
+    serverSnapshot,
+  );
+  const [authLoading, setAuthLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [mode, setMode] = useState<"DEMO" | "AUTHENTICATED">("DEMO");
   const [catalog, setCatalog] = useState<Product[]>(demoProducts);
@@ -49,6 +68,9 @@ export function Workspace({ children }: { children: React.ReactNode }) {
   const center = centers.find((c) => c.id === centerId) ?? null;
   useEffect(() => {
     const controller = new AbortController();
+    const local =
+      typeof window !== "undefined" &&
+      ["localhost", "127.0.0.1"].includes(window.location.hostname);
     clientRequest<Access>("/session")
       .then((d) => {
         if (controller.signal.aborted) return;
@@ -58,27 +80,26 @@ export function Workspace({ children }: { children: React.ReactNode }) {
         setCenters(d.centers);
         setCenterId(d.centers[0]?.id ?? "");
       })
-      .catch(() => {});
-    fetch(
-      process.env.EXPO_PUBLIC_CENTERS_URL ?? "http://127.0.0.1:5184/centers",
-      {
-        signal: controller.signal,
-        cache: "no-store",
-      },
-    )
-      .then(async (r) => {
-        if (!r.ok) throw Error();
-        return r.json();
-      })
-      .then((d) => {
-        setCenters((old) => (old.length ? old : d.centers));
-        setCenterId((old) => old || d.centers[0]?.id || "");
-      })
-      .catch((e) => {
-        if (e.name !== "AbortError")
-          setCenterError(
-            "No se pueden cargar los centros. Comprueba el servicio local de la demo.",
+      .catch(async () => {
+        if (!local || controller.signal.aborted) return;
+        try {
+          const r = await fetch(
+            process.env.EXPO_PUBLIC_CENTERS_URL ??
+              "http://127.0.0.1:5184/centers",
+            { signal: controller.signal, cache: "no-store" },
           );
+          if (!r.ok) throw Error();
+          const d = await r.json();
+          if (controller.signal.aborted) return;
+          setCenters(d.centers);
+          setCenterId(d.centers[0]?.id ?? "");
+        } catch {
+          if (!controller.signal.aborted)
+            setCenterError("No se pueden cargar los centros de la demo.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setAuthLoading(false);
       });
     return () => controller.abort();
   }, []);
@@ -120,6 +141,8 @@ export function Workspace({ children }: { children: React.ReactNode }) {
   return (
     <C.Provider
       value={{
+        allowDemo,
+        authLoading,
         user,
         mode,
         catalog,

@@ -8,7 +8,7 @@ export default function Assistant() {
   const { add, notify, center, catalog } = useWorkspace();
   return (
     <Shell>
-      <Label>ASISTENTE HOREKIA</Label>
+      <Label>ASISTENTE CUINORA</Label>
       <Title>Una ayuda para empezar.</Title>
       <Copy>
         Vista previa del asistente del centro. Gemini todavía no está conectado

@@ -14,7 +14,7 @@ const messages: Record<string, string> = {
   Diets: "Dietas",
   "Center diners": "Comensales por centro",
   "Product allergens": "Alérgenos de productos",
-  "Connecting to Nexora…": "Conectando con Horekia…",
+  "Connecting to Nexora…": "Conectando con Cuinora…",
   Overview: "Resumen",
   "MASTER DATA": "MAESTROS",
   OPERATIONS: "OPERACIONES",
@@ -46,7 +46,7 @@ const messages: Record<string, string> = {
     "BACKOFFICE PRIVADO · HORECA Y COLECTIVIDADES",
   "LOCAL WORKSPACE · SUPABASE": "ENTORNO LOCAL · SUPABASE",
   "Set up your workspace": "Configura tu espacio de trabajo",
-  "Welcome to Nexora": "Bienvenido a Horekia",
+  "Welcome to Nexora": "Bienvenido a Cuinora",
   "Create the first administrator. No demo accounts are created.":
     "Crea la primera cuenta de administración. No hay usuarios de ejemplo.",
   "Sign in with your workspace account.": "Accede con tu cuenta de trabajo.",

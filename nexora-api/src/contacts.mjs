@@ -9,7 +9,7 @@ export function contactConfigFromEnv(env = process.env) {
   return {
     enabled: env.CONTACT_FORM_ENABLED === "true",
     tenant: env.CONTACT_TENANT_ID ?? "workspace",
-    origin: env.CONTACT_SITE_ORIGIN ?? "https://www.horekia.com",
+    origin: env.CONTACT_SITE_ORIGIN ?? "https://www.cuinora.com",
   };
 }
 export function contactClientKey(req) {

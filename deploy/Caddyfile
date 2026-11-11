@@ -1,4 +1,4 @@
-backoffice.horekia.com {
+backoffice.cuinora.com {
 	encode zstd gzip
 	header {
 		X-Content-Type-Options nosniff
@@ -19,15 +19,15 @@ backoffice.horekia.com {
 	}
 }
 
-http://horekia.com, http://www.horekia.com {
-	redir https://www.horekia.com{uri} 301
+http://cuinora.com, http://www.cuinora.com {
+	redir https://www.cuinora.com{uri} 301
 }
 
-horekia.com {
-	redir https://www.horekia.com{uri} 301
+cuinora.com {
+	redir https://www.cuinora.com{uri} 301
 }
 
-www.horekia.com {
+www.cuinora.com {
 	encode zstd gzip
 	root * /var/www/horekia/horekia-site/dist
 	header {
@@ -61,4 +61,39 @@ www.horekia.com {
 		rewrite * /404.html
 		file_server
 	}
+}
+
+app.cuinora.com {
+	encode zstd gzip
+	root * /var/www/horekia/horekia-app/dist
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		X-Robots-Tag "noindex, nofollow"
+		Referrer-Policy no-referrer
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000"
+		Cache-Control "no-cache"
+	}
+	handle /api/client/* {
+		reverse_proxy 127.0.0.1:3000 {
+			header_up Host 127.0.0.1:3000
+		}
+	}
+	handle /api/* {
+		respond 404
+	}
+	@assets path /_expo/* /assets/*
+	handle @assets {
+		file_server
+	}
+	handle {
+		try_files {path}.html {path} /index.html
+		file_server
+	}
+}
+
+horekia.com, www.horekia.com, backoffice.horekia.com {
+	header X-Robots-Tag "noindex, nofollow"
+	respond "Dominio reservado." 410
 }

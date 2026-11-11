@@ -49,13 +49,13 @@ http
             .map((x) => x.trim())
             .find((x) => x.startsWith("horekia_buyer_session=")) ?? "";
         const remote = await fetch(
-          "https://backoffice.horekia.com" + url.pathname + url.search,
+          "https://backoffice.cuinora.com" + url.pathname + url.search,
           {
             method: req.method,
             redirect: "error",
             signal: AbortSignal.timeout(20000),
             headers: {
-              Origin: "https://backoffice.horekia.com",
+              Origin: "https://backoffice.cuinora.com",
               "Content-Type": "application/json",
               Cookie: cookie,
             },

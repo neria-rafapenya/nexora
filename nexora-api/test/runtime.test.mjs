@@ -7,18 +7,18 @@ test("runtime config supports public HTTPS origin and keeps listener local", () 
   const o = runtimeOptions({
     PORT: "3000",
     COOKIE_SECURE: "true",
-    ALLOWED_ORIGINS: "https://backoffice.horekia.com",
+    ALLOWED_ORIGINS: "https://backoffice.cuinora.com",
   });
   assert.deepEqual(o, {
     port: 3000,
     secure: true,
-    allowedOrigins: ["https://backoffice.horekia.com"],
+    allowedOrigins: ["https://backoffice.cuinora.com"],
   });
   for (const e of [
     { PORT: "0" },
     { PORT: "abc" },
     { ALLOWED_ORIGINS: "*" },
-    { ALLOWED_ORIGINS: "https://backoffice.horekia.com/path" },
+    { ALLOWED_ORIGINS: "https://backoffice.cuinora.com/path" },
   ])
     assert.throws(() => runtimeOptions(e));
 });
@@ -27,7 +27,7 @@ test("public-origin requests work behind loopback proxy while foreign origins an
     { ready: async () => true },
     runtimeOptions({
       COOKIE_SECURE: "true",
-      ALLOWED_ORIGINS: "https://backoffice.horekia.com",
+      ALLOWED_ORIGINS: "https://backoffice.cuinora.com",
     }),
   );
   await new Promise((r) => s.listen(0, "127.0.0.1", r));
@@ -40,7 +40,7 @@ test("public-origin requests work behind loopback proxy while foreign origins an
         await fetch(url + "/api/setup", {
           method: "POST",
           headers: {
-            Origin: "https://backoffice.horekia.com",
+            Origin: "https://backoffice.cuinora.com",
             "Content-Type": "application/json",
           },
           body: "{}",

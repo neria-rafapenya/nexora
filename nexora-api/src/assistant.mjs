@@ -101,7 +101,7 @@ function integer(v, min, max) {
 export function defaultAssistantConfig() {
   return {
     state: "DRAFT",
-    name: "Asistente Horekia",
+    name: "Asistente Cuinora",
     instructions:
       "Responde en español con claridad. Si falta información, indícalo y solicita una aclaración.",
     fallback:

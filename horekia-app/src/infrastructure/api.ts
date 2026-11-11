@@ -5,7 +5,7 @@ const origin = () =>
     ? ["localhost", "127.0.0.1"].includes(window.location.hostname)
       ? `http://${window.location.hostname}:5184/api`
       : "/api"
-    : "https://app.horekia.com/api");
+    : "https://app.cuinora.com/api");
 export async function clientRequest<T>(
   path: string,
   method = "GET",

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Horekia",
+    "name": "Cuinora",
     "slug": "horekia-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,9 +20,11 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "output": "static",
-      "name": "Horekia \u00b7 Mi centro"
+      "name": "Cuinora \u00b7 Mi centro"
     },
-    "plugins": ["expo-router"],
-    "scheme": "horekia"
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "cuinora"
   }
 }

@@ -946,7 +946,7 @@ export function ActivateAccount() {
     <main className="activation-page">
       {toasts}
       <section className="panel profile-panel">
-        <h1>Activa tu cuenta de Horekia</h1>
+        <h1>Activa tu cuenta de Cuinora</h1>
         {done ? (
           <>
             <p>

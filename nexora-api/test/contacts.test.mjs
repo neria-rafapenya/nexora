@@ -55,7 +55,7 @@ function fixture() {
   let now = Date.now();
   const service = new Contacts(
     s,
-    { enabled: true, tenant: "company", origin: "https://www.horekia.com" },
+    { enabled: true, tenant: "company", origin: "https://www.cuinora.com" },
     () => now,
   );
   return { service, rows, logs, advance: (n) => (now += n) };
@@ -98,7 +98,7 @@ test("contact is disabled by default; requires canonical origin, bound unexpired
   const token = service.issue("ip").token;
   await assert.rejects(
     () =>
-      service.submit({ ...input(), token }, "other", "https://www.horekia.com"),
+      service.submit({ ...input(), token }, "other", "https://www.cuinora.com"),
     (e) => e.status === 400,
   );
   await assert.rejects(
@@ -108,7 +108,7 @@ test("contact is disabled by default; requires canonical origin, bound unexpired
   advance(600001);
   await assert.rejects(
     () =>
-      service.submit({ ...input(), token }, "ip", "https://www.horekia.com"),
+      service.submit({ ...input(), token }, "ip", "https://www.cuinora.com"),
     (e) => e.status === 400,
   );
   for (let i = 0; i < 19; i++) service.issue("ip");
@@ -123,13 +123,13 @@ test("submission retries are idempotent, data is private and audit contains no m
   const result = await service.submit(
     { ...input(), token },
     "ip",
-    "https://www.horekia.com",
+    "https://www.cuinora.com",
   );
   assert.deepEqual(
     await service.submit(
       { ...input(), token },
       "ip",
-      "https://www.horekia.com",
+      "https://www.cuinora.com",
     ),
     result,
   );
@@ -144,7 +144,7 @@ test("submission retries are idempotent, data is private and audit contains no m
       service.submit(
         { ...input(), message: "Different content", token },
         "ip",
-        "https://www.horekia.com",
+        "https://www.cuinora.com",
       ),
     (e) => e.status === 409,
   );
@@ -153,7 +153,7 @@ test("submission retries are idempotent, data is private and audit contains no m
     await service.submit(
       { ...input(), token },
       "ip",
-      "https://www.horekia.com",
+      "https://www.cuinora.com",
     );
   }
   await assert.rejects(
@@ -161,7 +161,7 @@ test("submission retries are idempotent, data is private and audit contains no m
       service.submit(
         { ...input(), token: service.issue("ip").token },
         "ip",
-        "https://www.horekia.com",
+        "https://www.cuinora.com",
       ),
     (e) => e.status === 429,
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Picker } from "@react-native-picker/picker";
 import {
   View,
@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
   TextInput,
 } from "react-native";
-import { Link, usePathname } from "expo-router";
+import { Link, usePathname, router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useWorkspace } from "./workspace";
 export const colors = {
@@ -125,6 +125,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const wide = width > 900;
   const path = usePathname();
   const {
+    allowDemo,
+    authLoading,
     cart,
     notice,
     notify,
@@ -137,6 +139,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
     logout,
     catalogError,
   } = useWorkspace();
+  useEffect(() => {
+    if (!allowDemo && !authLoading && !user) router.replace("/login");
+  }, [allowDemo, authLoading, user]);
   const menu = (
     <>
       {nav.map(([href, label, icon]) => (
@@ -155,12 +160,26 @@ export function Shell({ children }: { children: React.ReactNode }) {
       ))}
     </>
   );
+  if (!allowDemo && !user)
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.cream,
+          justifyContent: "center",
+          padding: 32,
+        }}
+      >
+        <Text style={s.logo}>cuinora✳</Text>
+        <Copy>Comprobando acceso…</Copy>
+      </View>
+    );
   return (
     <View style={s.app}>
       {wide && (
         <View style={s.sidebar}>
           <Link href="/" style={s.logo}>
-            horekia<Text style={{ color: "#94aa7c" }}>✳</Text>
+            cuinora<Text style={{ color: "#94aa7c" }}>✳</Text>
           </Link>
           <Text style={[s.label, { marginTop: 36, marginBottom: 14 }]}>
             TU ESPACIO DE COMPRA
@@ -182,7 +201,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <View style={s.header}>
           {!wide ? (
             <Link href="/" style={[s.logo, { fontSize: 24 }]}>
-              horekia✳
+              cuinora✳
             </Link>
           ) : (
             <Text style={s.copy}>

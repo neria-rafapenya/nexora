@@ -122,7 +122,7 @@ export function ContactInbox({ companyId }: { companyId: string }) {
           <p className="eyebrow">SISTEMA</p>
           <h1>Solicitudes web</h1>
           <p>
-            Consultas recibidas desde www.horekia.com. Su contenido no se envía
+            Consultas recibidas desde www.cuinora.com. Su contenido no se envía
             a la IA ni se utiliza para newsletters.
           </p>
         </div>

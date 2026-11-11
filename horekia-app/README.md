@@ -1,4 +1,4 @@
-# Horekia · aplicación del comprador
+# Cuinora · aplicación del comprador
 
 Expo SDK 58 + React Native + Expo Router. Desarrollo orientado primero a web; componentes compartidos con futuras apps móviles. Node 22.13+ (usar 22 LTS).
 
@@ -14,7 +14,7 @@ Catálogo con filtros y búsqueda, ficha, cesta con cantidades, validación de f
 
 ## Conexión pendiente
 
-Destino: app.horekia.com. No se ha publicado ni habilitado acceso de clientes todavía. La POC se prueba en localhost; las futuras llamadas deben usar la API remota, nunca una conexión directa desde Expo a Supabase o Gemini. `.env.example` documenta únicamente la URL pública prevista y no es una conexión activa.
+Destino: app.cuinora.com. Publicado en https://app.cuinora.com con login y centros autorizados. La POC se prueba en localhost; las futuras llamadas deben usar la API remota, nunca una conexión directa desde Expo a Supabase o Gemini. `.env.example` documenta únicamente la URL pública prevista y no es una conexión activa.
 
 Antes de conectar datos reales: autenticación de comprador, asociación administrada a cliente y centros, comprobaciones de alcance en servidor para cada lectura/escritura, API específica de comprador, catálogo autorizado, persistencia de pedidos y encaje con aprobación interna/ERP. No reutilizar el permiso amplio del backoffice ni sus rutas de maestros desde la app.
 
@@ -32,4 +32,4 @@ La demo conserva tres centros existentes (Northfield School, Silverwood Care y R
 
 En la cabecera, **Iniciar sesión** usa la cuenta existente y el autenticador cuando corresponde. Una cuenta con rol de administrador ve todos los centros de su empresa; el resto solo los asignados desde el backoffice. El catálogo autenticado se consulta en el servicio remoto; la app no usa credenciales de Supabase ni claves de Gemini. La sesión usa una cookie HttpOnly, no localStorage.
 
-La demo y el modo autenticado están distinguidos. En ambos, la creación de pedidos sigue siendo una prueba en memoria; el asistente sigue siendo un ejemplo preparado. El dominio `app.horekia.com` todavía no se publica; se mantiene la revisión en localhost.
+La demo y el modo autenticado están distinguidos. En ambos, la creación de pedidos sigue siendo una prueba en memoria; el asistente sigue siendo un ejemplo preparado. El dominio `app.cuinora.com` permite revisar la POC con acceso autenticado; la demostración abierta queda limitada a localhost.

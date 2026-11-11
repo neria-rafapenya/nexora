@@ -53,7 +53,7 @@ export async function initialize(store) {
     if (!(await store.db.prepare("SELECT 1 FROM tenants LIMIT 1").get())) {
       await store.db
         .prepare("INSERT INTO tenants VALUES(?,?)")
-        .run("workspace", "Horekia Workspace");
+        .run("workspace", "Cuinora Workspace");
       await seedCatalog(store, "workspace", null);
     }
   });
@@ -206,7 +206,7 @@ export function createServer(
               fail(400, "Invalid company name");
             await store.db
               .prepare("UPDATE tenants SET name=? WHERE id=?")
-              .run(body.companyName.trim() || "Horekia Workspace", "workspace");
+              .run(body.companyName.trim() || "Cuinora Workspace", "workspace");
           }
           await store.log("workspace", id, "SETUP");
         });

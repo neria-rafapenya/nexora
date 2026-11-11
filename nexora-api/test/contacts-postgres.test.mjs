@@ -33,7 +33,7 @@ test(
             const service = new Contacts(s, {
               enabled: true,
               tenant: t,
-              origin: "https://www.horekia.com",
+              origin: "https://www.cuinora.com",
             });
             const input = {
               name: "Contact fixture",
@@ -49,10 +49,10 @@ test(
             const result = await service.submit(
               input,
               "test-ip",
-              "https://www.horekia.com",
+              "https://www.cuinora.com",
             );
             assert.deepEqual(
-              await service.submit(input, "test-ip", "https://www.horekia.com"),
+              await service.submit(input, "test-ip", "https://www.cuinora.com"),
               result,
             );
             let records = (await service.list(t, "admin", actor)).records;
@@ -100,7 +100,7 @@ test(
             const second = await service.submit(
               { ...input, token: service.issue("test-ip").token },
               "test-ip",
-              "https://www.horekia.com",
+              "https://www.cuinora.com",
             );
             await s.query(
               "UPDATE bo.contact_leads SET created_at=now()-interval '181 days' WHERE id=$1",

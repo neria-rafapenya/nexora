@@ -7,7 +7,7 @@ test("public contact works without a session only at its configured origin; admi
     origin: process.env.CONTACT_SITE_ORIGIN,
   };
   process.env.CONTACT_FORM_ENABLED = "true";
-  process.env.CONTACT_SITE_ORIGIN = "https://www.horekia.com";
+  process.env.CONTACT_SITE_ORIGIN = "https://www.cuinora.com";
   const rows = [];
   const store = {
     transaction: async (fn) => fn(),
@@ -28,7 +28,7 @@ test("public contact works without a session only at its configured origin; admi
     },
   };
   const server = createServer(store, {
-    allowedOrigins: ["https://www.horekia.com"],
+    allowedOrigins: ["https://www.cuinora.com"],
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const base = "http://127.0.0.1:" + server.address().port;
@@ -55,16 +55,16 @@ test("public contact works without a session only at its configured origin; admi
         headers: { Origin: origin, "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-    const result = await post("https://www.horekia.com");
+    const result = await post("https://www.cuinora.com");
     assert.equal(result.status, 201);
     assert.equal((await result.json()).ok, true);
     assert.equal(rows.length, 1);
-    assert.equal((await post("https://www.horekia.com")).status, 201);
+    assert.equal((await post("https://www.cuinora.com")).status, 201);
     assert.equal(rows.length, 1);
     assert.equal((await post("https://evil.test")).status, 403);
     assert.equal(
       (
-        await post("https://www.horekia.com", {
+        await post("https://www.cuinora.com", {
           ...body,
           message: "x".repeat(17000),
         })

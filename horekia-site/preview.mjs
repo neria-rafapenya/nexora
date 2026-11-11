@@ -22,7 +22,7 @@ http
       if (req.url === "/_preview/mobile") {
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         res.end(
-          '<!doctype html><html lang="es"><head><title>Horekia · vista móvil local</title><meta name="robots" content="noindex"></head><body style="margin:0;background:#ddd"><iframe title="Vista móvil de Horekia" src="/" width="390" height="844" style="border:0;background:white;display:block"></iframe></body></html>',
+          '<!doctype html><html lang="es"><head><title>Cuinora · vista móvil local</title><meta name="robots" content="noindex"></head><body style="margin:0;background:#ddd"><iframe title="Vista móvil de Cuinora" src="/" width="390" height="844" style="border:0;background:white;display:block"></iframe></body></html>',
         );
         return;
       }

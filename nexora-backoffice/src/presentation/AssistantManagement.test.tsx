@@ -28,7 +28,7 @@ beforeEach(() => {
       createdAt: null,
       updatedAt: null,
       data: {
-        name: "Asistente Horekia",
+        name: "Asistente Cuinora",
         state: "DRAFT",
         instructions: "Responde en español",
         fallback: "Falta información",
@@ -149,7 +149,7 @@ it("shows management only, does not call Gemini or a chat API, and persists conf
   await render();
   expect(host.textContent).toContain("Chat pendiente de conectar");
   expect(host.querySelector('[aria-label="Enviar mensaje"]')).toBeNull();
-  await edit("Nombre del asistente", "Ayuda Horekia");
+  await edit("Nombre del asistente", "Ayuda Cuinora");
   await submit("Configuración del asistente");
   expect(request).toHaveBeenCalledWith(
     "/assistant/config",
@@ -157,7 +157,7 @@ it("shows management only, does not call Gemini or a chat API, and persists conf
     "PUT",
     expect.objectContaining({
       version: 0,
-      data: expect.objectContaining({ name: "Ayuda Horekia" }),
+      data: expect.objectContaining({ name: "Ayuda Cuinora" }),
     }),
   );
   expect(host.textContent).toContain("Configuración del asistente guardada");

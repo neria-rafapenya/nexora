@@ -222,7 +222,7 @@ export function App() {
     if (user) setCompany(companyFromSearch(location.search, user.companies));
   }, [location.search, user]);
   if (page === "activate") return <ActivateAccount />;
-  if (loading) return <div className="loading">Conectando con Horekia…</div>;
+  if (loading) return <div className="loading">Conectando con Cuinora…</div>;
   if (!user)
     return (
       <Access
@@ -236,7 +236,7 @@ export function App() {
     <div className="shell">
       <aside className="sidebar">
         <Link className="brand" to={urlFor("dashboard")}>
-          Horekia<span>✳</span>
+          Cuinora<span>✳</span>
         </Link>
         <nav>
           <Link
@@ -551,7 +551,7 @@ export function App() {
             </div>
           )}
           <footer>
-            Horekia Backoffice{" "}
+            Cuinora Backoffice{" "}
             <span>
               Espacio privado · PostgreSQL en Supabase · Flujos de IA pendientes
             </span>
@@ -618,7 +618,7 @@ function Access({
     <div className="login">
       <section className="login-story">
         <a className="brand" href="#">
-          Horekia<span>✳</span>
+          Cuinora<span>✳</span>
         </a>
         <div>
           <span className="eyebrow">TUS OPERACIONES, CONECTADAS</span>
@@ -642,7 +642,7 @@ function Access({
         <div>
           <span className="pill">ENTORNO LOCAL · SUPABASE</span>
           <h2>
-            {setup ? "Configura tu espacio de trabajo" : "Bienvenido a Horekia"}
+            {setup ? "Configura tu espacio de trabajo" : "Bienvenido a Cuinora"}
           </h2>
           <p>
             {setup
